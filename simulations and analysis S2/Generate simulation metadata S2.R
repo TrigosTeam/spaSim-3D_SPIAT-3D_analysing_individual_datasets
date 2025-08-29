@@ -61,11 +61,11 @@ for (parameter in spes_table_colnames) {
   i <- i + 1
 }
 
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S2/S2 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations and analysis S2/S2 data")
 write.table(spes_table, "spes_table.csv")
 
 
-### 3. Generate sps metadata ----
+### 3. Generate spes metadata ----
 # constant metadata for simulations
 bg_metadata <- spe_metadata_background_template("random")
 bg_metadata$background$n_cells <- 30000
@@ -98,7 +98,7 @@ separated_cluster_cell_prop <- 1
 
 
 # Get table for simulations
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S2/S2 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations and analysis S2/S2 data")
 spes_table <- read.table("spes_table.csv")
 
 # Setup
@@ -184,6 +184,6 @@ for (arrangement in arrangements) {
   }
 }
 
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S2/S2 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations and analysis S2/S2 data")
 saveRDS(spes_metadata, "spes_metadata.RDS")
 
