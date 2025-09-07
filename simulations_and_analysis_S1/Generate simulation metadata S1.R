@@ -89,7 +89,7 @@ for (parameter in spes_table_colnames) {
   i <- i + 1
 }
 
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S1/S1 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations_and_analysis_S1/S1_data")
 write.table(spes_table, "spes_table.csv")
 
 
@@ -126,7 +126,7 @@ separated_cluster_cell_prop <- 1
 
 
 # Get table for simulations
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S1/S1 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations_and_analysis_S1/S1_data")
 spes_table <- read.table("spes_table.csv")
 
 # Setup
@@ -168,12 +168,8 @@ for (arrangement in arrangements) {
       
       
       if (shape == "ellipsoid") {
-        curr_metadata$cluster_1$x_radius <- spes_table_subset$E_radius_x[i]
-        curr_metadata$cluster_1$y_radius <- spes_table_subset$E_radius_y[i]
-        curr_metadata$cluster_1$z_radius <- spes_table_subset$E_radius_z[i]
-        curr_metadata$cluster_1$x_y_rotation <- runif(1, 0, 180)
-        curr_metadata$cluster_1$x_z_rotation <- runif(1, 0, 180)
-        curr_metadata$cluster_1$y_z_rotation <- runif(1, 0, 180)
+        curr_metadata$cluster_1$radii <- c(spes_table_subset$E_radius_x[i], spes_table_subset$E_radius_y[i], spes_table_subset$E_radius_z[i])
+        curr_metadata$cluster_1$axes_rotation <- c(runif(1, 0, 180), runif(1, 0, 180), runif(1, 0, 180))
       }
       
       else if (shape == "network") {
@@ -215,6 +211,6 @@ for (arrangement in arrangements) {
   }
 }
 
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S1/S1 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations_and_analysis_S1/S1_data")
 saveRDS(spes_metadata, "spes_metadata.RDS")
 

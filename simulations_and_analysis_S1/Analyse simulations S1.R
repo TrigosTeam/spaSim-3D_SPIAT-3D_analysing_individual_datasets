@@ -23,7 +23,7 @@ get_spe_slices_list <- function(spe, slice_bottom_z_coords, slice_top_z_coords) 
 
 ### Spes 3D setup --------------------------------------------
 
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S1/S1 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations_and_analysis_S1/S1_data")
 spes_metadata <- readRDS("spes_metadata.RDS")
 
 # Get number of spe groups
@@ -32,15 +32,10 @@ n_spe_groups <- length(spes_metadata)
 # Get number of spes in each group (should be the same)
 n_spes <- length(spes_metadata[[1]])
 
-# Define APD and AMD data frames as well as constants
+# Define AMD data frames as well as constants
 cell_types <- c("A", "B")
-APD_pairs <- c("A/A", "A/B", "B/B")
+
 AMD_pairs <- c("A/A", "A/B", "B/A", "B/B")
-
-APD_colnames <- c("spe", "pair", "APD")
-APD_df <- data.frame(matrix(nrow = n_spes * length(APD_pairs), ncol = length(APD_colnames)))
-colnames(APD_df) <- APD_colnames
-
 AMD_colnames <- c("spe", "reference", "target", "AMD")
 AMD_df <- data.frame(matrix(nrow = n_spes * length(AMD_pairs), ncol = 4))
 colnames(AMD_df) <- AMD_colnames
@@ -54,20 +49,16 @@ MS_colnames <- c("spe", "reference", "target", radii_colnames)
 MS_df <- data.frame(matrix(nrow = n_spes * length(cell_types), ncol = length(MS_colnames)))
 colnames(MS_df) <- MS_colnames
 
-NMS_colnames <- c("spe", "reference", "target", radii_colnames)
-NMS_df <- data.frame(matrix(nrow = n_spes * length(cell_types), ncol = length(NMS_colnames)))
-colnames(NMS_df) <- NMS_colnames
+# NMS has same data frame output as MS
+NMS_df <- MS_df
 
-# Target is always A and B together
-# Only choose prop(B) as prop(A) = 1 - prop(B) always
+# Only choose prop(A) as prop(A) = 1 - prop(B) always
 ACINP_colnames <- c("spe", "reference", "target", radii_colnames)
 ACINP_df <- data.frame(matrix(nrow = n_spes * length(cell_types), ncol = length(ACINP_colnames)))
 colnames(ACINP_df) <- ACINP_colnames
 
-# Target is always A and B together
-AE_colnames <- c("spe", "reference", "target", radii_colnames)
-AE_df <- data.frame(matrix(nrow = n_spes * length(cell_types), ncol = length(AE_colnames)))
-colnames(AE_df) <- AE_colnames
+# AE has same data frame output as ACINP
+AE_df <- ACINP_df
 
 ## ACIN and CKR are twice as large
 # (ref A and tar A or B) OR (ref B and tar B or A)
@@ -75,11 +66,10 @@ ACIN_colnames <- c("spe", "reference", "target", radii_colnames)
 ACIN_df <- data.frame(matrix(nrow = n_spes * length(cell_types)^2, ncol = length(ACIN_colnames)))
 colnames(ACIN_df) <- ACIN_colnames
 
-# (ref A and tar A or B) OR (ref B and tar B or A)
-CKR_colnames <- c("spe", "reference", "target", radii_colnames)
-CKR_df <- data.frame(matrix(nrow = n_spes * length(cell_types)^2, ncol = length(CKR_colnames)))
-colnames(CKR_df) <- CKR_colnames
-
+# CKR, CLR, COO have same data frame ouptut as ACIN
+CKR_df <- ACIN_df
+CLR_df <- ACIN_df
+COO_df <- ACIN_df
 
 # Define SAC and prevalence data frames as well as constants
 n_splits <- 10
@@ -109,14 +99,15 @@ colnames(entropy_prevalence_df) <- entropy_prevalence_df_colnames
 
 
 # Add all to list:
-metric_df_list3D <- list(APD = APD_df,
-                         AMD = AMD_df,
+metric_df_list3D <- list(AMD = AMD_df,
                          MS = MS_df,
                          NMS = NMS_df,
                          ACINP = ACINP_df,
                          AE = AE_df,
                          ACIN = ACIN_df,
                          CKR = CKR_df,
+                         CLR = CLR_df,
+                         COO = COO_df,
                          prop_SAC = prop_SAC_df,
                          prop_prevalence = prop_prevalence_df,
                          entropy_SAC = entropy_SAC_df,
@@ -137,93 +128,12 @@ slice_bottom_z_coords <- c(145, 175, 205)
 slice_top_z_coords <- slice_bottom_z_coords + 10
 n_slices <- length(slice_bottom_z_coords)
 
+metric_df_list2D <- metric_df_list3D
 
-# Define APD and AMD data frames as well as constants
-cell_types <- c("A", "B")
-APD_pairs <- c("A/A", "A/B", "B/B")
-AMD_pairs <- c("A/A", "A/B", "B/A", "B/B")
-
-slices_APD_df_colnames <- c("spe", "slice", "pair", "APD")
-slices_APD_df <- data.frame(matrix(nrow = n_spes * length(APD_pairs) * n_slices, ncol = length(slices_APD_df_colnames)))
-colnames(slices_APD_df) <- slices_APD_df_colnames
-
-slices_AMD_df_colnames <- c("spe", "slice", "reference", "target", "AMD")
-slices_AMD_df <- data.frame(matrix(nrow = n_spes * length(AMD_pairs) * n_slices, ncol = length(slices_AMD_df_colnames)))
-colnames(slices_AMD_df) <- slices_AMD_df_colnames
-
-# Define MS, NMS, ACIN, ACINP, CKR, AE data frames as well as constants
-radii <- seq(20, 100, 10)
-radii_colnames <- paste("r", radii, sep = "")
-
-slices_MS_df_colnames <- c("spe", "slice", "reference", "target", radii_colnames)
-slices_MS_df <- data.frame(matrix(nrow = n_spes * length(cell_types) * n_slices, ncol = length(slices_MS_df_colnames)))
-colnames(slices_MS_df) <- slices_MS_df_colnames
-
-slices_NMS_df_colnames <- c("spe", "slice", "reference", "target", radii_colnames)
-slices_NMS_df <- data.frame(matrix(nrow = n_spes * length(cell_types) * n_slices, ncol = length(slices_MS_df_colnames)))
-colnames(slices_NMS_df) <- slices_NMS_df_colnames
-
-# Only choose prop(A) as prop(B) = 1 - prop(A) always
-slices_ACINP_df_colnames <- c("spe", "slice", "reference", "target", radii_colnames)
-slices_ACINP_df <- data.frame(matrix(nrow = n_spes * length(cell_types) * n_slices, ncol = length(slices_ACINP_df_colnames)))
-colnames(slices_ACINP_df) <- slices_ACINP_df_colnames
-
-# Target is always A and B together
-slices_AE_df_colnames <- c("spe", "slice", "reference", "target", radii_colnames)
-slices_AE_df <- data.frame(matrix(nrow = n_spes * length(cell_types) * n_slices, ncol = length(slices_AE_df_colnames)))
-colnames(slices_AE_df) <- slices_AE_df_colnames
-
-## ACIN and CKR are twice as large
-# (ref A and tar A or B) OR (ref B and tar B or A)
-slices_ACIN_df_colnames <- c("spe", "slice", "reference", "target", radii_colnames)
-slices_ACIN_df <- data.frame(matrix(nrow = n_spes * length(cell_types)^2 * n_slices, ncol = length(slices_ACIN_df_colnames)))
-colnames(slices_ACIN_df) <- slices_ACIN_df_colnames
-
-# (ref A and tar A or B) OR (ref B and tar B or A)
-slices_CKR_df_colnames <- c("spe", "slice", "reference", "target", radii_colnames)
-slices_CKR_df <- data.frame(matrix(nrow = n_spes * length(cell_types)^2 * n_slices, ncol = length(slices_CKR_df_colnames)))
-colnames(slices_CKR_df) <- slices_CKR_df_colnames
-
-# Define SAC and prevalence data frames as well as constants
-n_splits <- 10
-thresholds <- seq(0.01, 1, 0.01)
-thresholds_colnames <- paste("t", thresholds, sep = "")
-
-prop_cell_types <- data.frame(ref = c("A", "O"), tar = c("B", "A,B"))
-
-slices_prop_SAC_df_colnames <- c("spe", "slice", "reference", "target", "prop_SAC")
-slices_prop_SAC_df <- data.frame(matrix(nrow = n_spes * nrow(prop_cell_types) * n_slices, ncol = length(slices_prop_SAC_df_colnames)))
-colnames(slices_prop_SAC_df) <- slices_prop_SAC_df_colnames
-
-slices_prop_prevalence_df_colnames <- c("spe", "slice", "reference", "target", thresholds_colnames)
-slices_prop_prevalence_df <- data.frame(matrix(nrow = n_spes * nrow(prop_cell_types) * n_slices, ncol = length(slices_prop_prevalence_df_colnames)))
-colnames(slices_prop_prevalence_df) <- slices_prop_prevalence_df_colnames
-
-
-entropy_cell_types <- data.frame(cell_types = c("A,B", "A,B,O"))
-
-slices_entropy_SAC_df_colnames <- c("spe", "slice", "cell_types", "entropy_SAC")
-slices_entropy_SAC_df <- data.frame(matrix(nrow = n_spes * nrow(entropy_cell_types) * n_slices, ncol = length(slices_entropy_SAC_df_colnames)))
-colnames(slices_entropy_SAC_df) <- slices_entropy_SAC_df_colnames
-
-slices_entropy_prevalence_df_colnames <- c("spe", "slice", "cell_types", thresholds_colnames)
-slices_entropy_prevalence_df <- data.frame(matrix(nrow = n_spes * nrow(entropy_cell_types) * n_slices, ncol = length(slices_entropy_prevalence_df_colnames)))
-colnames(slices_entropy_prevalence_df) <- slices_entropy_prevalence_df_colnames
-
-
-# Add all to list:
-metric_df_list2D <- list(APD = slices_APD_df,
-                         AMD = slices_AMD_df,
-                         MS = slices_MS_df,
-                         NMS = slices_NMS_df,
-                         ACINP = slices_ACINP_df,
-                         AE = slices_AE_df,
-                         ACIN = slices_ACIN_df,
-                         CKR = slices_CKR_df,
-                         prop_SAC = slices_prop_SAC_df,
-                         prop_prevalence = slices_prop_prevalence_df,
-                         entropy_SAC = slices_entropy_SAC_df,
-                         entropy_prevalence = slices_entropy_prevalence_df)
+for (df in metric_df_list2D) {
+  df <- cbind(df[1], slice = NA, df[-1])
+  df <- df[rep(1:nrow(df), 3), ]
+}
 
 metric_df_lists2D <- list(mixed_ellipsoid = metric_df_list2D,
                           mixed_network = metric_df_list2D,
@@ -231,6 +141,9 @@ metric_df_lists2D <- list(mixed_ellipsoid = metric_df_list2D,
                           ringed_network = metric_df_list2D,
                           separated_ellipsoid = metric_df_list2D,
                           separated_network = metric_df_list2D)
+
+
+
 
 
 
@@ -248,19 +161,6 @@ for (arrangement in arrangements) {
       ### 3D analysis -----------------------------
       spe <- simulate_spe_metadata3D(spes_metadata[[spes_metadata_index]][[i]], plot_image = F)
       spe_name <- paste("spe_", i, sep = "")  
-      
-      
-      # pairwise_distance_data <- calculate_pairwise_distances_between_cell_types3D(spe,
-      #                                                                             cell_types,
-      #                                                                             show_summary = F,
-      #                                                                             plot_image = F)
-      # pairwise_distance_data_summary <- summarise_distances_between_cell_types3D(pairwise_distance_data)
-      # 
-      # ## Fill in 3 rows at a time for APD df (as we have A/A, A/B, B/B)
-      # index <- 3 * (i - 1) + 1 # index is 1, 4, 7, 10 ...
-      # metric_df_lists3D[[spes_metadata_index]][["APD"]][index:(index + 2), "spe"] <- spe_name
-      # metric_df_lists3D[[spes_metadata_index]][["APD"]][index:(index + 2), "pair"] <- pairwise_distance_data_summary$pair
-      # metric_df_lists3D[[spes_metadata_index]][["APD"]][index:(index + 2), "APD"] <- pairwise_distance_data_summary$mean
       
       minimum_distance_data <- calculate_minimum_distances_between_cell_types3D(spe,
                                                                                 cell_types,
@@ -300,22 +200,29 @@ for (arrangement in arrangements) {
         metric_df_lists3D[[spes_metadata_index]][["ACINP"]][index1, c("spe", "reference", "target")] <- c(spe_name, reference_cell_type, "B")
         metric_df_lists3D[[spes_metadata_index]][["ACINP"]][index1, radii_colnames] <- gradient_data[["cells_in_neighbourhood_proportion"]][["B"]]
         
-        metric_df_lists3D[[spes_metadata_index]][["AE"]][index1, c("spe", "reference")] <- c(spe_name, reference_cell_type, "A,B")
+        metric_df_lists3D[[spes_metadata_index]][["AE"]][index1, c("spe", "reference", "target")] <- c(spe_name, reference_cell_type, "A,B")
         metric_df_lists3D[[spes_metadata_index]][["AE"]][index1, radii_colnames] <- gradient_data[["entropy"]]$entropy
         
         index1 <- index1 + 1
         
         for (target_cell_type in cell_types) {
-          ## Calculate ACIN and CKR as target cell type can also be the reference cell type
+          ## Calculate ACIN, CKR, CKL, COO as target cell type can also be the reference cell type
           
           # ACIN
           metric_df_lists3D[[spes_metadata_index]][["ACIN"]][index2, c("spe", "reference", "target")] <- c(spe_name, reference_cell_type, target_cell_type)
           metric_df_lists3D[[spes_metadata_index]][["ACIN"]][index2, radii_colnames] <- gradient_data[["cells_in_neighbourhood"]][[target_cell_type]]
           
-          
           # CKR
           metric_df_lists3D[[spes_metadata_index]][["CKR"]][index2, c("spe", "reference", "target")] <- c(spe_name, reference_cell_type, target_cell_type)
-          metric_df_lists3D[[spes_metadata_index]][["CKR"]][index2, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]]$cross_K_ratio
+          metric_df_lists3D[[spes_metadata_index]][["CKR"]][index2, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]]
+          
+          # CLR
+          metric_df_lists3D[[spes_metadata_index]][["CLR"]][index2, c("spe", "reference", "target")] <- c(spe_name, reference_cell_type, target_cell_type)
+          metric_df_lists3D[[spes_metadata_index]][["CLR"]][index2, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]]
+          
+          # COO
+          metric_df_lists3D[[spes_metadata_index]][["COO"]][index2, c("spe", "reference", "target")] <- c(spe_name, reference_cell_type, target_cell_type)
+          metric_df_lists3D[[spes_metadata_index]][["COO"]][index2, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
           
           index2 <- index2 + 1
         }
@@ -377,20 +284,6 @@ for (arrangement in arrangements) {
       for (slice_index in seq(n_slices)) {
         spe_slice <- spe_slices[[slice_index]]
         
-        # pairwise_distance_data <- calculate_pairwise_distances_between_cell_types2D(spe_slice,
-        #                                                                             cell_types,
-        #                                                                             show_summary = F,
-        #                                                                             plot_image = F)
-        # pairwise_distance_data_summary <- summarise_distances_between_cell_types2D(pairwise_distance_data)
-        # 
-        # ## Fill in 3 rows at a time for APD df (as we have A/A, A/B, B/B)
-        # index <- n_slices * 3 * (i - 1) + 3 * (slice_index - 1) + 1
-        #  metric_df_lists2D[[spes_metadata_index]][["APD"]][index:(index + 2), "spe"] <- spe_name
-        # metric_df_lists2D[[spes_metadata_index]][["APD"]][index:(index + 2), "slice"] <- slice_index
-        # metric_df_lists2D[[spes_metadata_index]][["APD"]][index:(index + 2), "pair"] <- pairwise_distance_data_summary$pair
-        # metric_df_lists2D[[spes_metadata_index]][["APD"]][index:(index + 2), "APD"] <- pairwise_distance_data_summary$mean
-        
-        
         minimum_distance_data <- calculate_minimum_distances_between_cell_types2D(spe_slice,
                                                                                   cell_types,
                                                                                   show_summary = F,
@@ -404,9 +297,6 @@ for (arrangement in arrangements) {
         metric_df_lists2D[[spes_metadata_index]][["AMD"]][index:(index + 3), "reference"] <- minimum_distance_data_summary$reference
         metric_df_lists2D[[spes_metadata_index]][["AMD"]][index:(index + 3), "target"] <- minimum_distance_data_summary$target
         metric_df_lists2D[[spes_metadata_index]][["AMD"]][index:(index + 3), "AMD"] <- minimum_distance_data_summary$mean
-        
-        
-        
         
         
         index1 <- n_slices * 2 * (i - 1) + 2 * (slice_index - 1) + 1
@@ -442,19 +332,25 @@ for (arrangement in arrangements) {
           index1 <- index1 + 1
           
           for (target_cell_type in cell_types) {
-            ## Calculate ACIN and CKR as target cell type can also be the reference cell type
+            ## Calculate ACIN, CKR, CLR, COO as target cell type can also be the reference cell type
             
             # ACIN & CKR
             metric_df_lists2D[[spes_metadata_index]][["ACIN"]][index2, c("spe", "slice", "reference", "target")] <- c(spe_name, slice_index, reference_cell_type, target_cell_type)
             metric_df_lists2D[[spes_metadata_index]][["CKR"]][index2, c("spe", "slice", "reference", "target")] <- c(spe_name, slice_index, reference_cell_type, target_cell_type)
+            metric_df_lists2D[[spes_metadata_index]][["CLR"]][index2, c("spe", "slice", "reference", "target")] <- c(spe_name, slice_index, reference_cell_type, target_cell_type)
+            metric_df_lists2D[[spes_metadata_index]][["COO"]][index2, c("spe", "slice", "reference", "target")] <- c(spe_name, slice_index, reference_cell_type, target_cell_type)
             
             if (!is.null(gradient_data)) {
               metric_df_lists2D[[spes_metadata_index]][["ACIN"]][index2, radii_colnames] <- gradient_data[["cells_in_neighbourhood"]][[target_cell_type]]
-              metric_df_lists2D[[spes_metadata_index]][["CKR"]][index2, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]]$cross_K_ratio
+              metric_df_lists2D[[spes_metadata_index]][["CKR"]][index2, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]]
+              metric_df_lists2D[[spes_metadata_index]][["CLR"]][index2, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]]
+              metric_df_lists2D[[spes_metadata_index]][["COO"]][index2, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
             }
             else {
               metric_df_lists2D[[spes_metadata_index]][["ACIN"]][index2, radii_colnames] <- NA
               metric_df_lists2D[[spes_metadata_index]][["CKR"]][index2, radii_colnames] <- NA
+              metric_df_lists2D[[spes_metadata_index]][["CLR"]][index2, radii_colnames] <- NA
+              metric_df_lists2D[[spes_metadata_index]][["COO"]][index2, radii_colnames] <- NA
             }
             
             index2 <- index2 + 1
@@ -531,7 +427,7 @@ for (arrangement in arrangements) {
   }
 }
 
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S1/S1 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations_and_analysis_S1/S1_data")
 saveRDS(metric_df_lists3D, "metric_df_lists3D.RDS")
 saveRDS(metric_df_lists2D, "metric_df_lists2D.RDS")
 
