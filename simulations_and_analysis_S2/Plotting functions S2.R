@@ -7,7 +7,7 @@ library(dplyr)
 ### Utility function to get metric cell types -----
 get_metric_cell_types <- function(metric) {
   # Get metric_cell_types
-  if (metric %in% c("AMD", "ACIN", "CKR", "ACIN_AUC", "CKR_AUC")) {
+  if (metric %in% c("AMD", "ACIN", "CKR", "CLR", "COO", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC")) {
     metric_cell_types <- data.frame(ref = c("A", "A", "B", "B"), tar = c("A", "B", "A", "B"))
     metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
   }
@@ -40,7 +40,7 @@ subset_metric_df <- function(metric,
                              metric_df,
                              metric_cell_types,
                              index) {
-  if (metric %in% c("AMD", "ACIN", "CKR", "MS", "NMS", "ACIN_AUC", "CKR_AUC", "MS_AUC", "NMS_AUC", "prop_SAC", "prop_prevalence", "prop_AUC")) {
+  if (metric %in% c("AMD", "ACIN", "CKR", "CLR", "COO", "MS", "NMS", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "MS_AUC", "NMS_AUC", "prop_SAC", "prop_prevalence", "prop_AUC")) {
     metric_df <- metric_df[metric_df$reference == metric_cell_types[index, "ref"] & metric_df$target == metric_cell_types[index, "tar"], ] 
   }
   else if (metric %in% c("ACINP", "AE", "ACINP_AUC", "AE_AUC")) {
@@ -68,7 +68,7 @@ duplicate_df <- function(df, n_times) {
 ### Utility function to get title --------
 get_metric_cell_types_title <- function(metric, metric_cell_types, index) {
   
-  if (metric %in% c("AMD", "ACIN", "ACINP", "AE", "CKR", "MS", "NMS", "ACIN_AUC", "ACINP_AUC", "AE_AUC", "CKR_AUC", "MS_AUC", "NMS_AUC", "prop_SAC", "prop_prevalence", "prop_AUC")) {
+  if (metric %in% c("AMD", "ACIN", "ACINP", "AE", "CKR", "CLR", "COO", "MS", "NMS", "ACIN_AUC", "ACINP_AUC", "AE_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "MS_AUC", "NMS_AUC", "prop_SAC", "prop_prevalence", "prop_AUC")) {
     title <- ggdraw() +
       draw_label(paste("Reference:", metric_cell_types[index, "ref"], "Target:", metric_cell_types[index, "tar"]),
                  fontface = 'bold')
@@ -254,7 +254,7 @@ plot_gradient_metric <- function(spes_table,
     metric_df_subset <- subset_metric_df(metric, metric_df, metric_cell_types, i)
     
     # Combine spes_table and metric_df
-    plot_df <- cbind(spes_table, metric_df)
+    plot_df <- cbind(spes_table, metric_df_subset)
     
     # Melt
     plot_df <- reshape2::melt(plot_df, , gradient_colnames)
