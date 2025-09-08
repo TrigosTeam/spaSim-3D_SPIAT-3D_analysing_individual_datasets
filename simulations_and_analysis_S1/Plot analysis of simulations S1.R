@@ -6,12 +6,12 @@ library(dplyr)
 
 ### Utility functions -------------------------
 get_gradient <- function(metric) {
-  if (metric %in% c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR")) return("radius")
+  if (metric %in% c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO")) return("radius")
   return("threshold")
 }
 
 ### Read metric_df_lists --------------------------------------------------------------
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S1/S1 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations_and_analysis_S1/S1_data")
 metric_df_lists3D <- readRDS("metric_df_lists3D.RDS")
 metric_df_lists2D <- readRDS("metric_df_lists2D.RDS")
 
@@ -32,7 +32,7 @@ shapes <- c("ellipsoid", "network")
 radii <- seq(20, 100, 10)
 radii_colnames <- paste("r", radii, sep = "")
 
-gradient_radii_metrics <- c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR")
+gradient_radii_metrics <- c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO")
 
 
 for (arrangement in arrangements) {
@@ -43,7 +43,7 @@ for (arrangement in arrangements) {
     for (metric in gradient_radii_metrics) {
       metric_AUC_name <- paste(metric, "AUC", sep = "_")
       
-      if (metric %in% c("MS", "NMS", "ACIN", "CKR")) {
+      if (metric %in% c("MS", "NMS", "ACIN", "CKR", "CLR", "COO")) {
         subset_colnames <- c("spe", "reference", "target", metric_AUC_name)
       }
       else {
@@ -111,7 +111,7 @@ for (arrangement in arrangements) {
 
 ### Get plots for 3D metric analysis (non-gradient) ------------------------------------------
 # Read spes_table
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S1/S1 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations_and_analysis_S1/S1_data")
 spes_table <- read.table("spes_table.csv")
 spes_table$cluster_prop_B <- 1 - spes_table$cluster_prop_A
 spes_table[spes_table$variable_parameter == "cluster_prop_A", "variable_parameter"] <- "cluster_prop_B"
@@ -139,7 +139,7 @@ non_gradient_plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -181,7 +181,7 @@ setwd("~/R/plots/S1")
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
 
-metrics_set1 <- c("AMD",  "ACIN_AUC", "CKR_AUC")
+metrics_set1 <- c("AMD",  "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC")
 metrics_set2 <- c("MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
 
 pdf("plots3D_non_gradient.pdf", width = 25, height = 12)
@@ -219,7 +219,7 @@ dev.off()
 
 ### Get plots for 3D metric analysis (gradient) ------------------------------------------
 # Read spes_table
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S1/S1 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations_and_analysis_S1/S1_data")
 spes_table <- read.table("spes_table.csv")
 spes_table$cluster_prop_B <- 1 - spes_table$cluster_prop_A
 spes_table[spes_table$variable_parameter == "cluster_prop_A", "variable_parameter"] <- "cluster_prop_B"
@@ -246,7 +246,7 @@ gradient_plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "prop_prevalence", "entropy_prevalence")
+metrics <- c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "prop_prevalence", "entropy_prevalence")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -290,7 +290,7 @@ setwd("~/R/plots/S1")
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
 
-metrics_set1 <- c("ACIN", "CKR")
+metrics_set1 <- c("ACIN", "CKR", "CLR", "COO")
 metrics_set2 <- c("MS", "NMS", "ACINP", "AE", "prop_prevalence", "entropy_prevalence")
 
 pdf("plots3D_gradient.pdf", width = 25, height = 12)
@@ -328,7 +328,7 @@ dev.off()
 
 ### Get plots for 2D metric analysis (middle slice only) ------------------------------------------
 # Read spes_table
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S1/S1 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations_and_analysis_S1/S1_data")
 spes_table <- read.table("spes_table.csv")
 spes_table$cluster_prop_B <- 1 - spes_table$cluster_prop_A
 spes_table[spes_table$variable_parameter == "cluster_prop_A", "variable_parameter"] <- "cluster_prop_B"
@@ -389,7 +389,7 @@ gradient_plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("AMD", "MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "prop_SAC", "prop_prevalence", "prop_AUC", "entropy_SAC", "entropy_prevalence", "entropy_AUC")
+metrics <- c("AMD", "MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "prop_SAC", "prop_prevalence", "prop_AUC", "entropy_SAC", "entropy_prevalence", "entropy_AUC")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -423,7 +423,7 @@ for (arrangement in arrangements) {
                                                                                     arrangement_parameters[[arrangement]], 
                                                                                     non_gradient_plots_metadata[[shape]])
       }
-      else if (metric %in% c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "prop_prevalence", "entropy_prevalence")) {
+      else if (metric %in% c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "prop_prevalence", "entropy_prevalence")) {
         metric_plots2D[[spes_metadata_index]][[metric]] <- plot_gradient_metric(spes_table_subset, 
                                                                                 metric,
                                                                                 metric_df_lists2D_subset[[spes_metadata_index]][[metric]], 
@@ -441,7 +441,7 @@ arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
 # metrics <- c("AMD", "MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "prop_SAC", "prop_prevalence", "prop_AUC", "entropy_SAC", "entropy_prevalence", "entropy_AUC")
 
-metrics_set1 <- c("AMD", "ACIN", "CKR")
+metrics_set1 <- c("AMD", "ACIN", "CKR", "CLR", "COO")
 metrics_set2 <- c("MS", "NMS", "ACINP", "AE", "prop_SAC", "prop_prevalence", "prop_AUC", "entropy_SAC", "entropy_prevalence", "entropy_AUC")
 
 pdf("plots2D_middle_slice.pdf", width = 25, height = 12)
@@ -477,7 +477,7 @@ for (metric in metrics_set2) {
 dev.off()
 
 ### Get plots with 2D (middle slice only) on the x-axis and 3D on the y-axis ----------------
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S1/S1 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations_and_analysis_S1/S1_data")
 spes_table <- read.table("spes_table.csv")
 spes_table$cluster_prop_B <- 1 - spes_table$cluster_prop_A
 spes_table[spes_table$variable_parameter == "cluster_prop_A", "variable_parameter"] <- "cluster_prop_B" 
@@ -530,7 +530,7 @@ plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -571,7 +571,7 @@ for (arrangement in arrangements) {
 setwd("~/R/plots/S1")
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics_set1 <- c("AMD",  "ACIN_AUC", "CKR_AUC")
+metrics_set1 <- c("AMD",  "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC")
 metrics_set2 <- c("MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
 
 pdf("plots2D_vs_3D_middle_slice.pdf", width = 25, height = 10)
@@ -612,7 +612,7 @@ dev.off()
 
 
 ### Get plots with 2D (all slices) on the x-axis and 3D on the y-axis ----------------
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S1/S1 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations_and_analysis_S1/S1_data")
 spes_table <- read.table("spes_table.csv")
 spes_table$cluster_prop_B <- 1 - spes_table$cluster_prop_A
 spes_table[spes_table$variable_parameter == "cluster_prop_A", "variable_parameter"] <- "cluster_prop_B" 
@@ -642,7 +642,7 @@ plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -684,7 +684,7 @@ for (arrangement in arrangements) {
 setwd("~/R/plots/S1")
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics_set1 <- c("AMD",  "ACIN_AUC", "CKR_AUC")
+metrics_set1 <- c("AMD",  "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC")
 metrics_set2 <- c("MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
 
 pdf("plots2D_vs_3D_all_slices.pdf", width = 25, height = 10)
@@ -725,7 +725,7 @@ dev.off()
 
 
 ### Get plots for error for non-gradient metrics ----------------------------------
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S1/S1 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations_and_analysis_S1/S1_data")
 spes_table <- read.table("spes_table.csv")
 spes_table$cluster_prop_B <- 1 - spes_table$cluster_prop_A
 spes_table[spes_table$variable_parameter == "cluster_prop_A", "variable_parameter"] <- "cluster_prop_B" 
@@ -756,7 +756,7 @@ plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CKR_AUC", "COO_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -797,7 +797,7 @@ for (arrangement in arrangements) {
 setwd("~/R/plots/S1")
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics_set1 <- c("AMD",  "ACIN_AUC", "CKR_AUC")
+metrics_set1 <- c("AMD",  "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC")
 metrics_set2 <- c("MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
 
 pdf("plots_error_non_gradient_all_slices.pdf", width = 25, height = 10)
@@ -838,7 +838,7 @@ dev.off()
 
 ### Get plots for error for gradient metrics one slice ----------------------------------
 # Read spes_table
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S1/S1 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations_and_analysis_S1/S1_data")
 spes_table <- read.table("spes_table.csv")
 spes_table$cluster_prop_B <- 1 - spes_table$cluster_prop_A
 spes_table[spes_table$variable_parameter == "cluster_prop_A", "variable_parameter"] <- "cluster_prop_B"
@@ -884,7 +884,7 @@ gradient_plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "prop_prevalence",  "entropy_prevalence")
+metrics <- c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "prop_prevalence",  "entropy_prevalence")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -926,7 +926,7 @@ for (arrangement in arrangements) {
 setwd("~/R/plots/S1")
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics_set1 <- c("ACIN", "CKR")
+metrics_set1 <- c("ACIN", "CKR", "CLR", "COO")
 metrics_set2 <- c("MS", "NMS", "ACINP", "AE", "prop_prevalence", "entropy_prevalence")
 
 pdf("plots_error_gradient_one_slice.pdf", width = 25, height = 10)
@@ -962,7 +962,7 @@ for (metric in metrics_set2) {
 dev.off()
 
 ### Get plots for 2D metric analysis (all slices with ground truth) -----
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S1/S1 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations_and_analysis_S1/S1_data")
 spes_table <- read.table("spes_table.csv")
 spes_table$cluster_prop_B <- 1 - spes_table$cluster_prop_A
 spes_table[spes_table$variable_parameter == "cluster_prop_A", "variable_parameter"] <- "cluster_prop_B" 
@@ -995,7 +995,7 @@ plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -1036,7 +1036,7 @@ for (arrangement in arrangements) {
 setwd("~/R/plots/S1")
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics_set1 <- c("AMD", "ACIN_AUC", "CKR_AUC")
+metrics_set1 <- c("AMD", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC")
 metrics_set2 <- c("MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
 
 pdf("plots2D_all_slices_with_ground_truth.pdf", width = 25, height = 10)
@@ -1075,7 +1075,7 @@ dev.off()
 
 
 ### Get plots for violin plots for slice (all slices) -----
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S1/S1 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations_and_analysis_S1/S1_data")
 spes_table <- read.table("spes_table.csv")
 spes_table$cluster_prop_B <- 1 - spes_table$cluster_prop_A
 spes_table[spes_table$variable_parameter == "cluster_prop_A", "variable_parameter"] <- "cluster_prop_B" 
@@ -1108,7 +1108,7 @@ plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -1187,7 +1187,7 @@ dev.off()
 
 
 ### Get plots for violin plots for slice (all slices with ground truth) -----
-setwd("~/R/spaSim-3D/scripts/simulations and analysis S1/S1 data")
+setwd("~/R/SPIAT-3D_benchmarking/simulations_and_analysis_S1/S1_data")
 spes_table <- read.table("spes_table.csv")
 spes_table$cluster_prop_B <- 1 - spes_table$cluster_prop_A
 spes_table[spes_table$variable_parameter == "cluster_prop_A", "variable_parameter"] <- "cluster_prop_B" 
@@ -1220,7 +1220,7 @@ plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -1261,7 +1261,7 @@ for (arrangement in arrangements) {
 setwd("~/R/plots/S1")
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics_set1 <- c("AMD", "ACIN_AUC", "CKR_AUC")
+metrics_set1 <- c("AMD", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC")
 metrics_set2 <- c("MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
 
 pdf("metric_plots_violin_all_slices_with_ground_truth.pdf", width = 25, height = 10)
@@ -1295,6 +1295,7 @@ for (metric in metrics_set2) {
 }
 
 dev.off()
+
 
 
 

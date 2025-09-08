@@ -4,8 +4,8 @@
 #SBATCH --ntasks=1
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=58G 
-#SBATCH --time=20:00:00 # Currently 20 hours
+#SBATCH --mem=80G 
+#SBATCH --time=10:00:00 # Currently 10 hours
 #SBATCH --job-name=S1_analysis
 #SBATCH --partition=work
 #SBATCH --export=NONE
