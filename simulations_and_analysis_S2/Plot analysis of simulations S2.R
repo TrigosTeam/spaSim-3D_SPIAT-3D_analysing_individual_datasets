@@ -195,7 +195,6 @@ for (arrangement in arrangements) {
 setwd("~/R/plots/S2")
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-# metrics <- c("AMD", "MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "prop_SAC", "prop_prevalence", "prop_AUC", "entropy_SAC", "entropy_prevalence", "entropy_AUC")
 
 metrics_set1 <- c("AMD", "ACIN", "CKR", "CLR", "COO")
 metrics_set2 <- c("MS", "NMS", "ACINP", "AE", "prop_SAC", "prop_prevalence", "prop_AUC", "entropy_SAC", "entropy_prevalence", "entropy_AUC")
@@ -340,7 +339,6 @@ for (arrangement in arrangements) {
 setwd("~/R/plots/S2")
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-# metrics <- c("AMD", "MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "prop_SAC", "prop_prevalence", "prop_AUC", "entropy_SAC", "entropy_prevalence", "entropy_AUC")
 
 metrics_set1 <- c("AMD", "ACIN", "CKR", "CLR", "COO")
 metrics_set2 <- c("MS", "NMS", "ACINP", "AE", "prop_SAC", "prop_prevalence", "prop_AUC", "entropy_SAC", "entropy_prevalence", "entropy_AUC")
@@ -660,7 +658,7 @@ for (arrangement in arrangements) {
       if (i > 1) {
         temp <- nrow(metric_df_lists3D[[spes_metadata_index]][[metric]])
         n_slices <- length(unique(metric_df_lists2D[[spes_metadata_index]][[metric]][["slice"]]))
-        if (metric %in% c("AMD", "ACIN_AUC", "CKR_AUC")) {
+        if (metric %in% c("AMD", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC")) {
           metric_df_lists3D[[spes_metadata_index]][[metric]][["spe"]] <- 
             paste("spe", rep(seq((temp/4) * (i - 1) + 1, (temp/4) * (i - 1) + (temp/4)), each = 4), sep = "_")
           metric_df_lists2D[[spes_metadata_index]][[metric]][["spe"]] <-
@@ -694,7 +692,7 @@ for (metric in metrics) {
 
 # Put plots into a pdf
 setwd("~/R/plots/S2")
-metrics_set1 <- c("AMD",  "ACIN_AUC", "CKR_AUC")
+metrics_set1 <- c("AMD",  "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC")
 metrics_set2 <- c("MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC")
 metrics_set3 <- c("prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
 
@@ -872,7 +870,7 @@ for (arrangement in arrangements) {
       if (i > 1) {
         temp <- nrow(metric_df_lists3D[[spes_metadata_index]][[metric]])
         n_slices <- length(unique(metric_df_lists2D[[spes_metadata_index]][[metric]][["slice"]]))
-        if (metric %in% c("AMD", "ACIN_AUC", "CKR_AUC")) {
+        if (metric %in% c("AMD", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC")) {
           metric_df_lists3D[[spes_metadata_index]][[metric]][["spe"]] <- 
             paste("spe", rep(seq((temp/4) * (i - 1) + 1, (temp/4) * (i - 1) + (temp/4)), each = 4), sep = "_")
           metric_df_lists2D[[spes_metadata_index]][[metric]][["spe"]] <-
@@ -943,6 +941,177 @@ plot4 <- plot_grid(plot2, plot3,
 print(plot4)
 dev.off()
 
+
+
+
+
+
+### Get plots with 2D (all slices) on the x-axis and 3D on the y-axis (not annotating for arrangement or shape and choosing random slice) (one cell type pair A/B or equivalent) ----------------
+
+# Set up plots metadata
+plots_metadata <- list(
+  temp <- list(x_aes = "3D", y_aes = "2D")
+)
+
+# Generate plots and plots into a list
+arrangements <- c("mixed", "ringed", "separated")
+shapes <- c("ellipsoid", "network")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
+
+
+# Merge lists in metric_lists
+metric_df_lists3D_merged <- list()
+metric_df_lists2D_merged <- list()
+
+i <- 1
+for (arrangement in arrangements) {
+  for (shape in shapes) {
+    spes_metadata_index <- paste(arrangement, shape, sep = "_")
+    
+    for (metric in metrics) {
+      if (i == 1)  {
+        metric_df_lists3D_merged[[metric]] <- data.frame()
+        metric_df_lists2D_merged[[metric]] <- data.frame()
+      }
+      if (i > 1) {
+        temp <- nrow(metric_df_lists3D[[spes_metadata_index]][[metric]])
+        n_slices <- length(unique(metric_df_lists2D[[spes_metadata_index]][[metric]][["slice"]]))
+        if (metric %in% c("AMD", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC")) {
+          metric_df_lists3D[[spes_metadata_index]][[metric]][["spe"]] <- 
+            paste("spe", rep(seq((temp/4) * (i - 1) + 1, (temp/4) * (i - 1) + (temp/4)), each = 4), sep = "_")
+          metric_df_lists2D[[spes_metadata_index]][[metric]][["spe"]] <-
+            paste("spe", rep(seq((temp/4) * (i - 1) + 1, (temp)/4 * (i - 1) + (temp/4)), each = 4 * n_slices), sep = "_")
+        }
+        else {
+          metric_df_lists3D[[spes_metadata_index]][[metric]][["spe"]] <- 
+            paste("spe", rep(seq((temp/2) * (i - 1) + 1, (temp/2) * (i - 1) + (temp/2)), each = 2), sep = "_")
+          metric_df_lists2D[[spes_metadata_index]][[metric]][["spe"]] <-
+            paste("spe", rep(seq((temp/2) * (i - 1) + 1, (temp/2) * (i - 1) + (temp/2)), each = 2 * n_slices), sep = "_")
+        }
+      }
+      metric_df_lists3D_merged[[metric]] <- rbind(metric_df_lists3D_merged[[metric]], metric_df_lists3D[[spes_metadata_index]][[metric]])
+      metric_df_lists2D_merged[[metric]] <- rbind(metric_df_lists2D_merged[[metric]], metric_df_lists2D[[spes_metadata_index]][[metric]])
+    }
+    
+    i <- i + 1
+  }
+}
+
+metric_plots_3D_vs_2D_random_slice <- list()
+
+for (metric in metrics) {
+  metric_plots_3D_vs_2D_random_slice[[metric]] <- plot_3D_vs_2D_metric_random_slice_no_annotating_one_cell_type_pair(metric, 
+                                                                                                                     metric_df_lists3D_merged[[metric]],
+                                                                                                                     metric_df_lists2D_merged[[metric]], 
+                                                                                                                     plots_metadata)
+}
+
+
+
+# Put plots into a pdf
+setwd("~/R/plots/S2")
+
+pdf("plots2D_vs_3D_random_slice_one_cell_pair.pdf", width = 12, height = 12)
+
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
+curr_metric_plots <- list()
+for (metric in metrics) {
+  curr_metric_plots[[metric]] <- metric_plots_3D_vs_2D_random_slice[[metric]] + theme(plot.margin = margin(15, 15, 15, 15))  
+}
+
+plot <- plot_grid(plotlist = curr_metric_plots,
+                  nrow = 4, 
+                  ncol = 4)
+
+print(plot)
+
+dev.off()
+
+
+
+
+
+
+### Get plots with 2D (all slices) on the x-axis and ERROR on the y-axis (not annotating for arrangement or shape and choosing random slice) (one cell type pair A/B or equivalent) ----------------
+
+# Set up plots metadata
+plots_metadata <- list(
+  temp <- list(x_aes = "3D", y_aes = "error")
+)
+
+# Generate plots and plots into a list
+arrangements <- c("mixed", "ringed", "separated")
+shapes <- c("ellipsoid", "network")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
+
+
+# Merge lists in metric_lists
+metric_df_lists3D_merged <- list()
+metric_df_lists2D_merged <- list()
+
+i <- 1
+for (arrangement in arrangements) {
+  for (shape in shapes) {
+    spes_metadata_index <- paste(arrangement, shape, sep = "_")
+    
+    for (metric in metrics) {
+      if (i == 1)  {
+        metric_df_lists3D_merged[[metric]] <- data.frame()
+        metric_df_lists2D_merged[[metric]] <- data.frame()
+      }
+      if (i > 1) {
+        temp <- nrow(metric_df_lists3D[[spes_metadata_index]][[metric]])
+        n_slices <- length(unique(metric_df_lists2D[[spes_metadata_index]][[metric]][["slice"]]))
+        if (metric %in% c("AMD", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC")) {
+          metric_df_lists3D[[spes_metadata_index]][[metric]][["spe"]] <- 
+            paste("spe", rep(seq((temp/4) * (i - 1) + 1, (temp/4) * (i - 1) + (temp/4)), each = 4), sep = "_")
+          metric_df_lists2D[[spes_metadata_index]][[metric]][["spe"]] <-
+            paste("spe", rep(seq((temp/4) * (i - 1) + 1, (temp)/4 * (i - 1) + (temp/4)), each = 4 * n_slices), sep = "_")
+        }
+        else {
+          metric_df_lists3D[[spes_metadata_index]][[metric]][["spe"]] <- 
+            paste("spe", rep(seq((temp/2) * (i - 1) + 1, (temp/2) * (i - 1) + (temp/2)), each = 2), sep = "_")
+          metric_df_lists2D[[spes_metadata_index]][[metric]][["spe"]] <-
+            paste("spe", rep(seq((temp/2) * (i - 1) + 1, (temp/2) * (i - 1) + (temp/2)), each = 2 * n_slices), sep = "_")
+        }
+      }
+      metric_df_lists3D_merged[[metric]] <- rbind(metric_df_lists3D_merged[[metric]], metric_df_lists3D[[spes_metadata_index]][[metric]])
+      metric_df_lists2D_merged[[metric]] <- rbind(metric_df_lists2D_merged[[metric]], metric_df_lists2D[[spes_metadata_index]][[metric]])
+    }
+    
+    i <- i + 1
+  }
+}
+
+metric_plots_error_vs_2D_random_slice <- list()
+
+for (metric in metrics) {
+  metric_plots_error_vs_2D_random_slice[[metric]] <- plot_error_vs_2D_metric_random_slice_no_annotating_one_cell_type_pair(metric, 
+                                                                                                                           metric_df_lists3D_merged[[metric]],
+                                                                                                                           metric_df_lists2D_merged[[metric]], 
+                                                                                                                           plots_metadata)
+}
+
+
+
+# Put plots into a pdf
+setwd("~/R/plots/S2")
+
+pdf("plots_error_vs_3D_random_slice_one_cell_pair.pdf", width = 12, height = 12)
+
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
+curr_metric_plots <- list()
+for (metric in metrics) {
+  curr_metric_plots[[metric]] <- metric_plots_error_vs_2D_random_slice[[metric]] + theme(plot.margin = margin(15, 15, 15, 15))  
+}
+
+plot <- plot_grid(plotlist = curr_metric_plots,
+                  nrow = 4, 
+                  ncol = 4)
+
+print(plot)
+
+dev.off()
 
 
 

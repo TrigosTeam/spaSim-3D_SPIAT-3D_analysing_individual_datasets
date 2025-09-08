@@ -35,6 +35,25 @@ get_metric_cell_types <- function(metric) {
   }
   return(metric_cell_types)
 }
+
+get_metric_cell_types_singular <- function(metric) {
+  # Get metric_cell_types
+  if (metric %in% c("AMD", "ACIN", "CKR", "CLR", "COO", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "MS", "NMS", "MS_AUC", "NMS_AUC", "ACINP", "ACINP_AUC", "prop_SAC", "prop_prevalence", "prop_AUC")) {
+    metric_cell_types <- data.frame(ref = c("A"), tar = c("B"))
+    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+  }
+  else if (metric %in% c("AE", "AE_AUC")) {
+    metric_cell_types <- data.frame(ref = c("A"), tar = c("A,B"))
+    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+  }
+  else if (metric %in% c("entropy_SAC", "entropy_prevalence", "entropy_AUC")) {
+    metric_cell_types <- data.frame(cell_types = c("A,B"))
+  }
+  else {
+    stop("metric not found")
+  }
+  return(metric_cell_types)
+}
 ### Utility function to subset metric_df -----
 subset_metric_df <- function(metric,
                              metric_df,
@@ -882,3 +901,205 @@ plot_error_vs_2D_metric_random_slice_no_annotating <- function(metric,
   
   return(combined_plots)
 }
+
+### Function to compare 3D vs 2D (not annotating for arrangement or shape) random slice (one cell type pair A/B or equivalent) ---------------
+plot_3D_vs_2D_metric_random_slice_no_annotating_one_cell_type_pair <- function(metric, 
+                                                                               metric_df3D,
+                                                                               metric_df2D,
+                                                                               plots_metadata) {
+  
+  # Get metric_cell_types
+  metric_cell_types <- get_metric_cell_types_singular(metric)
+  
+  # Define plotting function
+  formatCustomSci <- function(x) {
+    x_sci <- str_split_fixed(formatC(x, format = "e"), "e", 2)
+    alpha <- round(as.numeric(x_sci[ , 1]), 1)
+    power <- as.integer(x_sci[ , 2])
+    paste(alpha, power, sep = "e")
+  }
+  
+  create_plot <- function(data, x_aes, y_aes, title = "") {
+    
+    wilcox_test  <- wilcox.test(data[[x_aes]], data[[y_aes]], paired = TRUE)
+    p_value <- wilcox_test$p.value
+    if (p_value == 0) p_value <- 2.2e-308
+    if (0 < p_value && p_value < 1e-3)  {
+      p_value <- formatCustomSci(p_value)
+    }
+    else {
+      p_value  <- round(p_value, 3)
+    }
+    title <- paste("p =", p_value)
+    
+    plot <- ggplot(data, aes_string(x = x_aes, y = y_aes)) +
+      labs(x = x_aes, y = y_aes) +
+      theme_bw() +
+      ggtitle(title) +
+      theme(plot.title = element_text(size = 9)) +
+      xlim(min(c(data[[x_aes]], data[[y_aes]]), na.rm = T), max(c(data[[x_aes]], data[[y_aes]]), na.rm = T)) +
+      ylim(min(c(data[[x_aes]], data[[y_aes]]), na.rm = T), max(c(data[[x_aes]], data[[y_aes]]), na.rm = T)) +
+      geom_point(size = 0.5) +
+      geom_abline(intercept = 0, slope = 1, color = "red", linetype = "longdash")
+    
+    return(plot)
+  }
+  
+  # Put plots into an organised list
+  plots_list <- list()
+  
+  for (i in seq(nrow(metric_cell_types))) {
+    
+    # Subset metric_df for chosen pair/cell types
+    metric_df3D_subset <- subset_metric_df(metric, metric_df3D, metric_cell_types, i)
+    metric_df2D_subset <- subset_metric_df(metric, metric_df2D, metric_cell_types, i)
+    
+    plot_df <- data.frame(row.names = rownames(metric_df3D_subset))
+    plot_df[[paste(metric, "3D", sep = "_")]] <- metric_df3D_subset[[metric]]
+    
+    # Choose a random slice from metric_df2D_subset
+    n_slices <- length(unique(metric_df2D[["slice"]]))
+    
+    metric_df2D_subset$key <- paste(metric_df2D_subset[["spe"]], metric_df2D_subset[["slice"]], sep = "_")
+    plot_df[[paste(metric, "2D", sep = "_")]] <- metric_df2D_subset[metric_df2D_subset$key %in% paste(unique(metric_df2D_subset[["spe"]]), sample(seq(n_slices), nrow(metric_df3D_subset), replace = TRUE), sep = "_"), 
+                                                                    metric]
+    
+    # Factor
+    if (!is.null(plot_df$shape)) plot_df$shape <- factor(plot_df$shape, c("Ellipsoid", "Network"))
+    if (!is.null(plot_df$slice)) plot_df$slice <- as.character(plot_df$slice)
+    
+    # Generate plots based on plots_metadata, use final column of metric_cell_types
+    plots_list[[metric_cell_types[i, ncol(metric_cell_types)]]] <- lapply(plots_metadata, function(plot_def) {
+      x_aes <- paste(metric, "3D", sep = "_")
+      y_aes <- paste(metric, "2D", sep = "_")
+      title <- plot_def$title
+      plot <- create_plot(data = plot_df, x_aes = x_aes, y_aes = y_aes, title = title)
+      return(plot)
+    })
+  }
+  
+  # Combine the plots together using metric_cell_types
+  combined_plots_list <- list()
+  for (i in seq(nrow(metric_cell_types))) {
+    
+    # Remove legend from base plots
+    for (j in seq(length(plots_list[[metric_cell_types[i, ncol(metric_cell_types)]]]))) {
+      plots_list[[metric_cell_types[i, ncol(metric_cell_types)]]][[j]] <- 
+        plots_list[[metric_cell_types[i, ncol(metric_cell_types)]]][[j]] + theme(legend.position = "none")
+    }
+    
+    # Getting current set of cell types from metric_cell_types
+    cells <- metric_cell_types[i, ncol(metric_cell_types)]
+    
+    plots <- plot_grid(plotlist = plots_list[[cells]], nrow = 1, ncol = length(plots_list[[cells]]))
+    
+    title <- get_metric_cell_types_title(metric, metric_cell_types, i)
+    
+    fig <- plot_grid(title, plots, ncol = 1, rel_heights = c(0.1, 1))
+    combined_plots_list[[cells]] <- fig
+  }
+  
+  # Combine the combined plots into one big plot
+  combined_plots <- plot_grid(plotlist = combined_plots_list,
+                              nrow = length(combined_plots_list), 
+                              ncol = 1)
+  
+  return(combined_plots)
+}
+
+### Function to compare ERROR vs 2D (not annotating for arrangement or shape) random slice (one cell type pair A/B or equivalent) ---------------
+plot_error_vs_2D_metric_random_slice_no_annotating_one_cell_type_pair <- function(metric, 
+                                                                                  metric_df3D,
+                                                                                  metric_df2D,
+                                                                                  plots_metadata) {
+  
+  # Get metric_cell_types
+  metric_cell_types <- get_metric_cell_types_singular(metric)
+  
+  # Define plotting function
+  formatCustomSci <- function(x) {
+    x_sci <- str_split_fixed(formatC(x, format = "e"), "e", 2)
+    alpha <- as.numeric(x_sci[ , 1])
+    power <- as.integer(x_sci[ , 2])
+    paste(alpha, power, sep = "e")
+  }
+  
+  create_plot <- function(data, x_aes, y_aes, title = "") {
+    
+    plot <- ggplot(data, aes_string(x = x_aes, y = y_aes)) +
+      labs(title = title, x = x_aes, y = y_aes) +
+      theme_bw() +
+      ylim(min(c(0, data[[y_aes]]), na.rm = T), max(c(0, data[[y_aes]]), na.rm = T)) +
+      geom_point(size = 0.5) +
+      geom_abline(intercept = 0, slope = 0, color = "red", linetype = "longdash")
+    
+    return(plot)
+  }
+  
+  # Put plots into an organised list
+  plots_list <- list()
+  
+  for (i in seq(nrow(metric_cell_types))) {
+    
+    # Subset metric_df for chosen pair/cell types
+    metric_df3D_subset <- subset_metric_df(metric, metric_df3D, metric_cell_types, i)
+    metric_df2D_subset <- subset_metric_df(metric, metric_df2D, metric_cell_types, i)
+    
+    plot_df <- data.frame(row.names = rownames(metric_df3D_subset))
+    plot_df[[paste(metric, "3D", sep = "_")]] <- metric_df3D_subset[[metric]]
+    
+    # Choose a random slice from metric_df2D_subset
+    n_slices <- length(unique(metric_df2D[["slice"]]))
+    
+    metric_df2D_subset$key <- paste(metric_df2D_subset[["spe"]], metric_df2D_subset[["slice"]], sep = "_")
+    plot_df[[paste(metric, "2D", sep = "_")]] <- metric_df2D_subset[metric_df2D_subset$key %in% paste(unique(metric_df2D_subset[["spe"]]), sample(seq(n_slices), nrow(metric_df3D_subset), replace = TRUE), sep = "_"), 
+                                                                    metric]
+    
+    # Add error
+    plot_df[[paste(metric, "error", sep = "_")]] <- 100 * (plot_df[[paste(metric, "2D", sep = "_")]] - plot_df[[paste(metric, "3D", sep = "_")]]) / (plot_df[[paste(metric, "3D", sep = "_")]])
+    
+    # Factor
+    if (!is.null(plot_df$shape)) plot_df$shape <- factor(plot_df$shape, c("Ellipsoid", "Network"))
+    if (!is.null(plot_df$slice)) plot_df$slice <- as.character(plot_df$slice)
+    
+    # Generate plots based on plots_metadata, use final column of metric_cell_types
+    plots_list[[metric_cell_types[i, ncol(metric_cell_types)]]] <- lapply(plots_metadata, function(plot_def) {
+      x_aes <- paste(metric, "3D", sep = "_")
+      y_aes <- paste(metric, "error", sep = "_")
+      title <- plot_def$title
+      plot <- create_plot(data = plot_df, x_aes = x_aes, y_aes = y_aes, title = title)
+      return(plot)
+    })
+  }
+  
+  # Combine the plots together using metric_cell_types
+  combined_plots_list <- list()
+  for (i in seq(nrow(metric_cell_types))) {
+    
+    # Remove legend from base plots
+    for (j in seq(length(plots_list[[metric_cell_types[i, ncol(metric_cell_types)]]]))) {
+      plots_list[[metric_cell_types[i, ncol(metric_cell_types)]]][[j]] <- 
+        plots_list[[metric_cell_types[i, ncol(metric_cell_types)]]][[j]] + theme(legend.position = "none")
+    }
+    
+    # Getting current set of cell types from metric_cell_types
+    cells <- metric_cell_types[i, ncol(metric_cell_types)]
+    
+    plots <- plot_grid(plotlist = plots_list[[cells]], nrow = 1, ncol = length(plots_list[[cells]]))
+    
+    title <- get_metric_cell_types_title(metric, metric_cell_types, i)
+    
+    fig <- plot_grid(title, plots, ncol = 1, rel_heights = c(0.1, 1))
+    combined_plots_list[[cells]] <- fig
+  }
+  
+  # Combine the combined plots into one big plot
+  combined_plots <- plot_grid(plotlist = combined_plots_list,
+                              nrow = length(combined_plots_list), 
+                              ncol = 1)
+  
+  return(combined_plots)
+}
+
+
+
