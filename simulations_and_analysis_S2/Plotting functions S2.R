@@ -1103,3 +1103,69 @@ plot_error_vs_2D_metric_random_slice_no_annotating_one_cell_type_pair <- functio
 
 
 
+
+### Function to ERROR box plot for each metric (not annotating for arrangement or shape) random slice (one cell type pair A/B or equivalent) ---------------
+plot_error_box_plot_metric_random_slice_no_annotating_one_cell_type_pair <- function(metrics,
+                                                                                     metric_df3D,
+                                                                                     metric_df2D) {
+  
+  # Put all data into this data frame
+  combined_plot_df <- data.frame()
+  
+  for (metric in metrics) {
+    
+    # Get metric_cell_types
+    metric_cell_types <- get_metric_cell_types_singular(metric)
+    
+    for (i in seq(nrow(metric_cell_types))) {
+      
+      metric_df3D_subset <- metric_df3D[[metric]]
+      metric_df2D_subset <- metric_df2D[[metric]]
+      
+      # Subset metric_df for chosen pair/cell types
+      metric_df3D_subset <- subset_metric_df(metric, metric_df3D_subset, metric_cell_types, i)
+      metric_df2D_subset <- subset_metric_df(metric, metric_df2D_subset, metric_cell_types, i)
+      
+      plot_df <- data.frame(row.names = rownames(metric_df3D_subset))
+      plot_df[[paste(metric, "3D", sep = "_")]] <- metric_df3D_subset[[metric]]
+      
+      # Choose a random slice from metric_df2D_subset
+      n_slices <- length(unique(metric_df2D_subset[["slice"]]))
+      
+      metric_df2D_subset$key <- paste(metric_df2D_subset[["spe"]], metric_df2D_subset[["slice"]], sep = "_")
+      plot_df[[paste(metric, "2D", sep = "_")]] <- metric_df2D_subset[metric_df2D_subset$key %in% paste(unique(metric_df2D_subset[["spe"]]), sample(seq(n_slices), nrow(metric_df3D_subset), replace = TRUE), sep = "_"), 
+                                                                      metric]
+      
+      # Add error
+      plot_df[[paste(metric, "error", sep = "_")]] <- 100 * (plot_df[[paste(metric, "2D", sep = "_")]] - plot_df[[paste(metric, "3D", sep = "_")]]) / (plot_df[[paste(metric, "3D", sep = "_")]])
+      
+      # Factor
+      if (!is.null(plot_df$shape)) plot_df$shape <- factor(plot_df$shape, c("Ellipsoid", "Network"))
+      if (!is.null(plot_df$slice)) plot_df$slice <- as.character(plot_df$slice)
+      
+      combined_plot_df <- rbind(combined_plot_df, data.frame(error = plot_df[[paste(metric, "error", sep = "_")]],
+                                                             metric = metric))
+    }    
+  }
+  
+  # Remove outliers using IQR method for each metric group
+  df_clean <- combined_plot_df %>%
+    group_by(metric) %>%
+    filter(
+      error > quantile(error, 0.25, na.rm = TRUE) - 20 * IQR(error, na.rm = TRUE) &
+        error < quantile(error, 0.75, na.rm = TRUE) + 20 * IQR(error, na.rm = TRUE)
+    )
+
+  # Plot cleaned data
+  fig <- ggplot(df_clean, aes(x = metric, y = error)) +
+    geom_boxplot() +
+    labs(title = "Error Distribution by Metric",
+         x = "Metric",
+         y = "Error (%)") +
+    theme_minimal()
+  
+  return(fig)
+}
+
+
+

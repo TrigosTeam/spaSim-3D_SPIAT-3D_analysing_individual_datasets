@@ -1116,3 +1116,65 @@ dev.off()
 
 
 
+
+### Get plots with ERROR box pltos for each metric (not annotating for arrangement or shape and choosing random slice) (one cell type pair A/B or equivalent) ----------------
+
+# Generate plots and plots into a list
+arrangements <- c("mixed", "ringed", "separated")
+shapes <- c("ellipsoid", "network")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "prop_SAC", "prop_AUC", "entropy_SAC", "entropy_AUC")
+
+
+# Merge lists in metric_lists
+metric_df_lists3D_merged <- list()
+metric_df_lists2D_merged <- list()
+
+i <- 1
+for (arrangement in arrangements) {
+  for (shape in shapes) {
+    spes_metadata_index <- paste(arrangement, shape, sep = "_")
+    
+    for (metric in metrics) {
+      if (i == 1)  {
+        metric_df_lists3D_merged[[metric]] <- data.frame()
+        metric_df_lists2D_merged[[metric]] <- data.frame()
+      }
+      if (i > 1) {
+        temp <- nrow(metric_df_lists3D[[spes_metadata_index]][[metric]])
+        n_slices <- length(unique(metric_df_lists2D[[spes_metadata_index]][[metric]][["slice"]]))
+        if (metric %in% c("AMD", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC")) {
+          metric_df_lists3D[[spes_metadata_index]][[metric]][["spe"]] <- 
+            paste("spe", rep(seq((temp/4) * (i - 1) + 1, (temp/4) * (i - 1) + (temp/4)), each = 4), sep = "_")
+          metric_df_lists2D[[spes_metadata_index]][[metric]][["spe"]] <-
+            paste("spe", rep(seq((temp/4) * (i - 1) + 1, (temp)/4 * (i - 1) + (temp/4)), each = 4 * n_slices), sep = "_")
+        }
+        else {
+          metric_df_lists3D[[spes_metadata_index]][[metric]][["spe"]] <- 
+            paste("spe", rep(seq((temp/2) * (i - 1) + 1, (temp/2) * (i - 1) + (temp/2)), each = 2), sep = "_")
+          metric_df_lists2D[[spes_metadata_index]][[metric]][["spe"]] <-
+            paste("spe", rep(seq((temp/2) * (i - 1) + 1, (temp/2) * (i - 1) + (temp/2)), each = 2 * n_slices), sep = "_")
+        }
+      }
+      metric_df_lists3D_merged[[metric]] <- rbind(metric_df_lists3D_merged[[metric]], metric_df_lists3D[[spes_metadata_index]][[metric]])
+      metric_df_lists2D_merged[[metric]] <- rbind(metric_df_lists2D_merged[[metric]], metric_df_lists2D[[spes_metadata_index]][[metric]])
+    }
+    
+    i <- i + 1
+  }
+}
+
+fig <- plot_error_box_plot_metric_random_slice_no_annotating_one_cell_type_pair(metrics, 
+                                                                                metric_df_lists3D_merged, 
+                                                                                metric_df_lists2D_merged)
+
+
+# Put plots into a pdf
+setwd("~/R/plots/S2")
+
+pdf("plot_error_box_plot_metric_random_slice_no_annotating_one_cell_type_pair.pdf", width = 12, height = 6)
+
+print(fig)
+
+dev.off()
+
+
