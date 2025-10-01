@@ -213,15 +213,19 @@ for (arrangement in arrangements) {
           
           # CKR
           metric_df_lists3D[[spes_metadata_index]][["CKR"]][index2, c("spe", "reference", "target")] <- c(spe_name, reference_cell_type, target_cell_type)
-          metric_df_lists3D[[spes_metadata_index]][["CKR"]][index2, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]]
+          metric_df_lists3D[[spes_metadata_index]][["CKR"]][index2, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]] / gradient_data[["cross_K"]][["expected"]]
           
           # CLR
           metric_df_lists3D[[spes_metadata_index]][["CLR"]][index2, c("spe", "reference", "target")] <- c(spe_name, reference_cell_type, target_cell_type)
-          metric_df_lists3D[[spes_metadata_index]][["CLR"]][index2, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]]
+          metric_df_lists3D[[spes_metadata_index]][["CLR"]][index2, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] / gradient_data[["cross_L"]][["expected"]]
           
           # COO
           metric_df_lists3D[[spes_metadata_index]][["COO"]][index2, c("spe", "reference", "target")] <- c(spe_name, reference_cell_type, target_cell_type)
           metric_df_lists3D[[spes_metadata_index]][["COO"]][index2, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
+          
+          # CGR
+          metric_df_lists3D[[spes_metadata_index]][["CGR"]][index2, c("spe", "reference", "target")] <- c(spe_name, reference_cell_type, target_cell_type)
+          metric_df_lists3D[[spes_metadata_index]][["CGR"]][index2, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] / gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
           
           index2 <- index2 + 1
         }
@@ -236,21 +240,21 @@ for (arrangement in arrangements) {
                                                                             strsplit(prop_cell_types$tar[j], ",")[[1]],
                                                                             plot_image = F)
         
-        proportion_SAC <- calculate_spatial_autocorrelation3D(proportion_grid_metrics, 
-                                                              "proportion",
-                                                              weight_method = 0.1)
+        PBSAC <- calculate_spatial_autocorrelation3D(proportion_grid_metrics, 
+                                                     "proportion",
+                                                     weight_method = 0.1)
         
-        proportion_prevalence_df <- calculate_prevalence_gradient3D(proportion_grid_metrics,
-                                                                    "proportion",
-                                                                    show_AUC = F,
-                                                                    plot_image = F)
+        PBP_df <- calculate_prevalence_gradient3D(proportion_grid_metrics,
+                                                  "proportion",
+                                                  show_AUC = F,
+                                                  plot_image = F)
         
         index <- nrow(prop_cell_types) * (i - 1) + j
         metric_df_lists3D[[spes_metadata_index]][["PBSAC"]][index, c("spe", "reference", "target")] <- c(spe_name, prop_cell_types$ref[j], prop_cell_types$tar[j])
-        metric_df_lists3D[[spes_metadata_index]][["PBSAC"]][index, "PBSAC"] <- proportion_SAC
+        metric_df_lists3D[[spes_metadata_index]][["PBSAC"]][index, "PBSAC"] <- PBSAC
         
         metric_df_lists3D[[spes_metadata_index]][["PBP"]][index, c("spe", "reference", "target")] <- c(spe_name, prop_cell_types$ref[j], prop_cell_types$tar[j])
-        metric_df_lists3D[[spes_metadata_index]][["PBP"]][index, thresholds_colnames] <- proportion_prevalence_df$prevalence
+        metric_df_lists3D[[spes_metadata_index]][["PBP"]][index, thresholds_colnames] <- PBP_df$prevalence
       }
       
       # Get entropy grid metrics
@@ -318,7 +322,8 @@ for (arrangement in arrangements) {
             metric_df_lists2D[[spes_metadata_index]][["MS"]][index1, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$mixing_score
             metric_df_lists2D[[spes_metadata_index]][["NMS"]][index1, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$normalised_mixing_score
             metric_df_lists2D[[spes_metadata_index]][["ACINP"]][index1, radii_colnames] <- gradient_data[["cells_in_neighbourhood_proportion"]][["B"]]
-            metric_df_lists2D[[spes_metadata_index]][["AE"]][index1, radii_colnames] <- gradient_data[["entropy"]]$entropy        
+            metric_df_lists2D[[spes_metadata_index]][["AE"]][index1, radii_colnames] <- gradient_data[["entropy"]]$entropy    
+            
           }
           else {
             metric_df_lists2D[[spes_metadata_index]][["MS"]][index1, radii_colnames] <- NA
@@ -331,25 +336,27 @@ for (arrangement in arrangements) {
           index1 <- index1 + 1
           
           for (target_cell_type in cell_types) {
-            ## Calculate ACIN, CKR, CLR, COO as target cell type can also be the reference cell type
-            
-            # ACIN & CKR
+            ## Calculate ACIN, CKR, CLR, COO, CGR as target cell type can also be the reference cell type
+        
             metric_df_lists2D[[spes_metadata_index]][["ACIN"]][index2, c("spe", "slice", "reference", "target")] <- c(spe_name, slice_index, reference_cell_type, target_cell_type)
             metric_df_lists2D[[spes_metadata_index]][["CKR"]][index2, c("spe", "slice", "reference", "target")] <- c(spe_name, slice_index, reference_cell_type, target_cell_type)
             metric_df_lists2D[[spes_metadata_index]][["CLR"]][index2, c("spe", "slice", "reference", "target")] <- c(spe_name, slice_index, reference_cell_type, target_cell_type)
             metric_df_lists2D[[spes_metadata_index]][["COO"]][index2, c("spe", "slice", "reference", "target")] <- c(spe_name, slice_index, reference_cell_type, target_cell_type)
+            metric_df_lists2D[[spes_metadata_index]][["CGR"]][index2, c("spe", "slice", "reference", "target")] <- c(spe_name, slice_index, reference_cell_type, target_cell_type)
             
             if (!is.null(gradient_data)) {
               metric_df_lists2D[[spes_metadata_index]][["ACIN"]][index2, radii_colnames] <- gradient_data[["cells_in_neighbourhood"]][[target_cell_type]]
-              metric_df_lists2D[[spes_metadata_index]][["CKR"]][index2, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]]
-              metric_df_lists2D[[spes_metadata_index]][["CLR"]][index2, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]]
+              metric_df_lists2D[[spes_metadata_index]][["CKR"]][index2, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]] / gradient_data[["cross_K"]][["expected"]]
+              metric_df_lists2D[[spes_metadata_index]][["CLR"]][index2, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] / gradient_data[["cross_L"]][["expected"]]
               metric_df_lists2D[[spes_metadata_index]][["COO"]][index2, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
+              metric_df_lists2D[[spes_metadata_index]][["CGR"]][index2, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] / gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
             }
             else {
               metric_df_lists2D[[spes_metadata_index]][["ACIN"]][index2, radii_colnames] <- NA
               metric_df_lists2D[[spes_metadata_index]][["CKR"]][index2, radii_colnames] <- NA
               metric_df_lists2D[[spes_metadata_index]][["CLR"]][index2, radii_colnames] <- NA
               metric_df_lists2D[[spes_metadata_index]][["COO"]][index2, radii_colnames] <- NA
+              metric_df_lists2D[[spes_metadata_index]][["CGR"]][index2, radii_colnames] <- NA
             }
             
             index2 <- index2 + 1
@@ -366,18 +373,18 @@ for (arrangement in arrangements) {
                                                                               plot_image = F)
           
           if (!is.null(proportion_grid_metrics)) {
-            proportion_SAC <- calculate_spatial_autocorrelation2D(proportion_grid_metrics, 
-                                                                  "proportion",
-                                                                  weight_method = 0.1)
+            PBSAC <- calculate_spatial_autocorrelation2D(proportion_grid_metrics, 
+                                                         "proportion",
+                                                         weight_method = 0.1)
             
-            proportion_prevalence_df <- calculate_prevalence_gradient2D(proportion_grid_metrics,
-                                                                        "proportion",
-                                                                        show_AUC = F,
-                                                                        plot_image = F)
+            PBP_df <- calculate_prevalence_gradient2D(proportion_grid_metrics,
+                                                      "proportion",
+                                                      show_AUC = F,
+                                                      plot_image = F)
           }
           else {
-            proportion_SAC <- NA
-            proportion_prevalence_df <- data.frame(threshold = seq(0.01, 1, 0.01), prevalence = NA)
+            PBSAC <- NA
+            PBP_df <- data.frame(threshold = seq(0.01, 1, 0.01), prevalence = NA)
           }
           
           
@@ -385,10 +392,10 @@ for (arrangement in arrangements) {
           index <- n_slices * nrow(prop_cell_types) * (i - 1) + nrow(prop_cell_types) * (slice_index - 1) + j
           
           metric_df_lists2D[[spes_metadata_index]][["PBSAC"]][index, c("spe", "slice", "reference", "target")] <- c(spe_name, slice_index, prop_cell_types$ref[j], prop_cell_types$tar[j])
-          metric_df_lists2D[[spes_metadata_index]][["PBSAC"]][index, "PBSAC"] <- proportion_SAC
+          metric_df_lists2D[[spes_metadata_index]][["PBSAC"]][index, "PBSAC"] <- PBSAC
           
           metric_df_lists2D[[spes_metadata_index]][["PBP"]][index, c("spe", "slice", "reference", "target")] <- c(spe_name, slice_index, prop_cell_types$ref[j], prop_cell_types$tar[j])
-          metric_df_lists2D[[spes_metadata_index]][["PBP"]][index, thresholds_colnames] <- proportion_prevalence_df$prevalence
+          metric_df_lists2D[[spes_metadata_index]][["PBP"]][index, thresholds_colnames] <- PBP_df$prevalence
         }
         
         # Get entropy grid metrics
