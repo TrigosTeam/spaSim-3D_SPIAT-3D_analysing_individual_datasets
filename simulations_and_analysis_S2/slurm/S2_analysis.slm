@@ -3,11 +3,11 @@
 # List of R scripts to run
 scripts=(
   "mixed_ellipsoid.R"
-#  "mixed_network.R"
-#  "ringed_ellipsoid.R"
-#  "ringed_network.R"
-#  "separated_ellipsoid.R"
-#  "separated_network.R"
+  "mixed_network.R"
+  "ringed_ellipsoid.R"
+  "ringed_network.R"
+  "separated_ellipsoid.R"
+  "separated_network.R"
 )
 
 # Loop through each script and submit a job
@@ -19,7 +19,7 @@ for script in "${scripts[@]}"; do
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=58G
-#SBATCH --time=5:00:00
+#SBATCH --time=4:00:00
 #SBATCH --job-name=${script%%.*}
 #SBATCH --partition=work
 #SBATCH --export=NONE
