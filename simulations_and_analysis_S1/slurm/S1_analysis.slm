@@ -2,7 +2,7 @@
 
 # List of R scripts to run
 scripts=(
-  "S1_mixed_ellipsoid.R"
+  # "S1_mixed_ellipsoid.R"
   "S1_mixed_network.R"
   "S1_ringed_ellipsoid.R"
   "S1_ringed_network.R"
