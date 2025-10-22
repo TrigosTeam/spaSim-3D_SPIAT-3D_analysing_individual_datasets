@@ -8,7 +8,7 @@ library(DescTools)
 ### Utility function to get metric cell types -----
 get_metric_cell_types <- function(metric) {
   # Get metric_cell_types
-  if (metric %in% c("AMD", "ACIN", "CKR", "CLR", "COO", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC")) {
+  if (metric %in% c("AMD", "ACIN", "CKR", "CLR", "COO", "CGR", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC")) {
     metric_cell_types <- data.frame(ref = c("A", "A", "B", "B"), tar = c("A", "B", "A", "B"))
     metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
   }
@@ -24,11 +24,11 @@ get_metric_cell_types <- function(metric) {
     metric_cell_types <- data.frame(ref = c("A", "B"), tar = c("A,B", "A,B"))
     metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
   }
-  else if (metric %in% c("prop_SAC", "prop_prevalence", "prop_AUC")) {
+  else if (metric %in% c("PBSAC", "PBP", "PBP_AUC")) {
     metric_cell_types <- data.frame(ref = c("A", "O"), tar = c("B", "A,B"))
     metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
   }
-  else if (metric %in% c("entropy_SAC", "entropy_prevalence", "entropy_AUC")) {
+  else if (metric %in% c("EBSAC", "EBP", "EBP_AUC")) {
     metric_cell_types <- data.frame(cell_types = c("A,B", "A,B,O"))
   }
   else {
@@ -43,13 +43,13 @@ subset_metric_df <- function(metric,
                              metric_df,
                              metric_cell_types,
                              index) {
-  if (metric %in% c("AMD", "ACIN", "CKR", "CLR", "COO", "MS", "NMS", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "MS_AUC", "NMS_AUC", "prop_SAC", "prop_prevalence", "prop_AUC")) {
+  if (metric %in% c("AMD", "ACIN", "CKR", "CLR", "COO", "CGR", "MS", "NMS", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "MS_AUC", "NMS_AUC", "PBSAC", "PBP", "PBP_AUC")) {
     metric_df <- metric_df[metric_df$reference == metric_cell_types[index, "ref"] & metric_df$target == metric_cell_types[index, "tar"], ] 
   }
   else if (metric %in% c("ACINP", "AE", "ACINP_AUC", "AE_AUC")) {
     metric_df <- metric_df[metric_df$reference == metric_cell_types[index, "ref"], ] 
   }
-  else if (metric %in% c("entropy_SAC", "entropy_prevalence", "entropy_AUC")) {
+  else if (metric %in% c("EBSAC", "EBP", "EBP_AUC")) {
     metric_df <- metric_df[metric_df$cell_types == metric_cell_types[index, "cell_types"], ]
   }
   else {
@@ -71,12 +71,12 @@ duplicate_df <- function(df, n_times) {
 ### Utility function to get title --------
 get_metric_cell_types_title <- function(metric, metric_cell_types, index) {
   
-  if (metric %in% c("AMD", "ACIN", "ACINP", "AE", "CKR", "CLR", "COO", "MS", "NMS", "ACIN_AUC", "ACINP_AUC", "AE_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "MS_AUC", "NMS_AUC", "prop_SAC", "prop_prevalence", "prop_AUC")) {
+  if (metric %in% c("AMD", "ACIN", "ACINP", "AE", "CKR", "CLR", "COO", "MS", "NMS", "ACIN_AUC", "ACINP_AUC", "AE_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "MS_AUC", "NMS_AUC", "PBSAC", "PBP", "PBP_AUC")) {
     title <- ggdraw() +
       draw_label(paste("Reference:", metric_cell_types[index, "ref"], "Target:", metric_cell_types[index, "tar"]),
                  fontface = 'bold')
   }
-  else if (metric %in% c("entropy_SAC", "entropy_prevalence", "entropy_AUC")) {
+  else if (metric %in% c("EBSAC", "EBP", "EBP_AUC")) {
     title <- ggdraw() + 
       draw_label(paste("Cell types of interest:", metric_cell_types[index, "cell_types"]), 
                  fontface='bold')
