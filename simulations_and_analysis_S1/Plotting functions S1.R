@@ -71,7 +71,7 @@ duplicate_df <- function(df, n_times) {
 ### Utility function to get title --------
 get_metric_cell_types_title <- function(metric, metric_cell_types, index) {
   
-  if (metric %in% c("AMD", "ACIN", "ACINP", "AE", "CKR", "CLR", "COO", "MS", "NMS", "ACIN_AUC", "ACINP_AUC", "AE_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "MS_AUC", "NMS_AUC", "PBSAC", "PBP", "PBP_AUC")) {
+  if (metric %in% c("AMD", "ACIN", "ACINP", "AE", "CKR", "CLR", "COO", "CGR", "MS", "NMS", "ACIN_AUC", "ACINP_AUC", "AE_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "MS_AUC", "NMS_AUC", "PBSAC", "PBP", "PBP_AUC")) {
     title <- ggdraw() +
       draw_label(paste("Reference:", metric_cell_types[index, "ref"], "Target:", metric_cell_types[index, "tar"]),
                  fontface = 'bold')

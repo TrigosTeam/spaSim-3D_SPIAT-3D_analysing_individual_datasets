@@ -6,7 +6,7 @@ library(dplyr)
 
 ### Utility functions -------------------------
 get_gradient <- function(metric) {
-  if (metric %in% c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR")) return("radius")
+  if (metric %in% c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR", "CGR")) return("radius")
   return("threshold")
 }
 
@@ -32,7 +32,7 @@ shapes <- c("ellipsoid", "network")
 radii <- seq(20, 100, 10)
 radii_colnames <- paste("r", radii, sep = "")
 
-gradient_radii_metrics <- c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR")
+gradient_radii_metrics <- c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR", "CGR")
 
 
 for (arrangement in arrangements) {
@@ -43,7 +43,7 @@ for (arrangement in arrangements) {
     for (metric in gradient_radii_metrics) {
       metric_AUC_name <- paste(metric, "AUC", sep = "_")
       
-      if (metric %in% c("MS", "NMS", "ACIN", "CKR", "CLR", "COO", "CGR")) {
+      if (metric %in% c("MS", "NMS", "ACIN", "CKR", "CLR", "COO", "CGR", "CGR")) {
         subset_colnames <- c("spe", "reference", "target", metric_AUC_name)
       }
       else {
@@ -139,7 +139,7 @@ non_gradient_plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "CGR_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -181,7 +181,7 @@ setwd("~/R/plots/S1")
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
 
-metrics_set1 <- c("AMD",  "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC")
+metrics_set1 <- c("AMD",  "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "CGR_AUC")
 metrics_set2 <- c("MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 pdf("plots3D_non_gradient.pdf", width = 25, height = 12)
@@ -246,7 +246,7 @@ gradient_plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "PBP", "EBP")
+metrics <- c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR", "PBP", "EBP")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -290,7 +290,7 @@ setwd("~/R/plots/S1")
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
 
-metrics_set1 <- c("ACIN", "CKR", "CLR", "COO")
+metrics_set1 <- c("ACIN", "CKR", "CLR", "COO", "CGR")
 metrics_set2 <- c("MS", "NMS", "ACINP", "AE", "PBP", "EBP")
 
 pdf("plots3D_gradient.pdf", width = 25, height = 12)
@@ -389,7 +389,7 @@ gradient_plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("AMD", "MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "PBSAC", "PBP", "PBP_AUC", "EBSAC", "EBP", "EBP_AUC")
+metrics <- c("AMD", "MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR", "PBSAC", "PBP", "PBP_AUC", "EBSAC", "EBP", "EBP_AUC")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -423,7 +423,7 @@ for (arrangement in arrangements) {
                                                                                     arrangement_parameters[[arrangement]], 
                                                                                     non_gradient_plots_metadata[[shape]])
       }
-      else if (metric %in% c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "PBP", "EBP")) {
+      else if (metric %in% c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR", "PBP", "EBP")) {
         metric_plots2D[[spes_metadata_index]][[metric]] <- plot_gradient_metric(spes_table_subset, 
                                                                                 metric,
                                                                                 metric_df_lists2D_subset[[spes_metadata_index]][[metric]], 
@@ -440,7 +440,7 @@ setwd("~/R/plots/S1")
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
 
-metrics_set1 <- c("AMD", "ACIN", "CKR", "CLR", "COO")
+metrics_set1 <- c("AMD", "ACIN", "CKR", "CLR", "COO", "CGR")
 metrics_set2 <- c("MS", "NMS", "ACINP", "AE", "PBSAC", "PBP", "PBP_AUC", "EBSAC", "EBP", "EBP_AUC")
 
 pdf("plots2D_middle_slice.pdf", width = 25, height = 12)
@@ -529,7 +529,7 @@ plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -641,7 +641,7 @@ plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -755,7 +755,7 @@ plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -883,7 +883,7 @@ gradient_plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "PBP",  "EBP")
+metrics <- c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR", "PBP",  "EBP")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -925,7 +925,7 @@ for (arrangement in arrangements) {
 setwd("~/R/plots/S1")
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics_set1 <- c("ACIN", "CKR", "CLR", "COO")
+metrics_set1 <- c("ACIN", "CKR", "CLR", "COO", "CGR")
 metrics_set2 <- c("MS", "NMS", "ACINP", "AE", "PBP", "EBP")
 
 pdf("plots_error_gradient_one_slice.pdf", width = 25, height = 10)
@@ -994,7 +994,7 @@ plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -1107,7 +1107,7 @@ plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
@@ -1219,7 +1219,7 @@ plots_metadata <- list(
 # Generate plots and plots into a list
 arrangements <- c("mixed", "ringed", "separated")
 shapes <- c("ellipsoid", "network")
-metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+metrics <- c("AMD", "MS_AUC", "NMS_AUC", "ACINP_AUC", "AE_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 background_parameters <- c("bg_prop_A", "bg_prop_B")
 
