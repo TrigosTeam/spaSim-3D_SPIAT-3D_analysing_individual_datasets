@@ -1,10 +1,10 @@
-# Read data -----
+### Read data -----
 setwd("~/R/data3D/CyCIF_colorectal_cancer")
 data3D <- read.csv("colorectal_cancer_df.csv")
 data3D <- data3D[, -1]
 colnames(data3D)[1:3] <- c("Cell.X.Position", "Cell.Y.Position", "Cell.Z.Position")
 
-# Set up data frames to contain results -----
+### Set up data frames to contain results -----
 n_slices <- length(unique(data3D$Cell.Z.Position))
 cell_types <- c("Tumour", "Immune")
 
@@ -91,7 +91,7 @@ metric_df_list <- list(AMD = AMD_df,
                        EBP = EBP_df)
 
 
-# Analysis -----
+### Analysis -----
 n_slices <- length(unique(data3D$Cell.Z.Position))
 slice_z_coords <- unique(data3D$Cell.Z.Position)
 colnames(data3D)[4:5] <- c("Cell.Type.Specific", "Cell.Type")
@@ -103,11 +103,11 @@ for (i in seq(n_slices + 1)) {
   
   # i represents the current slice index
   if (i == n_slices + 1) {
-    df <- data3D[data3D$Cell.Z.Position == slice_z_coords[i], ]
+    df <- data3D
   }
   # if i == 0, analyse in 3D instead
   else {
-    df <- data3D
+    df <- data3D[data3D$Cell.Z.Position == slice_z_coords[i], ]
   }
   
   ### 3D analysis -----------------------------
@@ -359,3 +359,247 @@ for (i in seq(n_slices + 1)) {
     }  
   }
 }
+
+setwd("~/R/SPIAT-3D_benchmarking/public_3D_data_analysis")
+saveRDS(metric_df_list, "metric_df_list.RDS")
+
+### Plot analysis of 2D and 3D data -----
+setwd("~/R/SPIAT-3D_benchmarking/public_3D_data_analysis")
+metric_df_list <- readRDS("metric_df_list.RDS")
+
+get_gradient <- function(metric) {
+  if (metric %in% c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR")) {
+    return("radius")
+  }
+  else if (metric %in% c("PBP", "EBP")) {
+    return("threshold")  
+  }
+  else {
+    stop("Invalid metric. Must be gradient-based")
+  }
+}
+
+
+## Turn gradient radii metrics into AUC and add to metric_df list
+get_AUC_for_radii_gradient_metrics <- function(y) {
+  x <- radii
+  h <- diff(x)[1]
+  n <- length(x)
+  
+  AUC <- (h / 2) * (y[1] + 2 * sum(y[2:(n - 1)]) + y[n])
+  
+  return(AUC)
+}
+
+
+radii <- seq(20, 100, 10)
+radii_colnames <- paste("r", radii, sep = "")
+
+gradient_radii_metrics <- c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR")
+
+
+for (metric in gradient_radii_metrics) {
+  metric_AUC_name <- paste(metric, "AUC", sep = "_")
+  
+  if (metric %in% c("MS", "NMS", "ACIN", "CKR", "CLR", "COO", "CGR")) {
+    subset_colnames <- c("slice", "reference", "target", metric_AUC_name)
+  }
+  else {
+    subset_colnames <- c("slice", "reference", metric_AUC_name)
+  }
+  
+  df <- metric_df_list[[metric]]
+  df[[metric_AUC_name]] <- apply(df[ , radii_colnames], 1, get_AUC_for_radii_gradient_metrics)
+  metric_df_list[[metric_AUC_name]] <- df
+  
+}
+
+## Turn threshold radii metrics into AUC and add to metric_df list
+thresholds <- seq(0.01, 1, 0.01)
+threshold_colnames <- paste("t", thresholds, sep = "")
+
+# PBP_AUC 3D
+PBP_df <- metric_df_list[["PBP"]]
+PBP_df$PBP_AUC <- apply(PBP_df[ , threshold_colnames], 1, sum) * 0.01
+PBP_AUC_df <- PBP_df[ , c("slice", "reference", "target", "PBP_AUC")]
+metric_df_list[["PBP_AUC"]] <- PBP_AUC_df
+
+# EBP_AUC 3D
+EBP_df <- metric_df_list[["EBP"]]
+EBP_df$EBP_AUC <- apply(EBP_df[ , threshold_colnames], 1, sum) * 0.01
+EBP_AUC_df <- EBP_df[ , c("slice", "cell_types", "EBP_AUC")]
+metric_df_list[["EBP_AUC"]] <- EBP_AUC_df
+
+
+## Functions to plot
+# Utility function to get metric cell types
+get_metric_cell_types <- function(metric) {
+  # Get metric_cell_types
+  if (metric %in% c("AMD", "ACIN", "CKR", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC")) {
+    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
+    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+  }
+  else if (metric %in% c("MS", "NMS", "MS_AUC", "NMS_AUC")) {
+    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
+    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+  }
+  else if (metric %in% c("ACINP", "ACINP_AUC")) {
+    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Tumour"))
+    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+  }
+  else if (metric %in% c("AE", "AE_AUC")) {
+    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Tumour,Immune"))
+    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+  }
+  else if (metric %in% c("PBSAC", "PBP", "PBP_AUC")) {
+    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
+    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+  }
+  else if (metric %in% c("EBSAC", "EBP", "EBP_AUC")) {
+    metric_cell_types <- data.frame(cell_types = c("Tumour,Immune"))
+  }
+  else {
+    stop("metric not found")
+  }
+  return(metric_cell_types)
+}
+
+# Utility function to subset metric_df
+subset_metric_df <- function(metric,
+                             metric_df,
+                             metric_cell_types,
+                             index) {
+  
+  if (metric %in% c("AMD", "ACIN", "CKR", "CLR", "COO", "CGR", "MS", "NMS", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "MS_AUC", "NMS_AUC", "PBSAC", "PBP", "PBP_AUC")) {
+    metric_df_subset <- metric_df[metric_df$reference == metric_cell_types[index, "ref"] & metric_df$target == metric_cell_types[index, "tar"], ] 
+  }
+  else if (metric %in% c("ACINP", "AE", "ACINP_AUC", "AE_AUC")) {
+    metric_df_subset <- metric_df[metric_df$reference == metric_cell_types[index, "ref"], ] 
+  }
+  else if (metric %in% c("EBSAC", "EBP", "EBP_AUC")) {
+    metric_df_subset <- metric_df[metric_df$cell_types == metric_cell_types[index, "cell_types"], ]
+  }
+  else {
+    stop("metric not found")
+  }
+  
+  return(metric_df_subset)
+}
+
+
+
+plot_3D_vs_2D <- function(metric_df_list,
+                          metric) {
+  
+  # Get metric_df for current metric
+  metric_df <- metric_df_list[[metric]]
+  
+  # Get metric cell types for current metric (should only be one set/ one row)
+  metric_cell_types <- get_metric_cell_types(metric)
+  
+  # Subset metric_df
+  metric_df_subset <- subset_metric_df(metric,
+                                       metric_df,
+                                       metric_cell_types,
+                                       1) # Always first row
+  
+  # Change and further subset columns of metric_df_subset
+  colnames(metric_df_subset)[colnames(metric_df_subset) == metric] <- "value"
+  metric_df_subset$metric <- metric
+  metric_df_subset <- metric_df_subset[ , c("slice", "value", "metric")]
+  
+  metric_df_subset$dummy <- "dummy"
+  metric_df_subset$metric <- factor(metric_df_subset$metric, metrics)
+  
+  # Create the dot plot, highlighting the maximum slice points with a star shape and using facets
+  fig <- ggplot(metric_df_subset[metric_df_subset$slice != 0, ], aes(x = dummy, y = value)) +
+    geom_jitter(width = 0.2, height = 0, size = 1.5) +
+    geom_point(data = metric_df_subset[metric_df_subset$slice == 0, ], color = "red", shape = 8, size = 6) +
+    labs(x = "", y = metric) +
+    theme_bw()  +
+    theme(axis.ticks.x = element_blank(), axis.text.x = element_blank())
+  
+  return(fig)
+  
+}
+
+
+plot_3D_vs_error <- function(metric_df_list,
+                             metrics) {
+  
+  # Get metric_df for current metric
+  metric_df <- metric_df_list[[metric]]
+  
+  # Get metric cell types for current metric (should only be one set/ one row)
+  metric_cell_types <- get_metric_cell_types(metric)
+  
+  # Subset metric_df
+  metric_df_subset <- subset_metric_df(metric,
+                                       metric_df,
+                                       metric_cell_types,
+                                       1) # Always first row
+  
+  # Change and further subset columns of metric_df_subset
+  colnames(metric_df_subset)[colnames(metric_df_subset) == metric] <- "value"
+  metric_df_subset$metric <- metric
+  metric_df_subset <- metric_df_subset[ , c("slice", "value", "metric")]
+  
+  metric_df_subset$dummy <- "dummy"
+  metric_df_subset$metric <- factor(metric_df_subset$metric, metrics)
+  
+  # Calculate error for each slice, and remove 3D row
+  value_3D <- metric_df_subset[["value"]][metric_df_subset[["slice"]] == 0]
+  metric_df_subset[["value"]] <- ((metric_df_subset[["value"]] - value_3D) / value_3D) * 100
+  metric_df_subset <- metric_df_subset[metric_df_subset[["slice"]] != 0, ]
+  
+  # Create the dot plot
+  fig <- ggplot(metric_df_subset, aes(x = dummy, y = value)) +
+    geom_point(data = data.frame(x = "dummy", y = 0), aes(x, y), size = 0) + # Ensures plot shows y = 0
+    geom_jitter(width = 0.2, height = 0, size = 1.5) +
+    geom_abline(intercept = 0, slope = 0, color = "red", linetype = "longdash") +
+    labs(x = "", y = paste(metric, "error (%)")) +
+    theme_bw()  +
+    theme(axis.ticks.x = element_blank(), axis.text.x = element_blank())
+  
+  return(fig)
+  
+}
+
+
+
+
+## Get plot
+metrics <- c("AMD", "ACIN_AUC", "ACINP_AUC", "AE_AUC", "MS_AUC", "NMS_AUC", "CKR_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+
+plot3D_vs_2D_metric_list <- list()
+plot3D_vs_error_metric_list <- list()
+
+for (metric in metrics) {
+  plot3D_vs_2D_metric_list[[metric]] <- plot_3D_vs_2D(metric_df_list,
+                                                      metric)
+  plot3D_vs_error_metric_list[[metric]] <- plot_3D_vs_error(metric_df_list,
+                                                            metric)
+}
+
+plots3D_vs_2D <- plot_grid(plotlist = plot3D_vs_2D_metric_list,
+                           nrow = 3,
+                           ncol = 4,
+                           labels = LETTERS[1:13])
+
+plots3D_vs_error <- plot_grid(plotlist = plot3D_vs_error_metric_list,
+                              nrow = 3,
+                              ncol = 4,
+                              labels = LETTERS[1:13])
+
+
+methods::show(plots3D_vs_2D)
+methods::show(plots3D_vs_error)
+
+
+setwd("~/R/plots/public_data")
+pdf("CyCIF_colorectal_cancer.pdf", width = 10, height = 8)
+
+print(plots3D_vs_2D)
+print(plots3D_vs_error)
+
+dev.off()
