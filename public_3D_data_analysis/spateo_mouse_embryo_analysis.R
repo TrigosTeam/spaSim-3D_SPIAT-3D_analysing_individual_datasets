@@ -1,11 +1,30 @@
 ### Read data -----
-setwd("~/R/data3D/openST_human_metastatic_lymph_node")
-data3D <- read.csv("human_metastatic_lymph_node_df.csv")
+setwd("~/R/data3D/spateo")
+data3D <- read.csv("mouse_E11.5_embryo.csv")
 
 ### Set up data frames to contain results -----
 n_slices <- length(unique(data3D$Cell.Z.Position))
-cell_types <- unique(data3D$Cell.Type)
-cell_types <- cell_types[cell_types != "unknown"]
+
+# pick and choose the cell types...
+cell_types <- c(
+  "Neural progenitors",
+  "Spinal cord neuroectoderm",
+  "Telencephalon neuroectoderm",
+  "Cajal-Retzius cells",
+  "GABAergic interneurons",
+  "Glutamatergic neurons",
+  "Neural crest (PNS neurons)",
+  "Neural crest (PNS glia)",
+  "Somitic muscle progenitors",
+  "Cardiac mesoderm",
+  "Myoblasts",
+  "Endothelium",
+  "Hematopoietic progenitors",
+  "Primitive erythroid cells",
+  "Hepatocytes",
+  "Lung progenitor cells"
+)
+
 n_cell_type_combinations <- length(cell_types)^2
 
 # Define AMD data frames as well as constants
@@ -119,7 +138,7 @@ for (i in seq(n_slices + 1, 1)) {
     metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "reference"] <- minimum_distance_data_summary$reference
     metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "target"] <- minimum_distance_data_summary$target
     metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "AMD"] <- minimum_distance_data_summary$mean
-
+    
     for (reference_cell_type in cell_types) {
       gradient_data <- calculate_all_gradient_cc_metrics3D(df,
                                                            reference_cell_type,
@@ -373,11 +392,11 @@ for (i in seq(n_slices + 1, 1)) {
 }
 
 setwd("~/R/SPIAT-3D_benchmarking/public_3D_data_analysis")
-saveRDS(metric_df_list, "openST_human_metastatic_lymph_node_metric_df_list.RDS")
+saveRDS(metric_df_list, "spateo_mouse_embryo.RDS")
 
 ### Plot analysis of 2D and 3D data -----
 setwd("~/R/SPIAT-3D_benchmarking/public_3D_data_analysis")
-metric_df_list <- readRDS("openST_human_metastatic_lymph_node_metric_df_list.RDS")
+metric_df_list <- readRDS("spateo_mouse_embryo.RDS")
 
 get_gradient <- function(metric) {
   if (metric %in% c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR")) {
@@ -444,28 +463,100 @@ metric_df_list[["EBP_AUC"]] <- EBP_AUC_df
 
 
 ## Functions to plot
-plot_3D_vs_2D <- function(metric_df_list,
-                          metric) {
-  
-  # Get metric_df for current metric
-  metric_df <- metric_df_list[[metric]]
-  
-  metric_df <- metric_df[metric_df$reference %in% c("CAF", "CAM", "Tumor"), ]
-  metric_df <- metric_df[metric_df$target %in% c("CAF", "CAM", "Tumor"), ]
-  
-  # Change and further subset columns of metric_df_subset
-  colnames(metric_df)[colnames(metric_df) == metric] <- "value"
+# Utility function to get metric cell types
+get_metric_cell_types <- function(metric) {
+  # Get metric_cell_types
+  if (metric %in% c("AMD", "ACIN", "CKR", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC")) {
+    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
+    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+  }
+  else if (metric %in% c("MS", "NMS", "MS_AUC", "NMS_AUC")) {
+    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
+    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+  }
+  else if (metric %in% c("ACINP", "ACINP_AUC")) {
+    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Tumour"))
+    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+  }
+  else if (metric %in% c("AE", "AE_AUC")) {
+    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Tumour,Immune"))
+    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+  }
+  else if (metric %in% c("PBSAC", "PBP", "PBP_AUC")) {
+    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
+    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+  }
+  else if (metric %in% c("EBSAC", "EBP", "EBP_AUC")) {
+    metric_cell_types <- data.frame(cell_types = c("Tumour,Immune"))
+  }
+  else {
+    stop("metric not found")
+  }
+  return(metric_cell_types)
+}
 
-  # Add dummy column
-  metric_df$dummy <- paste("dummy")
+# Utility function to subset metric_df
+subset_metric_df <- function(metric,
+                             metric_df,
+                             metric_cell_types,
+                             index) {
   
-  fig <- ggplot(metric_df, aes(x = dummy, y = metric)) +
-    geom_boxplot(data = metric_df[metric_df$slice != max(metric_df$slice), ],
+  if (metric %in% c("AMD", "ACIN", "CKR", "CLR", "COO", "CGR", "MS", "NMS", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "MS_AUC", "NMS_AUC", "PBSAC", "PBP", "PBP_AUC")) {
+    metric_df_subset <- metric_df[metric_df$reference == metric_cell_types[index, "ref"] & metric_df$target == metric_cell_types[index, "tar"], ] 
+  }
+  else if (metric %in% c("ACINP", "AE", "ACINP_AUC", "AE_AUC")) {
+    metric_df_subset <- metric_df[metric_df$reference == metric_cell_types[index, "ref"], ] 
+  }
+  else if (metric %in% c("EBSAC", "EBP", "EBP_AUC")) {
+    metric_df_subset <- metric_df[metric_df$cell_types == metric_cell_types[index, "cell_types"], ]
+  }
+  else {
+    stop("metric not found")
+  }
+  
+  return(metric_df_subset)
+}
+
+
+
+plot_3D_vs_2D <- function(metric_df_list,
+                          metrics) {
+  
+  # Put all data into this data frame
+  combined_plot_df <- data.frame()
+  
+  for (metric in metrics) {
+    
+    # Get metric_df for current metric
+    metric_df <- metric_df_list[[metric]]
+    
+    # Get metric cell types for current metric (should only be one set/ one row)
+    metric_cell_types <- get_metric_cell_types(metric)
+    
+    # Subset metric_df
+    metric_df_subset <- subset_metric_df(metric,
+                                         metric_df,
+                                         metric_cell_types,
+                                         1) # Always first row
+    
+    # Change and further subset columns of metric_df_subset
+    colnames(metric_df_subset)[colnames(metric_df_subset) == metric] <- "value"
+    metric_df_subset$metric <- metric
+    metric_df_subset <- metric_df_subset[ , c("slice", "value", "metric")]
+    
+    # Add dummy column
+    metric_df_subset$dummy <- "dummy"
+    
+    combined_plot_df <- rbind(combined_plot_df, metric_df_subset)
+  }
+  
+  fig <- ggplot(combined_plot_df, aes(x = dummy, y = value)) +
+    geom_boxplot(data = combined_plot_df[combined_plot_df$slice != 0, ],
                  outlier.shape = NA, fill = "lightgray") +
-    geom_jitter(data = metric_df[metric_df$slice != max(metric_df$slice), ],
+    geom_jitter(data = combined_plot_df[combined_plot_df$slice != 0, ],
                 width = 0.2, alpha = 0.5, color = "#0062c5") +
-    geom_point(data = metric_df[metric_df$slice == max(metric_df$slice), ],
-               shape = 8, color = "#bb0036", size = 3) +  # Red stars for 3D value
+    geom_point(data = combined_plot_df[combined_plot_df$slice == 0, ],
+               shape = 8, color = "#bb0036", size = 3) +  # Red stars for slice == 0
     labs(title = "", x = NULL, y = NULL) +
     theme_minimal() +
     theme(
@@ -475,8 +566,7 @@ plot_3D_vs_2D <- function(metric_df_list,
       axis.title.x = element_blank(),
       axis.line.x = element_blank()
     ) +
-    facet_grid(reference ~ target, scales = "free_y")
-    
+    facet_wrap(~ metric, scales = "free_y")
   
   return(fig)
 }
@@ -532,7 +622,7 @@ metrics <- c("AMD", "ACIN_AUC", "ACINP_AUC", "AE_AUC", "MS_AUC", "NMS_AUC", "CKR
 
 
 fig_3D_vs_2D <- plot_3D_vs_2D(metric_df_list,
-                              metric)
+                              metrics)
 
 fig_3D_vs_error_box_plot <- plot_3D_vs_error_box_plot(metric_df_list,
                                                       metrics)
