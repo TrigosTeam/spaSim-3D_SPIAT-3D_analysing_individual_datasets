@@ -63,7 +63,7 @@ PBP_df <- data.frame(matrix(nrow = (n_slices + 1) * nrow(prop_cell_types), ncol 
 colnames(PBP_df) <- PBP_df_colnames
 
 
-entropy_cell_types <- data.frame(cell_types = c("A,B", "A,B,O"))
+entropy_cell_types <- data.frame(cell_types = c("Tumour,Immune"))
 
 EBSAC_df_colnames <- c("slice", "cell_types", "EBSAC")
 EBSAC_df <- data.frame(matrix(nrow = (n_slices + 1) * nrow(entropy_cell_types), ncol = length(EBSAC_df_colnames)))
@@ -119,17 +119,13 @@ for (i in seq(n_slices + 1)) {
                                                                               plot_image = F)
     
     minimum_distance_data_summary <- summarise_distances_between_cell_types3D(minimum_distance_data)
-    ## Fill in 4 rows at a time for AMD df (as we have A/A, A/B, B/A, B/B)
+    ## Fill in 4 rows at a time for AMD df (as we have Tumour/Tumour, Tumour/Immune, Immune/Tumour, Immune/Immune)
     index <- 4 * (i - 1) + 1 # index is 1, 5, 9, 13
     
     metric_df_list[["AMD"]][index:(index + 3), "slice"] <- i
     metric_df_list[["AMD"]][index:(index + 3), "reference"] <- minimum_distance_data_summary$reference
     metric_df_list[["AMD"]][index:(index + 3), "target"] <- minimum_distance_data_summary$target
     metric_df_list[["AMD"]][index:(index + 3), "AMD"] <- minimum_distance_data_summary$mean
-    
-    
-    
-    
     
     index1 <- 2 * (i - 1) + 1 # index1 is 1, 3, 5, ...
     index2 <- 4 * (i - 1) + 1 # index2 is 1, 5, 9, 13...
@@ -140,47 +136,54 @@ for (i in seq(n_slices + 1)) {
                                                            radii,
                                                            plot_image = F)
       
-      target_cell_type <- setdiff(cell_types, reference_cell_type)
-      
-      metric_df_list[["MS"]][index1, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-      metric_df_list[["MS"]][index1, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$mixing_score
-      
-      metric_df_list[["NMS"]][index1, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-      metric_df_list[["NMS"]][index1, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$normalised_mixing_score
-      
-      metric_df_list[["ACINP"]][index1, c("slice", "reference", "target")] <- c(i, reference_cell_type, "B")
-      metric_df_list[["ACINP"]][index1, radii_colnames] <- gradient_data[["cells_in_neighbourhood_proportion"]][["B"]]
-      
-      metric_df_list[["AE"]][index1, c("slice", "reference", "target")] <- c(i, reference_cell_type, "A,B")
-      metric_df_list[["AE"]][index1, radii_colnames] <- gradient_data[["entropy"]]$entropy
-      
-      index1 <- index1 + 1
-      
       for (target_cell_type in cell_types) {
-        ## Calculate ACIN, CKR, CKL, COO as target cell type can also be the reference cell type
         
-        # ACIN
         metric_df_list[["ACIN"]][index2, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["ACIN"]][index2, radii_colnames] <- gradient_data[["cells_in_neighbourhood"]][[target_cell_type]]
-        
-        # CKR
+        metric_df_list[["ACINP"]][index2, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
         metric_df_list[["CKR"]][index2, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["CKR"]][index2, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]] / gradient_data[["cross_K"]][["expected"]]
-        
-        # CLR
         metric_df_list[["CLR"]][index2, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["CLR"]][index2, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] / gradient_data[["cross_L"]][["expected"]]
-        
-        # COO
         metric_df_list[["COO"]][index2, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["COO"]][index2, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
-        
-        # CGR
         metric_df_list[["CGR"]][index2, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["CGR"]][index2, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] / gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
         
+        # These metrics aren't applicable if reference and target cell type are the same
+        if (reference_cell_type != target_cell_type) {
+          metric_df_list[["MS"]][index1, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
+          metric_df_list[["NMS"]][index1, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
+          metric_df_list[["AE"]][index1, c("slice", "reference", "target")] <- c(i, reference_cell_type, 
+                                                                                 paste(reference_cell_type, target_cell_type, sep = ","))
+        }
+        
+        if (is.null(gradient_data)) {
+          metric_df_list[["ACIN"]][index2, radii_colnames] <- NA
+          metric_df_list[["ACINP"]][index2, radii_colnames] <- NA
+          metric_df_list[["CKR"]][index2, radii_colnames] <- NA
+          metric_df_list[["CLR"]][index2, radii_colnames] <- NA
+          metric_df_list[["COO"]][index2, radii_colnames] <- NA
+          metric_df_list[["CGR"]][index2, radii_colnames] <- NA
+          
+          if (reference_cell_type != target_cell_type) {
+            metric_df_list[["MS"]][index1, radii_colnames] <- NA
+            metric_df_list[["NMS"]][index1, radii_colnames] <- NA
+            metric_df_list[["AE"]][index1, radii_colnames] <- NA
+          }
+        }
+        else {
+          metric_df_list[["ACIN"]][index2, radii_colnames] <- gradient_data[["cells_in_neighbourhood"]][[target_cell_type]]
+          metric_df_list[["ACINP"]][index2, radii_colnames] <- gradient_data[["cells_in_neighbourhood_proportion"]][[target_cell_type]]
+          metric_df_list[["CKR"]][index2, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]] / gradient_data[["cross_K"]][["expected"]]
+          metric_df_list[["CLR"]][index2, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] / gradient_data[["cross_L"]][["expected"]]
+          metric_df_list[["COO"]][index2, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
+          metric_df_list[["CGR"]][index2, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] / gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
+          
+          if (reference_cell_type != target_cell_type) {
+            metric_df_list[["MS"]][index1, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$mixing_score
+            metric_df_list[["NMS"]][index1, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$normalised_mixing_score
+            metric_df_list[["AE"]][index1, radii_colnames] <- gradient_data[["entropy"]]$entropy
+          }
+        }
         index2 <- index2 + 1
       }
+      index1 <- index1 + 1
     }
     
     
@@ -192,21 +195,28 @@ for (i in seq(n_slices + 1)) {
                                                                           strsplit(prop_cell_types$tar[j], ",")[[1]],
                                                                           plot_image = F)
       
-      PBSAC <- calculate_spatial_autocorrelation3D(proportion_grid_metrics, 
-                                                   "proportion",
-                                                   weight_method = 0.1)
-      
-      PBP_df <- calculate_prevalence_gradient3D(proportion_grid_metrics,
-                                                "proportion",
-                                                show_AUC = F,
-                                                plot_image = F)
-      
       index <- nrow(prop_cell_types) * (i - 1) + j
       metric_df_list[["PBSAC"]][index, c("slice", "reference", "target")] <- c(i, prop_cell_types$ref[j], prop_cell_types$tar[j])
-      metric_df_list[["PBSAC"]][index, "PBSAC"] <- PBSAC
-      
       metric_df_list[["PBP"]][index, c("slice", "reference", "target")] <- c(i, prop_cell_types$ref[j], prop_cell_types$tar[j])
-      metric_df_list[["PBP"]][index, thresholds_colnames] <- PBP_df$prevalence
+      
+      if (is.null(proportion_grid_metrics)) {
+        metric_df_list[["PBSAC"]][index, "PBSAC"] <- NA
+        metric_df_list[["PBP"]][index, thresholds_colnames] <- NA
+      }
+      else {
+        PBSAC <- calculate_spatial_autocorrelation3D(proportion_grid_metrics, 
+                                                     "proportion",
+                                                     weight_method = 0.1)
+        
+        PBP_df <- calculate_prevalence_gradient3D(proportion_grid_metrics,
+                                                  "proportion",
+                                                  show_AUC = F,
+                                                  plot_image = F)
+        
+        
+        metric_df_list[["PBSAC"]][index, "PBSAC"] <- PBSAC
+        metric_df_list[["PBP"]][index, thresholds_colnames] <- PBP_df$prevalence
+      }
     }
     
     # Get entropy grid metrics
@@ -216,25 +226,29 @@ for (i in seq(n_slices + 1)) {
                                                                strsplit(entropy_cell_types$cell_types[j], ",")[[1]], 
                                                                plot_image = F)
       
-      EBSAC <- calculate_spatial_autocorrelation3D(entropy_grid_metrics, 
-                                                   "entropy",
-                                                   weight_method = 0.1)
-      
-      EBP_df <- calculate_prevalence_gradient3D(entropy_grid_metrics,
-                                                "entropy",
-                                                show_AUC = F,
-                                                plot_image = F)
-      
       index <- nrow(entropy_cell_types) * (i - 1) + j
       metric_df_list[["EBSAC"]][index, c("slice", "cell_types")] <- c(i, entropy_cell_types$cell_types[j])
-      metric_df_list[["EBSAC"]][index, "EBSAC"] <- EBSAC
-      
       metric_df_list[["EBP"]][index, c("slice", "cell_types")] <- c(i, entropy_cell_types$cell_types[j])
-      metric_df_list[["EBP"]][index, thresholds_colnames] <- EBP_df$prevalence
+      
+      if (is.null(proportion_grid_metrics)) {
+        metric_df_list[["EBSAC"]][index, "EBSAC"] <- NA
+        metric_df_list[["EBP"]][index, thresholds_colnames] <- NA
+      }
+      else {
+        EBSAC <- calculate_spatial_autocorrelation3D(entropy_grid_metrics, 
+                                                     "entropy",
+                                                     weight_method = 0.1)
+        
+        EBP_df <- calculate_prevalence_gradient3D(entropy_grid_metrics,
+                                                  "entropy",
+                                                  show_AUC = F,
+                                                  plot_image = F)
+        
+        metric_df_list[["EBSAC"]][index, "EBSAC"] <- EBSAC
+        metric_df_list[["EBP"]][index, thresholds_colnames] <- EBP_df$prevalence
+      }
     }  
   }
-  
-  
   ### 2D analysis -----------------------------
   else {
     
@@ -244,17 +258,13 @@ for (i in seq(n_slices + 1)) {
                                                                               plot_image = F)
     
     minimum_distance_data_summary <- summarise_distances_between_cell_types2D(minimum_distance_data)
-    ## Fill in 4 rows at a time for AMD df (as we have A/A, A/B, B/A, B/B)
+    ## Fill in 4 rows at a time for AMD df (as we have Tumour/Tumour, Tumour/Immune, Immune/Tumour, Immune/Immune)
     index <- 4 * (i - 1) + 1 # index is 1, 5, 9, 13
     
     metric_df_list[["AMD"]][index:(index + 3), "slice"] <- i
     metric_df_list[["AMD"]][index:(index + 3), "reference"] <- minimum_distance_data_summary$reference
     metric_df_list[["AMD"]][index:(index + 3), "target"] <- minimum_distance_data_summary$target
     metric_df_list[["AMD"]][index:(index + 3), "AMD"] <- minimum_distance_data_summary$mean
-    
-    
-    
-    
     
     index1 <- 2 * (i - 1) + 1 # index1 is 1, 3, 5, ...
     index2 <- 4 * (i - 1) + 1 # index2 is 1, 5, 9, 13...
@@ -265,47 +275,54 @@ for (i in seq(n_slices + 1)) {
                                                            radii,
                                                            plot_image = F)
       
-      target_cell_type <- setdiff(cell_types, reference_cell_type)
-      
-      metric_df_list[["MS"]][index1, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-      metric_df_list[["MS"]][index1, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$mixing_score
-      
-      metric_df_list[["NMS"]][index1, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-      metric_df_list[["NMS"]][index1, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$normalised_mixing_score
-      
-      metric_df_list[["ACINP"]][index1, c("slice", "reference", "target")] <- c(i, reference_cell_type, "B")
-      metric_df_list[["ACINP"]][index1, radii_colnames] <- gradient_data[["cells_in_neighbourhood_proportion"]][["B"]]
-      
-      metric_df_list[["AE"]][index1, c("slice", "reference", "target")] <- c(i, reference_cell_type, "A,B")
-      metric_df_list[["AE"]][index1, radii_colnames] <- gradient_data[["entropy"]]$entropy
-      
-      index1 <- index1 + 1
-      
       for (target_cell_type in cell_types) {
-        ## Calculate ACIN, CKR, CKL, COO as target cell type can also be the reference cell type
-        
-        # ACIN
+  
         metric_df_list[["ACIN"]][index2, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["ACIN"]][index2, radii_colnames] <- gradient_data[["cells_in_neighbourhood"]][[target_cell_type]]
-        
-        # CKR
+        metric_df_list[["ACINP"]][index2, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
         metric_df_list[["CKR"]][index2, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["CKR"]][index2, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]] / gradient_data[["cross_K"]][["expected"]]
-        
-        # CLR
         metric_df_list[["CLR"]][index2, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["CLR"]][index2, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] / gradient_data[["cross_L"]][["expected"]]
-        
-        # COO
         metric_df_list[["COO"]][index2, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["COO"]][index2, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
-        
-        # CGR
         metric_df_list[["CGR"]][index2, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["CGR"]][index2, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] / gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
         
+        # These metrics aren't applicable if reference and target cell type are the same
+        if (reference_cell_type != target_cell_type) {
+          metric_df_list[["MS"]][index1, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
+          metric_df_list[["NMS"]][index1, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
+          metric_df_list[["AE"]][index1, c("slice", "reference", "target")] <- c(i, reference_cell_type, 
+                                                                                 paste(reference_cell_type, target_cell_type, sep = ","))
+        }
+        
+        if (is.null(gradient_data)) {
+          metric_df_list[["ACIN"]][index2, radii_colnames] <- NA
+          metric_df_list[["ACINP"]][index2, radii_colnames] <- NA
+          metric_df_list[["CKR"]][index2, radii_colnames] <- NA
+          metric_df_list[["CLR"]][index2, radii_colnames] <- NA
+          metric_df_list[["COO"]][index2, radii_colnames] <- NA
+          metric_df_list[["CGR"]][index2, radii_colnames] <- NA
+          
+          if (reference_cell_type != target_cell_type) {
+            metric_df_list[["MS"]][index1, radii_colnames] <- NA
+            metric_df_list[["NMS"]][index1, radii_colnames] <- NA
+            metric_df_list[["AE"]][index1, radii_colnames] <- NA
+          }
+        }
+        else {
+          metric_df_list[["ACIN"]][index2, radii_colnames] <- gradient_data[["cells_in_neighbourhood"]][[target_cell_type]]
+          metric_df_list[["ACINP"]][index2, radii_colnames] <- gradient_data[["cells_in_neighbourhood_proportion"]][[target_cell_type]]
+          metric_df_list[["CKR"]][index2, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]] / gradient_data[["cross_K"]][["expected"]]
+          metric_df_list[["CLR"]][index2, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] / gradient_data[["cross_L"]][["expected"]]
+          metric_df_list[["COO"]][index2, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
+          metric_df_list[["CGR"]][index2, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] / gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
+          
+          if (reference_cell_type != target_cell_type) {
+            metric_df_list[["MS"]][index1, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$mixing_score
+            metric_df_list[["NMS"]][index1, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$normalised_mixing_score
+            metric_df_list[["AE"]][index1, radii_colnames] <- gradient_data[["entropy"]]$entropy
+          }
+        }
         index2 <- index2 + 1
       }
+      index1 <- index1 + 1
     }
     
     
@@ -317,21 +334,28 @@ for (i in seq(n_slices + 1)) {
                                                                           strsplit(prop_cell_types$tar[j], ",")[[1]],
                                                                           plot_image = F)
       
-      PBSAC <- calculate_spatial_autocorrelation2D(proportion_grid_metrics, 
-                                                   "proportion",
-                                                   weight_method = 0.1)
-      
-      PBP_df <- calculate_prevalence_gradient2D(proportion_grid_metrics,
-                                                "proportion",
-                                                show_AUC = F,
-                                                plot_image = F)
-      
       index <- nrow(prop_cell_types) * (i - 1) + j
       metric_df_list[["PBSAC"]][index, c("slice", "reference", "target")] <- c(i, prop_cell_types$ref[j], prop_cell_types$tar[j])
-      metric_df_list[["PBSAC"]][index, "PBSAC"] <- PBSAC
-      
       metric_df_list[["PBP"]][index, c("slice", "reference", "target")] <- c(i, prop_cell_types$ref[j], prop_cell_types$tar[j])
-      metric_df_list[["PBP"]][index, thresholds_colnames] <- PBP_df$prevalence
+      
+      if (is.null(proportion_grid_metrics)) {
+        metric_df_list[["PBSAC"]][index, "PBSAC"] <- NA
+        metric_df_list[["PBP"]][index, thresholds_colnames] <- NA
+      }
+      else {
+        PBSAC <- calculate_spatial_autocorrelation2D(proportion_grid_metrics, 
+                                                     "proportion",
+                                                     weight_method = 0.1)
+        
+        PBP_df <- calculate_prevalence_gradient2D(proportion_grid_metrics,
+                                                  "proportion",
+                                                  show_AUC = F,
+                                                  plot_image = F)
+        
+        
+        metric_df_list[["PBSAC"]][index, "PBSAC"] <- PBSAC
+        metric_df_list[["PBP"]][index, thresholds_colnames] <- PBP_df$prevalence
+      }
     }
     
     # Get entropy grid metrics
@@ -341,31 +365,37 @@ for (i in seq(n_slices + 1)) {
                                                                strsplit(entropy_cell_types$cell_types[j], ",")[[1]], 
                                                                plot_image = F)
       
-      EBSAC <- calculate_spatial_autocorrelation2D(entropy_grid_metrics, 
-                                                   "entropy",
-                                                   weight_method = 0.1)
-      
-      EBP_df <- calculate_prevalence_gradient2D(entropy_grid_metrics,
-                                                "entropy",
-                                                show_AUC = F,
-                                                plot_image = F)
-      
       index <- nrow(entropy_cell_types) * (i - 1) + j
       metric_df_list[["EBSAC"]][index, c("slice", "cell_types")] <- c(i, entropy_cell_types$cell_types[j])
-      metric_df_list[["EBSAC"]][index, "EBSAC"] <- EBSAC
-      
       metric_df_list[["EBP"]][index, c("slice", "cell_types")] <- c(i, entropy_cell_types$cell_types[j])
-      metric_df_list[["EBP"]][index, thresholds_colnames] <- EBP_df$prevalence
+      
+      if (is.null(proportion_grid_metrics)) {
+        metric_df_list[["EBSAC"]][index, "EBSAC"] <- NA
+        metric_df_list[["EBP"]][index, thresholds_colnames] <- NA
+      }
+      else {
+        EBSAC <- calculate_spatial_autocorrelation2D(entropy_grid_metrics, 
+                                                     "entropy",
+                                                     weight_method = 0.1)
+        
+        EBP_df <- calculate_prevalence_gradient2D(entropy_grid_metrics,
+                                                  "entropy",
+                                                  show_AUC = F,
+                                                  plot_image = F)
+        
+        metric_df_list[["EBSAC"]][index, "EBSAC"] <- EBSAC
+        metric_df_list[["EBP"]][index, thresholds_colnames] <- EBP_df$prevalence
+      }
     }  
   }
 }
 
 setwd("~/R/SPIAT-3D_benchmarking/public_3D_data_analysis")
-saveRDS(metric_df_list, "metric_df_list.RDS")
+saveRDS(metric_df_list, "CyCIF_colorectal_cancer_metric_df_list.RDS")
 
 ### Plot analysis of 2D and 3D data -----
 setwd("~/R/SPIAT-3D_benchmarking/public_3D_data_analysis")
-metric_df_list <- readRDS("metric_df_list.RDS")
+metric_df_list <- readRDS("LOLOLOLOLOL")
 
 get_gradient <- function(metric) {
   if (metric %in% c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR")) {
@@ -489,117 +519,120 @@ subset_metric_df <- function(metric,
 
 
 plot_3D_vs_2D <- function(metric_df_list,
-                          metric) {
+                          metrics) {
   
-  # Get metric_df for current metric
-  metric_df <- metric_df_list[[metric]]
+  # Put all data into this data frame
+  combined_plot_df <- data.frame()
   
-  # Get metric cell types for current metric (should only be one set/ one row)
-  metric_cell_types <- get_metric_cell_types(metric)
+  for (metric in metrics) {
+    
+    # Get metric_df for current metric
+    metric_df <- metric_df_list[[metric]]
+    
+    # Get metric cell types for current metric (should only be one set/ one row)
+    metric_cell_types <- get_metric_cell_types(metric)
+    
+    # Subset metric_df
+    metric_df_subset <- subset_metric_df(metric,
+                                         metric_df,
+                                         metric_cell_types,
+                                         1) # Always first row
+    
+    # Change and further subset columns of metric_df_subset
+    colnames(metric_df_subset)[colnames(metric_df_subset) == metric] <- "value"
+    metric_df_subset$metric <- metric
+    metric_df_subset <- metric_df_subset[ , c("slice", "value", "metric")]
+    
+    # Add dummy column
+    metric_df_subset$dummy <- "dummy"
+    
+    combined_plot_df <- rbind(combined_plot_df, metric_df_subset)
+  }
   
-  # Subset metric_df
-  metric_df_subset <- subset_metric_df(metric,
-                                       metric_df,
-                                       metric_cell_types,
-                                       1) # Always first row
-  
-  # Change and further subset columns of metric_df_subset
-  colnames(metric_df_subset)[colnames(metric_df_subset) == metric] <- "value"
-  metric_df_subset$metric <- metric
-  metric_df_subset <- metric_df_subset[ , c("slice", "value", "metric")]
-  
-  metric_df_subset$dummy <- "dummy"
-  metric_df_subset$metric <- factor(metric_df_subset$metric, metrics)
-  
-  # Create the dot plot, highlighting the maximum slice points with a star shape and using facets
-  fig <- ggplot(metric_df_subset[metric_df_subset$slice != 0, ], aes(x = dummy, y = value)) +
-    geom_jitter(width = 0.2, height = 0, size = 1.5) +
-    geom_point(data = metric_df_subset[metric_df_subset$slice == 0, ], color = "red", shape = 8, size = 6) +
-    labs(x = "", y = metric) +
-    theme_bw()  +
-    theme(axis.ticks.x = element_blank(), axis.text.x = element_blank())
-  
-  return(fig)
-  
-}
-
-
-plot_3D_vs_error <- function(metric_df_list,
-                             metrics) {
-  
-  # Get metric_df for current metric
-  metric_df <- metric_df_list[[metric]]
-  
-  # Get metric cell types for current metric (should only be one set/ one row)
-  metric_cell_types <- get_metric_cell_types(metric)
-  
-  # Subset metric_df
-  metric_df_subset <- subset_metric_df(metric,
-                                       metric_df,
-                                       metric_cell_types,
-                                       1) # Always first row
-  
-  # Change and further subset columns of metric_df_subset
-  colnames(metric_df_subset)[colnames(metric_df_subset) == metric] <- "value"
-  metric_df_subset$metric <- metric
-  metric_df_subset <- metric_df_subset[ , c("slice", "value", "metric")]
-  
-  metric_df_subset$dummy <- "dummy"
-  metric_df_subset$metric <- factor(metric_df_subset$metric, metrics)
-  
-  # Calculate error for each slice, and remove 3D row
-  value_3D <- metric_df_subset[["value"]][metric_df_subset[["slice"]] == 0]
-  metric_df_subset[["value"]] <- ((metric_df_subset[["value"]] - value_3D) / value_3D) * 100
-  metric_df_subset <- metric_df_subset[metric_df_subset[["slice"]] != 0, ]
-  
-  # Create the dot plot
-  fig <- ggplot(metric_df_subset, aes(x = dummy, y = value)) +
-    geom_point(data = data.frame(x = "dummy", y = 0), aes(x, y), size = 0) + # Ensures plot shows y = 0
-    geom_jitter(width = 0.2, height = 0, size = 1.5) +
-    geom_abline(intercept = 0, slope = 0, color = "red", linetype = "longdash") +
-    labs(x = "", y = paste(metric, "error (%)")) +
-    theme_bw()  +
-    theme(axis.ticks.x = element_blank(), axis.text.x = element_blank())
+  fig <- ggplot(combined_plot_df, aes(x = dummy, y = value)) +
+    geom_boxplot(data = combined_plot_df[combined_plot_df$slice != 0, ],
+                 outlier.shape = NA, fill = "lightgray") +
+    geom_jitter(data = combined_plot_df[combined_plot_df$slice != 0, ],
+                width = 0.2, alpha = 0.5, color = "#0062c5") +
+    geom_point(data = combined_plot_df[combined_plot_df$slice == 0, ],
+               shape = 8, color = "#bb0036", size = 3) +  # Red stars for slice == 0
+    labs(title = "", x = NULL, y = NULL) +
+    theme_minimal() +
+    theme(
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      axis.title.x = element_blank(),
+      axis.line.x = element_blank()
+    ) +
+    facet_wrap(~ metric, scales = "free_y")
   
   return(fig)
-  
 }
 
+plot_3D_vs_error_box_plot <- function(metric_df_list,
+                                      metrics) {
+  
+  # Put all data into this data frame
+  combined_plot_df <- data.frame()
+  
+  
+  for (metric in metrics) {
+    # Get metric_df for current metric
+    metric_df <- metric_df_list[[metric]]
+    
+    # Get metric cell types for current metric (should only be one set/ one row)
+    metric_cell_types <- get_metric_cell_types(metric)
+    
+    # Subset metric_df
+    metric_df_subset <- subset_metric_df(metric,
+                                         metric_df,
+                                         metric_cell_types,
+                                         1) # Always first row
+    
+    # Change and further subset columns of metric_df_subset
+    colnames(metric_df_subset)[colnames(metric_df_subset) == metric] <- "value"
+    metric_df_subset$metric <- metric
+    metric_df_subset <- metric_df_subset[ , c("slice", "value", "metric")]
+    
+    # Calculate error for each slice, and remove 3D row
+    value_3D <- metric_df_subset[["value"]][metric_df_subset[["slice"]] == 0]
+    metric_df_subset[["error"]] <- ((metric_df_subset[["value"]] - value_3D) / value_3D) * 100
+    metric_df_subset["value"] <- NULL
+    metric_df_subset <- metric_df_subset[metric_df_subset[["slice"]] != 0, ]
+    
+    combined_plot_df <- rbind(combined_plot_df, metric_df_subset)
+  }
 
-
+  fig <- ggplot(combined_plot_df, aes(x = metric, y = error)) +
+    geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
+    geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
+    labs(title = "Error Distribution by Metric",
+         x = "Metric",
+         y = "Error (%)") +
+    theme_minimal() +
+    theme(panel.border = element_rect(color = "black", fill = NA, linewidth = 1))
+  
+  return(fig)
+}
 
 ## Get plot
-metrics <- c("AMD", "ACIN_AUC", "ACINP_AUC", "AE_AUC", "MS_AUC", "NMS_AUC", "CKR_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
-
-plot3D_vs_2D_metric_list <- list()
-plot3D_vs_error_metric_list <- list()
-
-for (metric in metrics) {
-  plot3D_vs_2D_metric_list[[metric]] <- plot_3D_vs_2D(metric_df_list,
-                                                      metric)
-  plot3D_vs_error_metric_list[[metric]] <- plot_3D_vs_error(metric_df_list,
-                                                            metric)
-}
-
-plots3D_vs_2D <- plot_grid(plotlist = plot3D_vs_2D_metric_list,
-                           nrow = 3,
-                           ncol = 4,
-                           labels = LETTERS[1:13])
-
-plots3D_vs_error <- plot_grid(plotlist = plot3D_vs_error_metric_list,
-                              nrow = 3,
-                              ncol = 4,
-                              labels = LETTERS[1:13])
+metrics <- c("AMD", "ACIN_AUC", "ACINP_AUC", "AE_AUC", "MS_AUC", "NMS_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 
-methods::show(plots3D_vs_2D)
-methods::show(plots3D_vs_error)
+fig_3D_vs_2D <- plot_3D_vs_2D(metric_df_list,
+                              metrics)
+
+fig_3D_vs_error_box_plot <- plot_3D_vs_error_box_plot(metric_df_list,
+                                                      metrics)
+methods::show(fig_3D_vs_2D)
+methods::show(fig_3D_vs_error_box_plot)
 
 
 setwd("~/R/plots/public_data")
 pdf("CyCIF_colorectal_cancer.pdf", width = 10, height = 8)
 
-print(plots3D_vs_2D)
-print(plots3D_vs_error)
+print(fig_3D_vs_2D)
+print(fig_3D_vs_error_box_plot)
 
 dev.off()
