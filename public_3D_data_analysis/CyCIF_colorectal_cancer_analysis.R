@@ -98,7 +98,7 @@ colnames(data3D)[4:5] <- c("Cell.Type.Specific", "Cell.Type")
 data3D[data3D$Cell.Type == "Tumor/Epi", "Cell.Type"] <- "Tumour"
 
 
-for (i in seq(n_slices + 1)) {
+for (i in seq(n_slices + 1, 1)) {
   print(i)
   
   # i represents the current slice index
@@ -230,7 +230,7 @@ for (i in seq(n_slices + 1)) {
       metric_df_list[["EBSAC"]][index, c("slice", "cell_types")] <- c(i, entropy_cell_types$cell_types[j])
       metric_df_list[["EBP"]][index, c("slice", "cell_types")] <- c(i, entropy_cell_types$cell_types[j])
       
-      if (is.null(proportion_grid_metrics)) {
+      if (is.null(entropy_grid_metrics)) {
         metric_df_list[["EBSAC"]][index, "EBSAC"] <- NA
         metric_df_list[["EBP"]][index, thresholds_colnames] <- NA
       }
@@ -369,7 +369,7 @@ for (i in seq(n_slices + 1)) {
       metric_df_list[["EBSAC"]][index, c("slice", "cell_types")] <- c(i, entropy_cell_types$cell_types[j])
       metric_df_list[["EBP"]][index, c("slice", "cell_types")] <- c(i, entropy_cell_types$cell_types[j])
       
-      if (is.null(proportion_grid_metrics)) {
+      if (is.null(entropy_grid_metrics)) {
         metric_df_list[["EBSAC"]][index, "EBSAC"] <- NA
         metric_df_list[["EBP"]][index, thresholds_colnames] <- NA
       }
