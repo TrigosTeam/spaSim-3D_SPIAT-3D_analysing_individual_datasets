@@ -458,16 +458,13 @@ plot_3D_vs_2D <- function(metric_df_list,
   # Get metric_df for current metric
   metric_df <- metric_df_list[[metric]]
   
-  metric_df <- metric_df[metric_df$reference %in% c("CAF", "CAM", "Tumor"), ]
-  metric_df <- metric_df[metric_df$target %in% c("CAF", "CAM", "Tumor"), ]
-  
   # Change and further subset columns of metric_df_subset
   colnames(metric_df)[colnames(metric_df) == metric] <- "value"
 
   # Add dummy column
   metric_df$dummy <- paste("dummy")
   
-  fig <- ggplot(metric_df, aes(x = dummy, y = metric)) +
+  fig <- ggplot(metric_df, aes(x = dummy, y = value)) +
     geom_boxplot(data = metric_df[metric_df$slice != max(metric_df$slice), ],
                  outlier.shape = NA, fill = "lightgray") +
     geom_jitter(data = metric_df[metric_df$slice != max(metric_df$slice), ],
@@ -481,7 +478,11 @@ plot_3D_vs_2D <- function(metric_df_list,
       axis.text.x = element_blank(),
       axis.ticks.x = element_blank(),
       axis.title.x = element_blank(),
-      axis.line.x = element_blank()
+      axis.line.x = element_blank(),
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      axis.title.y = element_blank(),
+      axis.line.y = element_blank()
     ) +
     facet_grid(reference ~ target, scales = "free_y")
     
@@ -490,47 +491,137 @@ plot_3D_vs_2D <- function(metric_df_list,
 }
 
 plot_3D_vs_error_box_plot <- function(metric_df_list,
-                                      metrics) {
+                                      metric) {
   
-  # Put all data into this data frame
-  combined_plot_df <- data.frame()
+  # Get metric_df for current metric
+  metric_df <- metric_df_list[[metric]]
   
+  # Change and further subset columns of metric_df
+  colnames(metric_df)[colnames(metric_df) == metric] <- "value"
   
-  for (metric in metrics) {
-    # Get metric_df for current metric
-    metric_df <- metric_df_list[[metric]]
-    
-    # Get metric cell types for current metric (should only be one set/ one row)
-    metric_cell_types <- get_metric_cell_types(metric)
-    
-    # Subset metric_df
-    metric_df_subset <- subset_metric_df(metric,
-                                         metric_df,
-                                         metric_cell_types,
-                                         1) # Always first row
-    
-    # Change and further subset columns of metric_df_subset
-    colnames(metric_df_subset)[colnames(metric_df_subset) == metric] <- "value"
-    metric_df_subset$metric <- metric
-    metric_df_subset <- metric_df_subset[ , c("slice", "value", "metric")]
-    
-    # Calculate error for each slice, and remove 3D row
-    value_3D <- metric_df_subset[["value"]][metric_df_subset[["slice"]] == 0]
-    metric_df_subset[["error"]] <- ((metric_df_subset[["value"]] - value_3D) / value_3D) * 100
-    metric_df_subset["value"] <- NULL
-    metric_df_subset <- metric_df_subset[metric_df_subset[["slice"]] != 0, ]
-    
-    combined_plot_df <- rbind(combined_plot_df, metric_df_subset)
-  }
+  # Obtain 3D value
+  value_3D <- metric_df[["value"]][metric_df[["slice"]] == max(metric_df$slice)]
   
-  fig <- ggplot(combined_plot_df, aes(x = metric, y = error)) +
+  # Calculate error
+  metric_df[["error"]] <- ((metric_df[["value"]] - value_3D) / value_3D) * 100
+  
+  # Remove value column (only using error now)
+  metric_df["value"] <- NULL
+  
+  # Remove 3D data (integrated into error)
+  metric_df <- metric_df[metric_df[["slice"]] != max(metric_df$slice), ]
+  
+  # Add reference-target column
+  metric_df$reference_target <- paste(metric_df$reference, metric_df$target, sep = "/")
+  
+  fig <- ggplot(metric_df, aes(x = reference_target, y = error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
-    geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
-    labs(title = "Error Distribution by Metric",
+    # geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
+    labs(title = "Error Distribution by Reference/Target combination",
          x = "Metric",
          y = "Error (%)") +
     theme_minimal() +
-    theme(panel.border = element_rect(color = "black", fill = NA, linewidth = 1))
+    theme(
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)  # Rotate x-axis labels vertically
+    )
+  
+  return(fig)
+}
+
+plot_3D_vs_error_heat_map <- function(metric_df_list,
+                                      metric) {
+  
+  # Get metric_df for current metric
+  metric_df <- metric_df_list[[metric]]
+  
+  # Change and further subset columns of metric_df
+  colnames(metric_df)[colnames(metric_df) == metric] <- "value"
+  
+  # Obtain 3D value
+  value_3D <- metric_df[["value"]][metric_df[["slice"]] == max(metric_df$slice)]
+  
+  # Calculate error
+  metric_df[["error"]] <- ((metric_df[["value"]] - value_3D) / value_3D) * 100
+  
+  # Remove value column (only using error now)
+  metric_df["value"] <- NULL
+  
+  # Remove 3D data (integrated into error)
+  metric_df <- metric_df[metric_df[["slice"]] != max(metric_df$slice), ]
+  
+  # Add reference-target column
+  metric_df$reference_target <- paste(metric_df$reference, metric_df$target, sep = "/")
+  
+  fig <- ggplot(metric_df, aes(x = reference_target, y = metric)) +
+    geom_tile(aes(fill = error)) +
+    scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0)
+  
+  return(fig)
+}
+
+
+plot_3D_vs_error_all_metrics_box_plot <- function(metric_df_list,
+                                                  metrics) {
+  
+  plot_df <- data.frame()
+  
+  for (metric in metrics) {
+    
+    # Get metric_df for current metric
+    metric_df <- metric_df_list[[metric]]
+
+    # Change and further subset columns of metric_df
+    colnames(metric_df)[colnames(metric_df) == metric] <- "value"
+    
+    # Obtain 3D value
+    value_3D <- metric_df[["value"]][metric_df[["slice"]] == max(metric_df$slice)]
+    
+    # Calculate error
+    metric_df[["error"]] <- ((metric_df[["value"]] - value_3D) / value_3D) * 100
+    
+    # Remove value column (only using error now)
+    metric_df["value"] <- NULL
+    
+    # Remove 3D data (integrated into error)
+    metric_df <- metric_df[metric_df[["slice"]] != max(metric_df$slice), ]
+    if (metric == "ACIN_AUC") View(metric_df)
+    if (!(metric %in% c("EBSAC", "EBP_AUC"))) {
+      # Add reference-target column
+      metric_df$reference_target <- paste(metric_df$reference, metric_df$target, sep = "/")
+      
+      # Extract median values for error for each reference-target
+      median_df <- metric_df %>%
+        group_by(reference_target) %>%
+        dplyr::summarize(median_error = median(error, na.rm = TRUE), .groups = "drop")
+      
+      median_df$reference_target <- NULL
+    }
+    else {
+      # Extract median values for error for each reference-target
+      median_df <- metric_df %>%
+        group_by(cell_types) %>%
+        dplyr::summarize(median_error = median(error, na.rm = TRUE), .groups = "drop")
+      
+      median_df$cell_types <- NULL
+    }
+  
+    median_df$metric <- metric  
+    
+    # Add median_df to plot_df
+    plot_df <- rbind(plot_df, median_df)
+  }
+  
+  fig <- ggplot(plot_df, aes(x = metric, y = median_error)) +
+    geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
+    geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
+    labs(title = "Error Distribution by Reference/Target combination",
+         x = "Metric",
+         y = "Error (%)") +
+    theme_minimal() +
+    theme(
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
+    )
   
   return(fig)
 }
@@ -539,13 +630,25 @@ plot_3D_vs_error_box_plot <- function(metric_df_list,
 metrics <- c("AMD", "ACIN_AUC", "ACINP_AUC", "AE_AUC", "MS_AUC", "NMS_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 
+# This is for a SINGLE metric
 fig_3D_vs_2D <- plot_3D_vs_2D(metric_df_list,
                               metric)
 
+# This is for a SINGLE metric
 fig_3D_vs_error_box_plot <- plot_3D_vs_error_box_plot(metric_df_list,
-                                                      metrics)
+                                                      metric)
+
+# This is for a SINGLE metric
+fig_3D_vs_error_heat_map <- plot_3D_vs_error_heat_map(metric_df_list,
+                                                      metric)
+
+fig_3D_vs_error_all_metrics_box_plot <- plot_3D_vs_error_all_metrics_box_plot(metric_df_list,
+                                                                              metrics)
+
 methods::show(fig_3D_vs_2D)
 methods::show(fig_3D_vs_error_box_plot)
+methods::show(fig_3D_vs_error_heat_map)
+methods::show(fig_3D_vs_error_all_metrics_box_plot)
 
 
 setwd("~/R/plots/public_data")
