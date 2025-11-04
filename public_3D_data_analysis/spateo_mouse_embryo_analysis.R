@@ -1,6 +1,7 @@
 ### Read data -----
 setwd("~/R/data3D/spateo")
 data3D <- read.csv("mouse_E11.5_embryo.csv")
+data3D$Cell.Type[data3D$Cell.Type == ""] <- "Empty"
 
 ### Set up data frames to contain results -----
 n_slices <- length(unique(data3D$Cell.Z.Position))
