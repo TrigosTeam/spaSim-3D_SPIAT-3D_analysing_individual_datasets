@@ -464,16 +464,12 @@ metric_df_list[["EBP_AUC"]] <- EBP_AUC_df
 # Utility function to get metric cell types
 get_metric_cell_types <- function(metric) {
   # Get metric_cell_types
-  if (metric %in% c("AMD", "ACIN", "CKR", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC")) {
+  if (metric %in% c("AMD", "ACIN", "ACINP", "CKR", "ACIN_AUC", "ACINP_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC")) {
     metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
     metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
   }
   else if (metric %in% c("MS", "NMS", "MS_AUC", "NMS_AUC")) {
     metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
-    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
-  }
-  else if (metric %in% c("ACINP", "ACINP_AUC")) {
-    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Tumour"))
     metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
   }
   else if (metric %in% c("AE", "AE_AUC")) {
@@ -499,11 +495,11 @@ subset_metric_df <- function(metric,
                              metric_cell_types,
                              index) {
   
-  if (metric %in% c("AMD", "ACIN", "CKR", "CLR", "COO", "CGR", "MS", "NMS", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "MS_AUC", "NMS_AUC", "PBSAC", "PBP", "PBP_AUC")) {
+  if (metric %in% c("AMD", "ACIN", "ACINP", "CKR", "CLR", "COO", "CGR", "MS", "NMS", "ACIN_AUC", "ACINP_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "MS_AUC", "NMS_AUC", "PBSAC", "PBP", "PBP_AUC")) {
     metric_df_subset <- metric_df[metric_df$reference == metric_cell_types[index, "ref"] & metric_df$target == metric_cell_types[index, "tar"], ] 
   }
-  else if (metric %in% c("ACINP", "AE", "ACINP_AUC", "AE_AUC")) {
-    metric_df_subset <- metric_df[metric_df$reference == metric_cell_types[index, "ref"], ] 
+  else if (metric %in% c("AE", "AE_AUC")) {
+    metric_df_subset <- metric_df[metric_df$reference == metric_cell_types[index, "ref"] & metric_df$target == metric_cell_types[index, "tar"], ] 
   }
   else if (metric %in% c("EBSAC", "EBP", "EBP_AUC")) {
     metric_df_subset <- metric_df[metric_df$cell_types == metric_cell_types[index, "cell_types"], ]
@@ -542,19 +538,22 @@ plot_3D_vs_2D <- function(metric_df_list,
     metric_df_subset$metric <- metric
     metric_df_subset <- metric_df_subset[ , c("slice", "value", "metric")]
     
-    # Add dummy column
-    metric_df_subset$dummy <- "dummy"
-    
     combined_plot_df <- rbind(combined_plot_df, metric_df_subset)
   }
   
+  # Add dummy column
+  combined_plot_df$dummy <- "dummy"
+  
+  # Change slice column to number, from char
+  combined_plot_df$slice <- as.integer(combined_plot_df$slice)
+
   fig <- ggplot(combined_plot_df, aes(x = dummy, y = value)) +
-    geom_boxplot(data = combined_plot_df[combined_plot_df$slice != 0, ],
+    geom_boxplot(data = combined_plot_df[combined_plot_df$slice != max(combined_plot_df$slice), ],
                  outlier.shape = NA, fill = "lightgray") +
-    geom_jitter(data = combined_plot_df[combined_plot_df$slice != 0, ],
+    geom_jitter(data = combined_plot_df[combined_plot_df$slice != max(combined_plot_df$slice), ],
                 width = 0.2, alpha = 0.5, color = "#0062c5") +
-    geom_point(data = combined_plot_df[combined_plot_df$slice == 0, ],
-               shape = 8, color = "#bb0036", size = 3) +  # Red stars for slice == 0
+    geom_point(data = combined_plot_df[combined_plot_df$slice == max(combined_plot_df$slice), ],
+               shape = 8, color = "#bb0036", size = 3) +  # Red stars for 3D value
     labs(title = "", x = NULL, y = NULL) +
     theme_minimal() +
     theme(
@@ -575,7 +574,6 @@ plot_3D_vs_error_box_plot <- function(metric_df_list,
   # Put all data into this data frame
   combined_plot_df <- data.frame()
   
-  
   for (metric in metrics) {
     # Get metric_df for current metric
     metric_df <- metric_df_list[[metric]]
@@ -589,23 +587,27 @@ plot_3D_vs_error_box_plot <- function(metric_df_list,
                                          metric_cell_types,
                                          1) # Always first row
     
+    # Change slice column to number, from char
+    metric_df_subset$slice <- as.integer(metric_df_subset$slice)
+    
     # Change and further subset columns of metric_df_subset
     colnames(metric_df_subset)[colnames(metric_df_subset) == metric] <- "value"
     metric_df_subset$metric <- metric
     metric_df_subset <- metric_df_subset[ , c("slice", "value", "metric")]
-    
+
     # Calculate error for each slice, and remove 3D row
-    value_3D <- metric_df_subset[["value"]][metric_df_subset[["slice"]] == 0]
+    value_3D <- metric_df_subset[["value"]][metric_df_subset[["slice"]] == max(metric_df_subset$slice)]
     metric_df_subset[["error"]] <- ((metric_df_subset[["value"]] - value_3D) / value_3D) * 100
     metric_df_subset["value"] <- NULL
-    metric_df_subset <- metric_df_subset[metric_df_subset[["slice"]] != 0, ]
+    metric_df_subset <- metric_df_subset[metric_df_subset[["slice"]] != max(metric_df_subset$slice), ]
     
     combined_plot_df <- rbind(combined_plot_df, metric_df_subset)
   }
-
+  
   fig <- ggplot(combined_plot_df, aes(x = metric, y = error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
+    geom_hline(yintercept = 0, linetype = "dotted", color = "#bb0036", linewidth = 1) +  # Add dotted red line at y = 0
     labs(title = "Error Distribution by Metric",
          x = "Metric",
          y = "Error (%)") +
@@ -629,7 +631,7 @@ methods::show(fig_3D_vs_error_box_plot)
 
 
 setwd("~/R/plots/public_data")
-pdf("CyCIF_colorectal_cancer.pdf", width = 10, height = 8)
+pdf("CyCIF_colorectal_cancer.pdf", width = 12, height = 8)
 
 print(fig_3D_vs_2D)
 print(fig_3D_vs_error_box_plot)
