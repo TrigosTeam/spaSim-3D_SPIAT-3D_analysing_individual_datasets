@@ -390,11 +390,11 @@ for (i in seq(n_slices + 1, 1)) {
 }
 
 setwd("~/R/SPIAT-3D_benchmarking/public_3D_data_analysis")
-saveRDS(metric_df_list, "CyCIF_colorectal_cancer_metric_df_list")
+saveRDS(metric_df_list, "CyCIF_colorectal_cancer_metric_df_list.RDS")
 
 ### Plot analysis of 2D and 3D data -----
 setwd("~/R/SPIAT-3D_benchmarking/public_3D_data_analysis")
-metric_df_list <- readRDS("LOLOLOLOLOL")
+metric_df_list <- readRDS("CyCIF_colorectal_cancer_metric_df_list.RDS")
 
 get_gradient <- function(metric) {
   if (metric %in% c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR")) {
