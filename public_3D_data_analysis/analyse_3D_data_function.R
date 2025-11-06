@@ -5,23 +5,107 @@
 # cell_types consists of only cells in the "Cell.Type" column, and at least two cells.
 
 analyse_3D_data <- function(
-  data3D,
-  cell_types
+    data3D,
+    cell_types,
+    radii = seq(20, 100, 10),
+    n_splits = 10,
+    thresholds = seq(0.01, 1, 0.01)
 ) {
   
   slice_z_coords <- unique(data3D$Cell.Z.Position)
   n_slices <- length(unique(data3D$Cell.Z.Position))
   n_cell_type_combinations <- length(cell_types)^2
-  radii <- seq(20, 100, 10)
-  n_splits <- 10
-  thresholds <- seq(0.01, 1, 0.01)
+  radii_colnames <- paste("r", radii, sep = "")
+  thresholds_colnames <- paste("t", thresholds, sep = "")
+  
+  create_empty_metric_df_list <- function(
+    cell_types,
+    n_slices,
+    radii_colnames,
+    thresholds_colnames
+  ) {
+    n_cell_type_combinations <- length(cell_types)^2
+    
+    # Define AMD data frames as well as constants
+    AMD_df_colnames <- c("slice", "reference", "target", "AMD")
+    AMD_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(AMD_df_colnames)))
+    colnames(AMD_df) <- AMD_df_colnames
+    
+    
+    # Define MS, NMS, ACIN, ACINP, CKR, CLR, CGR, COO, AE data frames as well as constants
+    radii_colnames <- paste("r", radii, sep = "")
+    
+    MS_df_colnames <- c("slice", "reference", "target", radii_colnames)
+    MS_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(MS_df_colnames)))
+    colnames(MS_df) <- MS_df_colnames
+    
+    # NMS has same data frame output as MS
+    NMS_df <- MS_df
+    
+    # Only choose prop(A) as prop(A) = 1 - prop(B) always
+    ACINP_df_colnames <- c("slice", "reference", "target", radii_colnames)
+    ACINP_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(ACINP_df_colnames)))
+    colnames(ACINP_df) <- ACINP_df_colnames
+    
+    # AE has same data frame output as ACINP
+    AE_df <- ACINP_df
+    
+    ## ACIN and CKR are twice as large
+    # (ref A and tar A or B) OR (ref B and tar B or A)
+    ACIN_df_colnames <- c("slice", "reference", "target", radii_colnames)
+    ACIN_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(ACIN_df_colnames)))
+    colnames(ACIN_df) <- ACIN_df_colnames
+    
+    # CKR, CLR, COO, CGR have same data frame ouptut as ACIN
+    CKR_df <- ACIN_df
+    CLR_df <- ACIN_df
+    COO_df <- ACIN_df
+    CGR_df <- ACIN_df
+    
+    # Define SAC and prevalence data frames as well as constants
+    thresholds_colnames <- paste("t", thresholds, sep = "")
+    
+    PBSAC_df_colnames <- c("slice", "reference", "target", "PBSAC")
+    PBSAC_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(PBSAC_df_colnames)))
+    colnames(PBSAC_df) <- PBSAC_df_colnames
+    
+    PBP_df_colnames <- c("slice", "reference", "target", thresholds_colnames)
+    PBP_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(PBP_df_colnames)))
+    colnames(PBP_df) <- PBP_df_colnames
+    
+    EBSAC_df_colnames <- c("slice", "cell_types", "EBSAC")
+    EBSAC_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(EBSAC_df_colnames)))
+    colnames(EBSAC_df) <- EBSAC_df_colnames
+    
+    EBP_df_colnames <- c("slice", "cell_types", thresholds_colnames)
+    EBP_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(EBP_df_colnames)))
+    colnames(EBP_df) <- EBP_df_colnames
+    
+    
+    # Add all to list:
+    metric_df_list <- list(AMD = AMD_df,
+                           MS = MS_df,
+                           NMS = NMS_df,
+                           ACINP = ACINP_df,
+                           AE = AE_df,
+                           ACIN = ACIN_df,
+                           CKR = CKR_df,
+                           CLR = CLR_df,
+                           CGR = CGR_df,
+                           COO = COO_df,
+                           PBSAC = PBSAC_df,
+                           PBP = PBP_df,
+                           EBSAC = EBSAC_df,
+                           EBP = EBP_df)
+    
+    return(metric_df_list)
+  }
   
   metric_df_list <- create_empty_metric_df_list(
     cell_types,
     n_slices,
-    radii,
-    n_splits,
-    thresholds
+    radii_colnames,
+    thresholds_colnames
   )
   
   for (i in seq(n_slices + 1, 1)) {
@@ -64,7 +148,7 @@ analyse_3D_data <- function(
                                                              plot_image = F)
         
         for (target_cell_type in cell_types) {
-          
+          print(paste(reference_cell_type, target_cell_type, sep = "/"))
           metric_df_list[["ACIN"]][gradient_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["ACINP"]][gradient_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["CKR"]][gradient_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
@@ -98,7 +182,7 @@ analyse_3D_data <- function(
             if (reference_cell_type != target_cell_type) {
               metric_df_list[["MS"]][gradient_index, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$mixing_score
               metric_df_list[["NMS"]][gradient_index, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$normalised_mixing_score
-              metric_df_list[["AE"]][gradient_index, radii_colnames] <- gradient_data[["entropy"]]$entropy
+              metric_df_list[["AE"]][gradient_index, radii_colnames] <- gradient_data[["entropy"]][[target_cell_type]]
             }
             else {
               metric_df_list[["MS"]][gradient_index, radii_colnames] <- Inf
@@ -202,7 +286,7 @@ analyse_3D_data <- function(
                                                              plot_image = F)
         
         for (target_cell_type in cell_types) {
-          
+          print(paste(reference_cell_type, target_cell_type, sep = "/"))
           metric_df_list[["ACIN"]][gradient_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["ACINP"]][gradient_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["CKR"]][gradient_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
@@ -236,7 +320,7 @@ analyse_3D_data <- function(
             if (reference_cell_type != target_cell_type) {
               metric_df_list[["MS"]][gradient_index, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$mixing_score
               metric_df_list[["NMS"]][gradient_index, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$normalised_mixing_score
-              metric_df_list[["AE"]][gradient_index, radii_colnames] <- gradient_data[["entropy"]]$entropy
+              metric_df_list[["AE"]][gradient_index, radii_colnames] <- gradient_data[["entropy"]][[target_cell_type]]
             }
             else {
               metric_df_list[["MS"]][gradient_index, radii_colnames] <- Inf
@@ -316,86 +400,4 @@ analyse_3D_data <- function(
   return(metric_df_list)
 }
 
-create_empty_metric_df_list <- function(
-    cell_types,
-    n_slices,
-    radii,
-    n_splits,
-    thresholds
-) {
-  n_cell_type_combinations <- length(cell_types)^2
-  
-  # Define AMD data frames as well as constants
-  AMD_df_colnames <- c("slice", "reference", "target", "AMD")
-  AMD_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(AMD_df_colnames)))
-  colnames(AMD_df) <- AMD_df_colnames
-  
-  
-  # Define MS, NMS, ACIN, ACINP, CKR, CLR, CGR, COO, AE data frames as well as constants
-  radii_colnames <- paste("r", radii, sep = "")
-  
-  MS_df_colnames <- c("slice", "reference", "target", radii_colnames)
-  MS_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(MS_df_colnames)))
-  colnames(MS_df) <- MS_df_colnames
-  
-  # NMS has same data frame output as MS
-  NMS_df <- MS_df
-  
-  # Only choose prop(A) as prop(A) = 1 - prop(B) always
-  ACINP_df_colnames <- c("slice", "reference", "target", radii_colnames)
-  ACINP_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(ACINP_df_colnames)))
-  colnames(ACINP_df) <- ACINP_df_colnames
-  
-  # AE has same data frame output as ACINP
-  AE_df <- ACINP_df
-  
-  ## ACIN and CKR are twice as large
-  # (ref A and tar A or B) OR (ref B and tar B or A)
-  ACIN_df_colnames <- c("slice", "reference", "target", radii_colnames)
-  ACIN_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(ACIN_df_colnames)))
-  colnames(ACIN_df) <- ACIN_df_colnames
-  
-  # CKR, CLR, COO, CGR have same data frame ouptut as ACIN
-  CKR_df <- ACIN_df
-  CLR_df <- ACIN_df
-  COO_df <- ACIN_df
-  CGR_df <- ACIN_df
-  
-  # Define SAC and prevalence data frames as well as constants
-  thresholds_colnames <- paste("t", thresholds, sep = "")
-  
-  PBSAC_df_colnames <- c("slice", "reference", "target", "PBSAC")
-  PBSAC_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(PBSAC_df_colnames)))
-  colnames(PBSAC_df) <- PBSAC_df_colnames
-  
-  PBP_df_colnames <- c("slice", "reference", "target", thresholds_colnames)
-  PBP_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(PBP_df_colnames)))
-  colnames(PBP_df) <- PBP_df_colnames
-  
-  EBSAC_df_colnames <- c("slice", "cell_types", "EBSAC")
-  EBSAC_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(EBSAC_df_colnames)))
-  colnames(EBSAC_df) <- EBSAC_df_colnames
-  
-  EBP_df_colnames <- c("slice", "cell_types", thresholds_colnames)
-  EBP_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(EBP_df_colnames)))
-  colnames(EBP_df) <- EBP_df_colnames
-  
-  
-  # Add all to list:
-  metric_df_list <- list(AMD = AMD_df,
-                         MS = MS_df,
-                         NMS = NMS_df,
-                         ACINP = ACINP_df,
-                         AE = AE_df,
-                         ACIN = ACIN_df,
-                         CKR = CKR_df,
-                         CLR = CLR_df,
-                         CGR = CGR_df,
-                         COO = COO_df,
-                         PBSAC = PBSAC_df,
-                         PBP = PBP_df,
-                         EBSAC = EBSAC_df,
-                         EBP = EBP_df)
-  
-  return(metric_df_list)
-}
+
