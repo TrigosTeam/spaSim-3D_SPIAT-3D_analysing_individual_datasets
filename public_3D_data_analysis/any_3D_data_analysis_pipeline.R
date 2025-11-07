@@ -5,6 +5,7 @@ data3D <- read.csv("***your data.csv***")
 
 cell_types <- "***whatever you want***"
 
+save_directory <- "***Where ever you want to save***" # e.g. "~/R/SPIAT-3D_benchmarking/public_3D_data_analysis/metric_df_lists"
 file_name <- "*** file save name.RDS ***" # e.g. openST_human_metastatic_lymph_node_metric_df_list.RDS
 
 # SPIAT-3D functions -----
@@ -5652,5 +5653,5 @@ analyse_3D_data <- function(
 
 # Analysis and upload ----
 metric_df_list <- analyse_3D_data(data3D, cell_types)
-setwd("~/R/SPIAT-3D_benchmarking/public_3D_data_analysis")
+setwd(save_directory)
 saveRDS(metric_df_list, file_name)
