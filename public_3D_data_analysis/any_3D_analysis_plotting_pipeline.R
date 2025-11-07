@@ -1,3 +1,9 @@
+### Read data and set file name (THE ONLY PART YOU NEED TO CHANGE) ------
+setwd("***directory to your analysis***") # e.g. "~/R/SPIAT-3D_benchmarking/public_3D_data_analysis/metric_df_lists"
+metric_df_list <- readRDS("***your metric_df_list.RDS***") # e.g. "CyCIF_colorectal_cancer_metric_df_list.RDS"
+
+file_name <- "*** file_save_name.pdf ***" # e.g. openST_human_metastatic_lymph_node.pdf
+
 ### Libraries -----
 library(SpatialExperiment)
 library(dbscan)
@@ -11,9 +17,7 @@ library(cowplot)
 library(Hmisc)
 library(alphashape3d)
 
-### Read data -----
-setwd("~/R/SPIAT-3D_benchmarking/public_3D_data_analysis")
-metric_df_list <- readRDS("openST_human_metastatic_lymph_node_metric_df_list.RDS")
+### Format data -----
 
 get_gradient <- function(metric) {
   if (metric %in% c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR")) {
@@ -82,6 +86,57 @@ metric_df_list[["EBP_AUC"]] <- EBP_AUC_df
 ### Plot analysis -----
 
 ## Functions to plot
+# Utility function to get metric cell types
+get_metric_cell_types <- function(metric) {
+  # Get metric_cell_types
+  if (metric %in% c("AMD", "ACIN", "ACINP", "CKR", "ACIN_AUC", "ACINP_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC")) {
+    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
+    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+  }
+  else if (metric %in% c("MS", "NMS", "MS_AUC", "NMS_AUC")) {
+    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
+    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+  }
+  else if (metric %in% c("AE", "AE_AUC")) {
+    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Tumour,Immune"))
+    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+  }
+  else if (metric %in% c("PBSAC", "PBP", "PBP_AUC")) {
+    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
+    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+  }
+  else if (metric %in% c("EBSAC", "EBP", "EBP_AUC")) {
+    metric_cell_types <- data.frame(cell_types = c("Tumour,Immune"))
+  }
+  else {
+    stop("metric not found")
+  }
+  return(metric_cell_types)
+}
+
+# Utility function to subset metric_df
+subset_metric_df <- function(metric,
+                             metric_df,
+                             index) {
+  
+  metric_cell_types <- get_metric_cell_types(metric)
+  
+  if (metric %in% c("AMD", "ACIN", "ACINP", "CKR", "CLR", "COO", "CGR", "MS", "NMS", "ACIN_AUC", "ACINP_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "MS_AUC", "NMS_AUC", "PBSAC", "PBP", "PBP_AUC")) {
+    metric_df_subset <- metric_df[metric_df$reference == metric_cell_types[index, "ref"] & metric_df$target == metric_cell_types[index, "tar"], ] 
+  }
+  else if (metric %in% c("AE", "AE_AUC")) {
+    metric_df_subset <- metric_df[metric_df$reference == metric_cell_types[index, "ref"] & metric_df$target == metric_cell_types[index, "tar"], ] 
+  }
+  else if (metric %in% c("EBSAC", "EBP", "EBP_AUC")) {
+    metric_df_subset <- metric_df[metric_df$cell_types == metric_cell_types[index, "cell_types"], ]
+  }
+  else {
+    stop("metric not found")
+  }
+  
+  return(metric_df_subset)
+}
+
 plot_3D_vs_2D <- function(metric_df_list,
                           metric) {
   
@@ -95,13 +150,13 @@ plot_3D_vs_2D <- function(metric_df_list,
   metric_df$dummy <- paste("dummy")
   
   fig <- ggplot(metric_df, aes(x = dummy, y = value)) +
-    geom_boxplot(data = metric_df[metric_df$slice != max(metric_df$slice), ],
+    geom_boxplot(data = metric_df[metric_df$slice != as.character(max(as.numeric(metric_df$slice))), ],
                  outlier.shape = NA, fill = "lightgray") +
-    geom_jitter(data = metric_df[metric_df$slice != max(metric_df$slice), ],
+    geom_jitter(data = metric_df[metric_df$slice != as.character(max(as.numeric(metric_df$slice))), ],
                 width = 0.2, alpha = 0.5, color = "#0062c5") +
-    geom_point(data = metric_df[metric_df$slice == max(metric_df$slice), ],
+    geom_point(data = metric_df[metric_df$slice == as.character(max(as.numeric(metric_df$slice))), ],
                shape = 8, color = "#bb0036", size = 3) +  # Red stars for 3D value
-    labs(title = "", x = NULL, y = NULL) +
+    labs(title = metric, x = NULL, y = NULL) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
@@ -130,7 +185,7 @@ plot_3D_vs_error_by_cell_combination_box_plot <- function(metric_df_list,
   colnames(metric_df)[colnames(metric_df) == metric] <- "value"
   
   # Obtain 3D value
-  value_3D <- metric_df[["value"]][metric_df[["slice"]] == max(metric_df$slice)]
+  value_3D <- metric_df[["value"]][metric_df[["slice"]] == as.character(max(as.numeric(metric_df$slice)))]
   
   # Calculate error
   metric_df[["error"]] <- ((metric_df[["value"]] - value_3D) / value_3D) * 100
@@ -146,7 +201,8 @@ plot_3D_vs_error_by_cell_combination_box_plot <- function(metric_df_list,
   
   fig <- ggplot(metric_df, aes(x = reference_target, y = error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
-    # geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
+    geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
+    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
     labs(title = "Error Distribution by Reference/Target combination",
          x = "Reference/Target combination",
          y = "Error (%)") +
@@ -169,7 +225,7 @@ plot_3D_vs_error_by_slice_box_plot <- function(metric_df_list,
   colnames(metric_df)[colnames(metric_df) == metric] <- "value"
   
   # Obtain 3D value
-  value_3D <- metric_df[["value"]][metric_df[["slice"]] == max(metric_df$slice)]
+  value_3D <- metric_df[["value"]][metric_df[["slice"]] == as.character(max(as.numeric(metric_df$slice)))]
   
   # Calculate error
   metric_df[["error"]] <- ((metric_df[["value"]] - value_3D) / value_3D) * 100
@@ -185,11 +241,11 @@ plot_3D_vs_error_by_slice_box_plot <- function(metric_df_list,
   
   fig <- ggplot(metric_df, aes(x = slice, y = error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
-    # geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
+    geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
+    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
     labs(title = "Error Distribution by Slice",
          x = "Slice index",
          y = "Error (%)") +
-    lims(y = c(-200, 200)) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
@@ -214,7 +270,7 @@ plot_3D_vs_error_all_metrics_by_cell_combination_box_plot <- function(metric_df_
     colnames(metric_df)[colnames(metric_df) == metric] <- "value"
     
     # Obtain 3D value
-    value_3D <- metric_df[["value"]][metric_df[["slice"]] == max(metric_df$slice)]
+    value_3D <- metric_df[["value"]][metric_df[["slice"]] == as.character(max(as.numeric(metric_df$slice)))]
     
     # Calculate error
     metric_df[["error"]] <- ((metric_df[["value"]] - value_3D) / value_3D) * 100
@@ -254,10 +310,10 @@ plot_3D_vs_error_all_metrics_by_cell_combination_box_plot <- function(metric_df_
   fig <- ggplot(plot_df, aes(x = metric, y = median_error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
+    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
     labs(title = "Error Distribution by metric, showing median error for each Reference/Target combination",
          x = "Metric",
          y = "Error (%)") +
-    lims(y = c(-200, 200)) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
@@ -280,7 +336,7 @@ plot_3D_vs_error_all_metrics_by_slice_box_plot <- function(metric_df_list,
     colnames(metric_df)[colnames(metric_df) == metric] <- "value"
     
     # Obtain 3D value
-    value_3D <- metric_df[["value"]][metric_df[["slice"]] == max(metric_df$slice)]
+    value_3D <- metric_df[["value"]][metric_df[["slice"]] == as.character(max(as.numeric(metric_df$slice)))]
     
     # Calculate error
     metric_df[["error"]] <- ((metric_df[["value"]] - value_3D) / value_3D) * 100
@@ -308,10 +364,10 @@ plot_3D_vs_error_all_metrics_by_slice_box_plot <- function(metric_df_list,
   fig <- ggplot(plot_df, aes(x = metric, y = median_error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
+    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
     labs(title = "Error Distribution by Metric, showing median error for each Slice",
          x = "Metric",
          y = "Error (%)") +
-    lims(y = c(-200, 200)) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
@@ -321,8 +377,8 @@ plot_3D_vs_error_all_metrics_by_slice_box_plot <- function(metric_df_list,
 }
 
 
-plot_3D_vs_error_all_metrics_by_combination_and_slice_box_plot <- function(metric_df_list,
-                                                                           metrics) {
+plot_3D_vs_error_all_metrics_by_cell_combination_and_slice_box_plot <- function(metric_df_list,
+                                                                                metrics) {
   
   plot_df <- data.frame()
   
@@ -335,7 +391,7 @@ plot_3D_vs_error_all_metrics_by_combination_and_slice_box_plot <- function(metri
     colnames(metric_df)[colnames(metric_df) == metric] <- "value"
     
     # Obtain 3D value
-    value_3D <- metric_df[["value"]][metric_df[["slice"]] == max(metric_df$slice)]
+    value_3D <- metric_df[["value"]][metric_df[["slice"]] == as.character(max(as.numeric(metric_df$slice)))]
     
     # Calculate error
     metric_df[["error"]] <- ((metric_df[["value"]] - value_3D) / value_3D) * 100
@@ -358,10 +414,10 @@ plot_3D_vs_error_all_metrics_by_combination_and_slice_box_plot <- function(metri
   
   fig <- ggplot(plot_df, aes(x = metric, y = error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
+    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
     labs(title = "Error Distribution by Metric, showing all error values",
          x = "Metric",
          y = "Error (%)") +
-    lims(y = c(-200, 200)) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
@@ -370,7 +426,120 @@ plot_3D_vs_error_all_metrics_by_combination_and_slice_box_plot <- function(metri
   return(fig)
 }
 
+# plot_3D_vs_2D_all_metrics_for_one_cell_combination_and_by_slice_box_plot <- function(metric_df_list,
+#                                                                                      metrics) {
+#   
+#   plot_df <- data.frame()
+#   
+#   for (metric in metrics) {
+#     
+#     # Get metric_df for current metric
+#     metric_df <- metric_df_list[[metric]]
+#     
+#     metric_df <- subset_metric_df(metric,
+#                                   metric_df,
+#                                   index = 1)
+#     
+#     # Change and further subset columns of metric_df
+#     colnames(metric_df)[colnames(metric_df) == metric] <- "value"
+#     
+#     # Add metric column
+#     metric_df$metric <- metric
+#     
+#     # Keep value, metric and slice column
+#     metric_df <- metric_df[ , c("value", "metric", "slice")]
+#     
+#     # Add median_df to plot_df
+#     plot_df <- rbind(plot_df, metric_df)
+#   }
+#   
+#   # Add dummy column
+#   plot_df$dummy <- paste("dummy")
+#   
+#   fig <- ggplot(plot_df, aes(x = dummy, y = value)) +
+#     geom_boxplot(data = plot_df[plot_df$slice != as.character(max(as.numeric(plot_df$slice))), ],
+#                  outlier.shape = NA, fill = "lightgray") +
+#     geom_jitter(data = plot_df[plot_df$slice != as.character(max(as.numeric(plot_df$slice))), ],
+#                 width = 0.2, alpha = 0.5, color = "#0062c5") +
+#     geom_point(data = plot_df[plot_df$slice == as.character(max(as.numeric(plot_df$slice))), ],
+#                shape = 8, color = "#bb0036", size = 3) +
+#     facet_wrap(~ metric, scales = "free_y") +  # Facet by metric with independent y-axes
+#     labs(title = "Value of Metric Distribution by Metric, for one cell combination and for each slice",
+#          x = "",
+#          y = "") +
+#     theme_minimal() +
+#     theme(
+#       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+#       strip.background = element_rect(fill = "gray90"),
+#       strip.text = element_text(face = "bold"),
+#       axis.text.x = element_blank(),
+#       axis.ticks.x = element_blank(),
+#       axis.title.x = element_blank(),
+#       axis.line.x = element_blank(),
+#     )
+#   
+#   
+#   
+#   return(fig)
+# }
+# 
+# plot_3D_vs_error_all_metrics_for_one_cell_combination_and_by_slice_box_plot <- function(metric_df_list,
+#                                                                                         metrics) {
+#   
+#   plot_df <- data.frame()
+#   
+#   for (metric in metrics) {
+#     
+#     # Get metric_df for current metric
+#     metric_df <- metric_df_list[[metric]]
+#     
+#     metric_df <- subset_metric_df(metric,
+#                                   metric_df,
+#                                   index = 1)
+#     
+#     # Change and further subset columns of metric_df
+#     colnames(metric_df)[colnames(metric_df) == metric] <- "value"
+#     
+#     # Obtain 3D value
+#     value_3D <- metric_df[["value"]][metric_df[["slice"]] == as.character(max(as.numeric(metric_df$slice)))]
+#     
+#     # Calculate error
+#     metric_df[["error"]] <- ((metric_df[["value"]] - value_3D) / value_3D) * 100
+#     
+#     # Remove value column (only using error now)
+#     metric_df["value"] <- NULL
+#     
+#     # Remove 3D data (integrated into error)
+#     metric_df <- metric_df[metric_df[["slice"]] != max(as.integer(metric_df$slice)), ]
+#     
+#     # Add metric column
+#     metric_df$metric <- metric
+#     
+#     # Keep error and metric column
+#     metric_df <- metric_df[ , c("error", "metric")]
+#     
+#     # Add median_df to plot_df
+#     plot_df <- rbind(plot_df, metric_df)
+#   }
+#   
+#   fig <- ggplot(plot_df, aes(x = metric, y = error)) +
+#     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
+#     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
+#     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
+#     labs(title = "Error Distribution by Metric, for one cell combination and for each slice",
+#          x = "Metric",
+#          y = "Error (%)") +
+#     theme_minimal() +
+#     theme(
+#       panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
+#     )
+#   
+#   return(fig)
+# }
+
+
 ## Get plot
+metric <- "AMD"
 metrics <- c("AMD", "ACIN_AUC", "ACINP_AUC", "AE_AUC", "MS_AUC", "NMS_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 
@@ -391,14 +560,21 @@ fig_3D_vs_error_all_metrics_by_cell_combination_box_plot <-
   plot_3D_vs_error_all_metrics_by_cell_combination_box_plot(metric_df_list,
                                                             metrics)
 
-fig_3D_vs_error_all_metrics_by_combination_and_slice_box_plot <- 
-  plot_3D_vs_error_all_metrics_by_combination_and_slice_box_plot(metric_df_list,
-                                                                 metrics)
-
-
 fig_3D_vs_error_all_metrics_by_slice_box_plot <- 
   plot_3D_vs_error_all_metrics_by_slice_box_plot(metric_df_list,
                                                  metrics)
+
+fig_3D_vs_error_all_metrics_by_combination_and_slice_box_plot <- 
+  plot_3D_vs_error_all_metrics_by_cell_combination_and_slice_box_plot(metric_df_list,
+                                                                      metrics)
+
+fig_3D_vs_2D_all_metrics_for_one_cell_combination_and_by_slice_box_plot <-
+  plot_3D_vs_2D_all_metrics_for_one_cell_combination_and_by_slice_box_plot(metric_df_list,
+                                                                           metrics)
+
+fig_3D_vs_error_all_metrics_for_one_cell_combination_and_by_slice_box_plot <-
+  plot_3D_vs_error_all_metrics_for_one_cell_combination_and_by_slice_box_plot(metric_df_list,
+                                                                              metrics)
 
 
 methods::show(fig_3D_vs_2D)
@@ -407,11 +583,13 @@ methods::show(fig_3D_vs_error_by_slice_box_plot)
 methods::show(fig_3D_vs_error_all_metrics_by_cell_combination_box_plot)
 methods::show(fig_3D_vs_error_all_metrics_by_slice_box_plot)
 methods::show(fig_3D_vs_error_all_metrics_by_combination_and_slice_box_plot)
+# methods::show(fig_3D_vs_2D_all_metrics_for_one_cell_combination_and_by_slice_box_plot)
+# methods::show(fig_3D_vs_error_all_metrics_for_one_cell_combination_and_by_slice_box_plot)
 
 
-
+### Plotting and upload ------
 setwd("~/R/plots/public_data")
-pdf("openST_human_metastatic_lymph_node.pdf", width = 12, height = 8)
+pdf(file_name, width = 12, height = 8)
 
 print(fig_3D_vs_2D)
 print(fig_3D_vs_error_by_combination_box_plot)
@@ -419,5 +597,7 @@ print(fig_3D_vs_error_by_slice_box_plot)
 print(fig_3D_vs_error_all_metrics_by_cell_combination_box_plot)
 print(fig_3D_vs_error_all_metrics_by_slice_box_plot)
 print(fig_3D_vs_error_all_metrics_by_combination_and_slice_box_plot)
+# print(fig_3D_vs_2D_all_metrics_for_one_cell_combination_and_by_slice_box_plot)
+# print(fig_3D_vs_error_all_metrics_for_one_cell_combination_and_by_slice_box_plot)
 
 dev.off()
