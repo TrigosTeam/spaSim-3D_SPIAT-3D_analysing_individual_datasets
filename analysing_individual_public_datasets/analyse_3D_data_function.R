@@ -31,7 +31,6 @@ analyse_3D_data <- function(
     AMD_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(AMD_df_colnames)))
     colnames(AMD_df) <- AMD_df_colnames
     
-    
     # Define MS, NMS, ACIN, ACINP, CKR, CLR, CGR, COO, AE data frames as well as constants
     radii_colnames <- paste("r", radii, sep = "")
     
@@ -39,28 +38,7 @@ analyse_3D_data <- function(
     MS_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(MS_df_colnames)))
     colnames(MS_df) <- MS_df_colnames
     
-    # NMS has same data frame output as MS
-    NMS_df <- MS_df
-    
-    # Only choose prop(A) as prop(A) = 1 - prop(B) always
-    ACINP_df_colnames <- c("slice", "reference", "target", radii_colnames)
-    ACINP_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(ACINP_df_colnames)))
-    colnames(ACINP_df) <- ACINP_df_colnames
-    
-    # AE has same data frame output as ACINP
-    AE_df <- ACINP_df
-    
-    ## ACIN and CKR are twice as large
-    # (ref A and tar A or B) OR (ref B and tar B or A)
-    ACIN_df_colnames <- c("slice", "reference", "target", radii_colnames)
-    ACIN_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(ACIN_df_colnames)))
-    colnames(ACIN_df) <- ACIN_df_colnames
-    
-    # CKR, CLR, COO, CGR have same data frame ouptut as ACIN
-    CKR_df <- ACIN_df
-    CLR_df <- ACIN_df
-    COO_df <- ACIN_df
-    CGR_df <- ACIN_df
+    NMS_df <- ACIN_df <- AE_df <- ACINP_df <- CKR_df <- CLR_df <- COO_df <- CGR_df <- MS_df
     
     # Define SAC and prevalence data frames as well as constants
     thresholds_colnames <- paste("t", thresholds, sep = "")
