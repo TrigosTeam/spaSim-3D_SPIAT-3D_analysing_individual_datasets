@@ -632,9 +632,9 @@ analyse_S1_simulations <- function(simulation_metadata) {
 }
 
 
-# Example ----
+# Running the functions ----
 parameters_df <- generate_random_parameters(
-  n_simulations = 3,
+  n_simulations = 10000,
   bg_prop_A_range = c("min" = 0, "max" = 0.10),
   bg_prop_B_range = c("min" = 0, "max" = 0.10),
   E_radius_x_range = c("min" = 75, "max" = 125),
@@ -649,4 +649,5 @@ parameters_df <- generate_random_parameters(
 simulation_metadata <- generate_simulation_metadata(parameters_df)
 
 S1_simulations_analysis <- analyse_S1_simulations(simulation_metadata)
+
 
