@@ -25,6 +25,13 @@ generate_random_parameters <- function(
     cluster1_x_coord = runif(n_simulations, cluster1_x_coord_range["min"], cluster1_x_coord_range["max"])
   )
   
+  # Randomly choose which arrangement and shape to use
+  arrangements <- c("mixed", "ringed", "separated")
+  shapes <- c("ellipsoid", "network")
+  
+  parameters_df$arrangement <- sample(arrangements, size = nrow(parameters_df), replace = TRUE)
+  parameters_df$shape <- sample(shapes, size = nrow(parameters_df), replace = TRUE)
+  
   return(parameters_df)
 }
 
@@ -63,9 +70,6 @@ generate_simulation_metadata <- function(parameters_df) {
   
   # Empty list for simulation_metadata
   simulation_metadata <- list()
-  
-  arrangements <- c("mixed", "ringed", "separated")
-  shapes <- c("ellipsoid", "network")
 
   for (i in seq_len(nrow(parameters_df))) {
     
@@ -77,9 +81,8 @@ generate_simulation_metadata <- function(parameters_df) {
                                                    parameters_df$bg_prop_B[i],
                                                    1 - parameters_df$bg_prop_A[i] - parameters_df$bg_prop_B[i]) # prop(O) = 1 - prop(A) - prop(B)
     
-    # For each simulation, randomly choose and arrangement and shape
-    shape <- sample(shapes, 1)
-    arrangement <- sample(arrangements, 1)
+    shape <- parameters_df[i, "shape"]
+    arrangement <- parameters_df[i, "arrangement"]
     
     # Determine what type of cluster to add to current metadata
     if (arrangement %in% c("mixed", "separated")) {
@@ -152,7 +155,6 @@ analyse_S1_simulations <- function(simulation_metadata) {
   # z-coords for slices
   bottom_z_coord_of_slices <- c(145, 175, 205)
   top_z_coord_of_slices <- bottom_z_coord_of_slices + 10
-  n_slices <- length(bottom_z_coord_of_slices)
   
   # Function to get a random slice from spe
   get_random_slice_from_spe <- function(spe, 
@@ -240,14 +242,6 @@ analyse_S1_simulations <- function(simulation_metadata) {
     
     return(metric_df_list)
   }
-  
-  metric_df_list <- create_empty_metric_df_list(
-    cell_types,
-    n_simulations,
-    radii_colnames,
-    thresholds_colnames
-  )
-  
 
   # Function analyse spe in 3D
   analyse_simulation3D <- function(spe, 
@@ -255,13 +249,13 @@ analyse_S1_simulations <- function(simulation_metadata) {
                                    radii, 
                                    thresholds, 
                                    n_splits, 
-                                   i, 
+                                   simulation_index, 
                                    metric_df_list) {
     n_cell_type_combinations <- length(cell_types)^2
     radii_colnames <- paste("r", radii, sep = "")
     thresholds_colnames <- paste("t", thresholds, sep = "")
     
-    index <- n_cell_type_combinations * (i - 1) + 1 
+    index <- n_cell_type_combinations * (simulation_index - 1) + 1 
     
     minimum_distance_data <- calculate_minimum_distances_between_cell_types3D(spe,
                                                                               cell_types,
@@ -270,13 +264,13 @@ analyse_S1_simulations <- function(simulation_metadata) {
     
     minimum_distance_data_summary <- summarise_distances_between_cell_types3D(minimum_distance_data)
     
-    metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "simulation"] <- i
+    metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "simulation"] <- simulation_index
     metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "reference"] <- minimum_distance_data_summary$reference
     metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "target"] <- minimum_distance_data_summary$target
     metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "AMD"] <- minimum_distance_data_summary$mean
     
     # Need a new index for gradient-based data which increments after each target cell type
-    gradient_index <- n_cell_type_combinations * (i - 1) + 1 
+    gradient_index <- n_cell_type_combinations * (simulation_index - 1) + 1 
     
     for (reference_cell_type in cell_types) {
       gradient_data <- calculate_all_gradient_cc_metrics3D(spe,
@@ -287,15 +281,15 @@ analyse_S1_simulations <- function(simulation_metadata) {
       
       for (target_cell_type in cell_types) {
         print(paste(reference_cell_type, target_cell_type, sep = "/"))
-        metric_df_list[["ACIN"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["ACINP"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["CKR"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["CLR"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["COO"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["CGR"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["MS"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["NMS"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["AE"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, 
+        metric_df_list[["ACIN"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["ACINP"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["CKR"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["CLR"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["COO"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["CGR"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["MS"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["NMS"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["AE"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, 
                                                                                             paste(reference_cell_type, target_cell_type, sep = ","))
         
         if (is.null(gradient_data)) {
@@ -330,11 +324,11 @@ analyse_S1_simulations <- function(simulation_metadata) {
         }
         
         # Spatial heterogeneity metrics
-        metric_df_list[["PBSAC"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["PBP"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
+        metric_df_list[["PBSAC"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["PBP"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         
-        metric_df_list[["EBSAC"]][gradient_index, c("simulation", "cell_types")] <- c(i, paste(reference_cell_type, target_cell_type, sep = ","))
-        metric_df_list[["EBP"]][gradient_index, c("simulation", "cell_types")] <- c(i, paste(reference_cell_type, target_cell_type, sep = ","))
+        metric_df_list[["EBSAC"]][gradient_index, c("simulation", "cell_types")] <- c(simulation_index, paste(reference_cell_type, target_cell_type, sep = ","))
+        metric_df_list[["EBP"]][gradient_index, c("simulation", "cell_types")] <- c(simulation_index, paste(reference_cell_type, target_cell_type, sep = ","))
         
         if (reference_cell_type != target_cell_type) {
           proportion_grid_metrics <- calculate_cell_proportion_grid_metrics3D(spe, 
@@ -404,13 +398,13 @@ analyse_S1_simulations <- function(simulation_metadata) {
                                    radii, 
                                    thresholds, 
                                    n_splits, 
-                                   i, 
+                                   simulation_index, 
                                    metric_df_list) {
     n_cell_type_combinations <- length(cell_types)^2
     radii_colnames <- paste("r", radii, sep = "")
     thresholds_colnames <- paste("t", thresholds, sep = "")
     
-    index <- n_cell_type_combinations * (i - 1) + 1 
+    index <- n_cell_type_combinations * (simulation_index - 1) + 1 
     
     minimum_distance_data <- calculate_minimum_distances_between_cell_types2D(spe,
                                                                               cell_types,
@@ -419,13 +413,13 @@ analyse_S1_simulations <- function(simulation_metadata) {
     
     minimum_distance_data_summary <- summarise_distances_between_cell_types2D(minimum_distance_data)
     
-    metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "simulation"] <- i
+    metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "simulation"] <- simulation_index
     metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "reference"] <- minimum_distance_data_summary$reference
     metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "target"] <- minimum_distance_data_summary$target
     metric_df_list[["AMD"]][index:(index + n_cell_type_combinations - 1), "AMD"] <- minimum_distance_data_summary$mean
     
     # Need a new index for gradient-based data which increments after each target cell type
-    gradient_index <- n_cell_type_combinations * (i - 1) + 1 
+    gradient_index <- n_cell_type_combinations * (simulation_index - 1) + 1 
     
     for (reference_cell_type in cell_types) {
       gradient_data <- calculate_all_gradient_cc_metrics2D(spe,
@@ -436,15 +430,15 @@ analyse_S1_simulations <- function(simulation_metadata) {
       
       for (target_cell_type in cell_types) {
         print(paste(reference_cell_type, target_cell_type, sep = "/"))
-        metric_df_list[["ACIN"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["ACINP"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["CKR"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["CLR"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["COO"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["CGR"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["MS"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["NMS"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["AE"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, 
+        metric_df_list[["ACIN"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["ACINP"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["CKR"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["CLR"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["COO"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["CGR"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["MS"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["NMS"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["AE"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, 
                                                                                             paste(reference_cell_type, target_cell_type, sep = ","))
         
         if (is.null(gradient_data)) {
@@ -479,11 +473,11 @@ analyse_S1_simulations <- function(simulation_metadata) {
         }
         
         # Spatial heterogeneity metrics
-        metric_df_list[["PBSAC"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-        metric_df_list[["PBP"]][gradient_index, c("simulation", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
+        metric_df_list[["PBSAC"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["PBP"]][gradient_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         
-        metric_df_list[["EBSAC"]][gradient_index, c("simulation", "cell_types")] <- c(i, paste(reference_cell_type, target_cell_type, sep = ","))
-        metric_df_list[["EBP"]][gradient_index, c("simulation", "cell_types")] <- c(i, paste(reference_cell_type, target_cell_type, sep = ","))
+        metric_df_list[["EBSAC"]][gradient_index, c("simulation", "cell_types")] <- c(simulation_index, paste(reference_cell_type, target_cell_type, sep = ","))
+        metric_df_list[["EBP"]][gradient_index, c("simulation", "cell_types")] <- c(simulation_index, paste(reference_cell_type, target_cell_type, sep = ","))
         
         if (reference_cell_type != target_cell_type) {
           proportion_grid_metrics <- calculate_cell_proportion_grid_metrics2D(spe, 
@@ -551,10 +545,10 @@ analyse_S1_simulations <- function(simulation_metadata) {
   metric_df_list3D <- metric_df_list2D <-
     create_empty_metric_df_list(cell_types, n_simulations, radii_colnames, thresholds_colnames)
   
-  for (i in seq_len(n_simulations)) {
-    print(i)
+  for (simulation_index in seq_len(n_simulations)) {
+    print(simulation_index)
     # Simulate spes in 3D, and get 2D slices
-    spe3D <- simulate_spe_metadata3D(simulation_metadata[[i]], plot_image = F)
+    spe3D <- simulate_spe_metadata3D(simulation_metadata[[simulation_index]], plot_image = F)
     
     spe2D <- get_random_slice_from_spe(spe3D, bottom_z_coord_of_slices, top_z_coord_of_slices)
     
@@ -564,7 +558,7 @@ analyse_S1_simulations <- function(simulation_metadata) {
                                              radii,
                                              thresholds,
                                              n_splits,
-                                             i,
+                                             simulation_index,
                                              metric_df_list3D)
     
     metric_df_list2D <- analyse_simulation2D(spe2D,
@@ -572,14 +566,9 @@ analyse_S1_simulations <- function(simulation_metadata) {
                                              radii,
                                              thresholds,
                                              n_splits,
-                                             i,
+                                             simulation_index,
                                              metric_df_list2D)
   }
-  
-  simulated_set_analysis <- list(
-    metric_df_list3D = metric_df_list3D,
-    metric_df_list2D = metric_df_list2D
-  )
   
   ## Turn gradient metrics into AUC and add to metric_df list
   get_AUC_for_radii_gradient_metrics <- function(y) {
@@ -592,19 +581,17 @@ analyse_S1_simulations <- function(simulation_metadata) {
     return(AUC)
   }
   
-  gradient_radii_metrics <- c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR")
-  
-  for (simulated_group_analysis in names(simulated_set_analysis)) {
-    metric_df_list <- simulated_set_analysis[[simulated_group_analysis]]
-    s
+  add_AUC_for_radii_gradient_metrics_to_metric_df_list <- function(metric_df_list, colnames_to_keep) {
+    gradient_radii_metrics <- c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR")
+    
     for (metric in gradient_radii_metrics) {
       metric_AUC_name <- paste(metric, "AUC", sep = "_")
       
       if (metric %in% c("MS", "NMS", "ACIN", "ACINP", "AE", "CKR", "CLR", "COO", "CGR")) {
-        subset_colnames <- c("simulation", "reference", "target", metric_AUC_name)
+        subset_colnames <- c(colnames_to_keep, metric_AUC_name)
       }
       else {
-        subset_colnames <- c("simulation", "reference", metric_AUC_name)
+        stop("Unknown metric?")
       }
       
       df <- metric_df_list[[metric]]
@@ -624,11 +611,25 @@ analyse_S1_simulations <- function(simulation_metadata) {
     EBP_df$EBP_AUC <- apply(EBP_df[ , thresholds_colnames], 1, sum) * 0.01
     EBP_AUC_df <- EBP_df[ , c("simulation", "cell_types", "EBP_AUC")]
     metric_df_list[["EBP_AUC"]] <- EBP_AUC_df
-    
-    simulated_set_analysis[[simulated_group_analysis]] <- metric_df_list
+  
+    return(metric_df_list)
   }
   
-  return(simulated_set_analysis)
+  metric_df_list3D <- add_AUC_for_radii_gradient_metrics_to_metric_df_list(metric_df_list3D, c("simulation", "reference", "target"))
+  metric_df_list2D <- add_AUC_for_radii_gradient_metrics_to_metric_df_list(metric_df_list3D, c("simulation", "reference", "target"))
+  
+  # Combine 3D and 2D metric df lists
+  metric_df_list_combined <- list()
+  
+  metrics <- names(metric_df_list3D)
+  for (metric in metrics) {
+    metric_df_list3D[[metric]][["dimension"]] <- "3D"
+    metric_df_list2D[[metric]][["dimension"]] <- "2D"
+    metric_df_combined <- rbind(metric_df_list3D[[metric]], metric_df_list2D[[metric]])
+    metric_df_list_combined[[metric]] <- metric_df_combined
+  }
+  
+  return(metric_df_list_combined)
 }
 
 
@@ -648,6 +649,6 @@ parameters_df <- generate_random_parameters(
 
 simulation_metadata <- generate_simulation_metadata(parameters_df)
 
-S1_simulations_analysis <- analyse_S1_simulations(simulation_metadata)
+S1_metric_df_list <- analyse_S1_simulations(simulation_metadata)
 
 
