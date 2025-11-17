@@ -35,115 +35,12 @@ generate_random_parameters <- function(
   return(parameters_df)
 }
 
-# Generate simulation metadata using parameters data frame from 'generate_random_parameters' function
-generate_simulation_metadata <- function(parameters_df) {
-  
-  # Constant metadata for simulations
-  bg_metadata <- spe_metadata_background_template("random")
-  bg_metadata$background$n_cells <- 30000
-  bg_metadata$background$length <- 600
-  bg_metadata$background$width <- 600
-  bg_metadata$background$height <- 300
-  bg_metadata$background$minimum_distance_between_cells <- 10
-  bg_metadata$background$cell_types <- c("A", "B", "O") # Cell proportions will change later
-  
-  N_radius <- 125
-  N_n_edges <- 20
-  
-  mixed_cluster_cell_types <- c("A", "B")
-  mixed_cluster_centre_loc <- c(300, 300, 150)
-
-  ringed_cluster_cell_type <- "A"
-  ringed_cluster_cell_prop <- 1
-  ringed_ring_cell_type <- "B"
-  ringed_ring_cell_prop <- 1
-  ringed_cluster_centre_loc <- c(300, 300, 150)
-  
-  separated_cluster1_cell_type <- "A"
-  separated_cluster1_cell_prop <- 1
-  separated_cluster1_y_z_centre_loc <- c(300, 150) # Append x-coord to it later
-  separated_cluster2_shape <- "sphere"
-  separated_cluster2_cell_type <- "B"
-  separated_cluster2_cell_prop <- 1
-  separated_cluster2_centre_loc <- c(450, 300, 150)
-  separated_cluster2_radius <- 100
-  
-  # Empty list for simulation_metadata
-  simulation_metadata <- list()
-
-  for (i in seq_len(nrow(parameters_df))) {
-    
-    # Current metadata starts off as the template background metadata from above
-    curr_metadata <- bg_metadata
-    
-    # Alter background cell proportions
-    curr_metadata$background$cell_proportions <- c(parameters_df$bg_prop_A[i], 
-                                                   parameters_df$bg_prop_B[i],
-                                                   1 - parameters_df$bg_prop_A[i] - parameters_df$bg_prop_B[i]) # prop(O) = 1 - prop(A) - prop(B)
-    
-    shape <- parameters_df[i, "shape"]
-    arrangement <- parameters_df[i, "arrangement"]
-    
-    # Determine what type of cluster to add to current metadata
-    if (arrangement %in% c("mixed", "separated")) {
-      curr_metadata <- spe_metadata_cluster_template("regular", shape, curr_metadata)
-    }
-    else if (arrangement == "ringed") {
-      curr_metadata <- spe_metadata_cluster_template("ring", shape, curr_metadata)
-    }
-    
-    # Modify shape parameters
-    if (shape == "ellipsoid") {
-      curr_metadata$cluster_1$radii <- c(parameters_df$E_radius_x[i], parameters_df$E_radius_y[i], parameters_df$E_radius_z[i])
-      curr_metadata$cluster_1$axes_rotation <- c(runif(1, 0, 180), runif(1, 0, 180), runif(1, 0, 180)) # Choose random rotation angles
-    }
-    
-    else if (shape == "network") {
-      curr_metadata$cluster_1$n_edges <- N_n_edges
-      curr_metadata$cluster_1$width <- parameters_df$N_width[i]
-      curr_metadata$cluster_1$radius <- N_radius
-    }
-    
-    # Modify arrangemetn parameters
-    if (arrangement == "mixed") {
-      curr_metadata$cluster_1$cluster_cell_types <- mixed_cluster_cell_types
-      curr_metadata$cluster_1$cluster_cell_proportions <- c(parameters_df$cluster_prop_A[i], 1 - parameters_df$cluster_prop_A[i])
-      curr_metadata$cluster_1$centre_loc <- mixed_cluster_centre_loc
-    }
-    else if (arrangement == "ringed") {
-      curr_metadata$cluster_1$cluster_cell_types <- ringed_cluster_cell_type
-      curr_metadata$cluster_1$cluster_cell_proportions <- ringed_cluster_cell_prop
-      curr_metadata$cluster_1$centre_loc <- ringed_cluster_centre_loc
-      curr_metadata$cluster_1$ring_cell_types <- ringed_ring_cell_type
-      curr_metadata$cluster_1$ring_cell_proportions <- ringed_ring_cell_prop
-      curr_metadata$cluster_1$ring_width <- parameters_df$ring_width_factor[i] * ifelse(shape == "network", 
-                                                                                     parameters_df$N_width[i],
-                                                                                     apply(parameters_df[, c("E_radius_x", "E_radius_y", "E_radius_z")], 1, mean))
-    }
-    else if (arrangement == "separated") {
-      curr_metadata$cluster_1$cluster_cell_types <- separated_cluster1_cell_type
-      curr_metadata$cluster_1$cluster_cell_proportions <- separated_cluster1_cell_prop
-      curr_metadata$cluster_1$centre_loc <- c(parameters_df$cluster1_x_coord[i], separated_cluster1_y_z_centre_loc)
-      
-      curr_metadata <- spe_metadata_cluster_template("regular", "sphere", curr_metadata)
-      curr_metadata$cluster_2$cluster_cell_types <- separated_cluster2_cell_type
-      curr_metadata$cluster_2$cluster_cell_proportions <- separated_cluster2_cell_prop
-      curr_metadata$cluster_2$centre_loc <- separated_cluster2_centre_loc
-      curr_metadata$cluster_2$radius <- separated_cluster2_radius
-    }
-    
-    simulation_metadata[[i]] <- curr_metadata
-  }
-  return(simulation_metadata)
-}
-
-
 # Analyse S1 simulations
-analyse_S1_simulations <- function(simulation_metadata) {
+analyse_S1_simulations <- function(parameters_df) {
   
   # Set defined parameters/values
   cell_types <- c('A', 'B')
-  n_simulations <- length(simulation_metadata)
+  n_simulations <- nrow(parameters_df)
   
   radii <- seq(20, 100, 10)
   radii_colnames <- paste("r", radii, sep = "")
@@ -155,6 +52,98 @@ analyse_S1_simulations <- function(simulation_metadata) {
   # z-coords for slices
   bottom_z_coord_of_slices <- c(145, 175, 205)
   top_z_coord_of_slices <- bottom_z_coord_of_slices + 10
+  
+  # Generate simulation metadata using parameters data frame from 'generate_random_parameters' function
+  generate_simulation_metadata <- function(parameters_df, simulation_index) {
+    
+    # Constant metadata for simulations
+    simulation_metadata <- spe_metadata_background_template("random")
+    simulation_metadata$background$n_cells <- 30000
+    simulation_metadata$background$length <- 600
+    simulation_metadata$background$width <- 600
+    simulation_metadata$background$height <- 300
+    simulation_metadata$background$minimum_distance_between_cells <- 10
+    simulation_metadata$background$cell_types <- c("A", "B", "O") # Cell proportions will change later
+    
+    N_radius <- 125
+    N_n_edges <- 20
+    
+    mixed_cluster_cell_types <- c("A", "B")
+    mixed_cluster_centre_loc <- c(300, 300, 150)
+    
+    ringed_cluster_cell_type <- "A"
+    ringed_cluster_cell_prop <- 1
+    ringed_ring_cell_type <- "B"
+    ringed_ring_cell_prop <- 1
+    ringed_cluster_centre_loc <- c(300, 300, 150)
+    
+    separated_cluster1_cell_type <- "A"
+    separated_cluster1_cell_prop <- 1
+    separated_cluster1_y_z_centre_loc <- c(300, 150) # Append x-coord to it later
+    separated_cluster2_shape <- "sphere"
+    separated_cluster2_cell_type <- "B"
+    separated_cluster2_cell_prop <- 1
+    separated_cluster2_centre_loc <- c(450, 300, 150)
+    separated_cluster2_radius <- 100
+    
+    # Alter background cell proportions
+    simulation_metadata$background$cell_proportions <- c(parameters_df$bg_prop_A[simulation_index], 
+                                                         parameters_df$bg_prop_B[simulation_index],
+                                                         1 - parameters_df$bg_prop_A[simulation_index] - parameters_df$bg_prop_B[simulation_index]) # prop(O) = 1 - prop(A) - prop(B)
+    
+    shape <- parameters_df[simulation_index, "shape"]
+    arrangement <- parameters_df[simulation_index, "arrangement"]
+    
+    # Determine what type of cluster to add to current metadata
+    if (arrangement %in% c("mixed", "separated")) {
+      simulation_metadata <- spe_metadata_cluster_template("regular", shape, simulation_metadata)
+    }
+    else if (arrangement == "ringed") {
+      simulation_metadata <- spe_metadata_cluster_template("ring", shape, simulation_metadata)
+    }
+    
+    # Modify shape parameters
+    if (shape == "ellipsoid") {
+      simulation_metadata$cluster_1$radii <- c(parameters_df$E_radius_x[simulation_index], parameters_df$E_radius_y[simulation_index], parameters_df$E_radius_z[simulation_index])
+      simulation_metadata$cluster_1$axes_rotation <- c(runif(1, 0, 180), runif(1, 0, 180), runif(1, 0, 180)) # Choose random rotation angles
+    }
+    
+    else if (shape == "network") {
+      simulation_metadata$cluster_1$n_edges <- N_n_edges
+      simulation_metadata$cluster_1$width <- parameters_df$N_width[simulation_index]
+      simulation_metadata$cluster_1$radius <- N_radius
+    }
+    
+    # Modify arrangemetn parameters
+    if (arrangement == "mixed") {
+      simulation_metadata$cluster_1$cluster_cell_types <- mixed_cluster_cell_types
+      simulation_metadata$cluster_1$cluster_cell_proportions <- c(parameters_df$cluster_prop_A[simulation_index], 1 - parameters_df$cluster_prop_A[simulation_index])
+      simulation_metadata$cluster_1$centre_loc <- mixed_cluster_centre_loc
+    }
+    else if (arrangement == "ringed") {
+      simulation_metadata$cluster_1$cluster_cell_types <- ringed_cluster_cell_type
+      simulation_metadata$cluster_1$cluster_cell_proportions <- ringed_cluster_cell_prop
+      simulation_metadata$cluster_1$centre_loc <- ringed_cluster_centre_loc
+      simulation_metadata$cluster_1$ring_cell_types <- ringed_ring_cell_type
+      simulation_metadata$cluster_1$ring_cell_proportions <- ringed_ring_cell_prop
+      simulation_metadata$cluster_1$ring_width <- parameters_df$ring_width_factor[simulation_index] * ifelse(shape == "network", 
+                                                                                                             parameters_df$N_width[simulation_index],
+                                                                                                             apply(parameters_df[, c("E_radius_x", "E_radius_y", "E_radius_z")], 1, mean))
+    }
+    else if (arrangement == "separated") {
+      simulation_metadata$cluster_1$cluster_cell_types <- separated_cluster1_cell_type
+      simulation_metadata$cluster_1$cluster_cell_proportions <- separated_cluster1_cell_prop
+      simulation_metadata$cluster_1$centre_loc <- c(parameters_df$cluster1_x_coord[simulation_index], separated_cluster1_y_z_centre_loc)
+      
+      simulation_metadata <- spe_metadata_cluster_template("regular", "sphere", simulation_metadata)
+      simulation_metadata$cluster_2$cluster_cell_types <- separated_cluster2_cell_type
+      simulation_metadata$cluster_2$cluster_cell_proportions <- separated_cluster2_cell_prop
+      simulation_metadata$cluster_2$centre_loc <- separated_cluster2_centre_loc
+      simulation_metadata$cluster_2$radius <- separated_cluster2_radius
+    }
+    
+    return(simulation_metadata)
+  }
   
   # Function to get a random slice from spe
   get_random_slice_from_spe <- function(spe, 
@@ -550,7 +539,9 @@ analyse_S1_simulations <- function(simulation_metadata) {
   for (simulation_index in seq_len(n_simulations)) {
     print(simulation_index)
     # Simulate spes in 3D, and get 2D slices
-    spe3D <- simulate_spe_metadata3D(simulation_metadata[[simulation_index]], plot_image = F)
+    simulation_metadata <- generate_simulation_metadata(parameters_df, simulation_index)
+    
+    spe3D <- simulate_spe_metadata3D(simulation_metadata, plot_image = F)
     
     spe2D <- get_random_slice_from_spe(spe3D, bottom_z_coord_of_slices, top_z_coord_of_slices)
     
@@ -649,8 +640,6 @@ parameters_df <- generate_random_parameters(
   cluster1_x_coord_range = c("min" = 125, "max" = 175)
 )
 
-simulation_metadata <- generate_simulation_metadata(parameters_df)
-
-S1_metric_df_list <- analyse_S1_simulations(simulation_metadata)
+S1_metric_df_list <- analyse_S1_simulations(parameters_df)
 
 
