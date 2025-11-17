@@ -305,18 +305,19 @@ analyse_S1_simulations <- function(simulation_metadata) {
         }
         else {
           metric_df_list[["ACIN"]][gradient_index, radii_colnames] <- gradient_data[["cells_in_neighbourhood"]][[target_cell_type]]
-          metric_df_list[["ACINP"]][gradient_index, radii_colnames] <- gradient_data[["cells_in_neighbourhood_proportion"]][[target_cell_type]]
           metric_df_list[["CKR"]][gradient_index, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]] / gradient_data[["cross_K"]][["expected"]]
           metric_df_list[["CLR"]][gradient_index, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] / gradient_data[["cross_L"]][["expected"]]
           metric_df_list[["COO"]][gradient_index, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
           metric_df_list[["CGR"]][gradient_index, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] / gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
           
           if (reference_cell_type != target_cell_type) {
+            metric_df_list[["ACINP"]][gradient_index, radii_colnames] <- gradient_data[["cells_in_neighbourhood_proportion"]][[target_cell_type]]
             metric_df_list[["MS"]][gradient_index, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$mixing_score
             metric_df_list[["NMS"]][gradient_index, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$normalised_mixing_score
             metric_df_list[["AE"]][gradient_index, radii_colnames] <- gradient_data[["entropy"]][[target_cell_type]]
           }
           else {
+            metric_df_list[["ACINP"]][gradient_index, radii_colnames] <- Inf
             metric_df_list[["MS"]][gradient_index, radii_colnames] <- Inf
             metric_df_list[["NMS"]][gradient_index, radii_colnames] <- Inf
             metric_df_list[["AE"]][gradient_index, radii_colnames] <- Inf
@@ -454,18 +455,19 @@ analyse_S1_simulations <- function(simulation_metadata) {
         }
         else {
           metric_df_list[["ACIN"]][gradient_index, radii_colnames] <- gradient_data[["cells_in_neighbourhood"]][[target_cell_type]]
-          metric_df_list[["ACINP"]][gradient_index, radii_colnames] <- gradient_data[["cells_in_neighbourhood_proportion"]][[target_cell_type]]
           metric_df_list[["CKR"]][gradient_index, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]] / gradient_data[["cross_K"]][["expected"]]
           metric_df_list[["CLR"]][gradient_index, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] / gradient_data[["cross_L"]][["expected"]]
           metric_df_list[["COO"]][gradient_index, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
           metric_df_list[["CGR"]][gradient_index, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] / gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
           
           if (reference_cell_type != target_cell_type) {
+            metric_df_list[["ACINP"]][gradient_index, radii_colnames] <- gradient_data[["cells_in_neighbourhood_proportion"]][[target_cell_type]]
             metric_df_list[["MS"]][gradient_index, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$mixing_score
             metric_df_list[["NMS"]][gradient_index, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$normalised_mixing_score
             metric_df_list[["AE"]][gradient_index, radii_colnames] <- gradient_data[["entropy"]][[target_cell_type]]
           }
           else {
+            metric_df_list[["ACINP"]][gradient_index, radii_colnames] <- Inf
             metric_df_list[["MS"]][gradient_index, radii_colnames] <- Inf
             metric_df_list[["NMS"]][gradient_index, radii_colnames] <- Inf
             metric_df_list[["AE"]][gradient_index, radii_colnames] <- Inf
