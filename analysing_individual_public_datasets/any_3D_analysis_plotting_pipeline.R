@@ -176,7 +176,7 @@ plot_3D_vs_2D <- function(metric_df_list,
 }
 
 plot_3D_vs_error_by_pair_box_plot <- function(metric_df_list,
-                                                          metric) {
+                                              metric) {
   
   # Get metric_df for current metric
   metric_df <- metric_df_list[[metric]]
@@ -257,7 +257,7 @@ plot_3D_vs_error_by_slice_box_plot <- function(metric_df_list,
 
 
 plot_3D_vs_error_all_metrics_by_pair_box_plot <- function(metric_df_list,
-                                                                      metrics) {
+                                                          metrics) {
   
   plot_df <- data.frame()
   
@@ -378,7 +378,7 @@ plot_3D_vs_error_all_metrics_by_slice_box_plot <- function(metric_df_list,
 
 
 plot_3D_vs_error_all_metrics_by_pair_and_slice_box_plot <- function(metric_df_list,
-                                                                                metrics) {
+                                                                    metrics) {
   
   plot_df <- data.frame()
   
@@ -549,7 +549,7 @@ fig_3D_vs_2D <- plot_3D_vs_2D(metric_df_list,
 
 # This is for a SINGLE metric
 fig_3D_vs_error_by_pair_box_plot <- plot_3D_vs_error_by_pair_box_plot(metric_df_list,
-                                                                                         metric)
+                                                                      metric)
 
 # This is for a SINGLE metric
 fig_3D_vs_error_by_slice_box_plot <- plot_3D_vs_error_by_slice_box_plot(metric_df_list,
@@ -558,7 +558,7 @@ fig_3D_vs_error_by_slice_box_plot <- plot_3D_vs_error_by_slice_box_plot(metric_d
 
 fig_3D_vs_error_all_metrics_by_pair_box_plot <- 
   plot_3D_vs_error_all_metrics_by_pair_box_plot(metric_df_list,
-                                                            metrics)
+                                                metrics)
 
 # fig_3D_vs_error_all_metrics_by_all_pair_box_plot <-
 #   plot_3D_vs_error_all_metrics_by_all_pair_box_plot(metric_df_list,
@@ -570,7 +570,7 @@ fig_3D_vs_error_all_metrics_by_slice_box_plot <-
 
 fig_3D_vs_error_all_metrics_by_pair_and_slice_box_plot <- 
   plot_3D_vs_error_all_metrics_by_pair_and_slice_box_plot(metric_df_list,
-                                                                      metrics)
+                                                          metrics)
 
 # fig_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot <-
 #   plot_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
