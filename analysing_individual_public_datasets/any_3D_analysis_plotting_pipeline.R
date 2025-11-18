@@ -175,7 +175,7 @@ plot_3D_vs_2D <- function(metric_df_list,
   return(fig)
 }
 
-plot_3D_vs_error_by_cell_combination_box_plot <- function(metric_df_list,
+plot_3D_vs_error_by_pair_box_plot <- function(metric_df_list,
                                                           metric) {
   
   # Get metric_df for current metric
@@ -196,15 +196,15 @@ plot_3D_vs_error_by_cell_combination_box_plot <- function(metric_df_list,
   # Remove 3D data (integrated into error)
   metric_df <- metric_df[metric_df[["slice"]] != max(as.integer(metric_df$slice)), ]
   
-  # Add reference-target column
-  metric_df$reference_target <- paste(metric_df$reference, metric_df$target, sep = "/")
+  # Add pair column
+  metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
   
-  fig <- ggplot(metric_df, aes(x = reference_target, y = error)) +
+  fig <- ggplot(metric_df, aes(x = pair, y = error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by Reference/Target combination",
-         x = "Reference/Target combination",
+    labs(title = "Error Distribution by Pair",
+         x = "Pair",
          y = "Error (%)") +
     theme_minimal() +
     theme(
@@ -256,7 +256,7 @@ plot_3D_vs_error_by_slice_box_plot <- function(metric_df_list,
 }
 
 
-plot_3D_vs_error_all_metrics_by_cell_combination_box_plot <- function(metric_df_list,
+plot_3D_vs_error_all_metrics_by_pair_box_plot <- function(metric_df_list,
                                                                       metrics) {
   
   plot_df <- data.frame()
@@ -282,18 +282,18 @@ plot_3D_vs_error_all_metrics_by_cell_combination_box_plot <- function(metric_df_
     metric_df <- metric_df[metric_df[["slice"]] != max(as.integer(metric_df$slice)), ]
     
     if (!(metric %in% c("EBSAC", "EBP_AUC"))) {
-      # Add reference-target column
-      metric_df$reference_target <- paste(metric_df$reference, metric_df$target, sep = "/")
+      # Add pair column
+      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
       
-      # Extract median values for error for each reference-target
+      # Extract median values for error for each pair
       median_df <- metric_df %>%
-        group_by(reference_target) %>%
+        group_by(pair) %>%
         dplyr::summarize(median_error = median(error, na.rm = TRUE), .groups = "drop")
       
-      median_df$reference_target <- NULL
+      median_df$pair <- NULL
     }
     else {
-      # Extract median values for error for each reference-target
+      # Extract median values for error for each pair
       median_df <- metric_df %>%
         group_by(cell_types) %>%
         dplyr::summarize(median_error = median(error, na.rm = TRUE), .groups = "drop")
@@ -311,7 +311,7 @@ plot_3D_vs_error_all_metrics_by_cell_combination_box_plot <- function(metric_df_
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by metric, showing median error for each Reference/Target combination",
+    labs(title = "Error Distribution by metric, showing median error for each Pair",
          x = "Metric",
          y = "Error (%)") +
     theme_minimal() +
@@ -377,7 +377,7 @@ plot_3D_vs_error_all_metrics_by_slice_box_plot <- function(metric_df_list,
 }
 
 
-plot_3D_vs_error_all_metrics_by_cell_combination_and_slice_box_plot <- function(metric_df_list,
+plot_3D_vs_error_all_metrics_by_pair_and_slice_box_plot <- function(metric_df_list,
                                                                                 metrics) {
   
   plot_df <- data.frame()
@@ -426,7 +426,7 @@ plot_3D_vs_error_all_metrics_by_cell_combination_and_slice_box_plot <- function(
   return(fig)
 }
 
-# plot_3D_vs_2D_all_metrics_for_one_cell_combination_and_by_slice_box_plot <- function(metric_df_list,
+# plot_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot <- function(metric_df_list,
 #                                                                                      metrics) {
 #   
 #   plot_df <- data.frame()
@@ -464,7 +464,7 @@ plot_3D_vs_error_all_metrics_by_cell_combination_and_slice_box_plot <- function(
 #     geom_point(data = plot_df[plot_df$slice == as.character(max(as.numeric(plot_df$slice))), ],
 #                shape = 8, color = "#bb0036", size = 3) +
 #     facet_wrap(~ metric, scales = "free_y") +  # Facet by metric with independent y-axes
-#     labs(title = "Value of Metric Distribution by Metric, for one cell combination and for each slice",
+#     labs(title = "Value of Metric Distribution by Metric, for one cell pair and for each slice",
 #          x = "",
 #          y = "") +
 #     theme_minimal() +
@@ -483,7 +483,7 @@ plot_3D_vs_error_all_metrics_by_cell_combination_and_slice_box_plot <- function(
 #   return(fig)
 # }
 # 
-# plot_3D_vs_error_all_metrics_for_one_cell_combination_and_by_slice_box_plot <- function(metric_df_list,
+# plot_3D_vs_error_all_metrics_for_one_pair_and_by_slice_box_plot <- function(metric_df_list,
 #                                                                                         metrics) {
 #   
 #   plot_df <- data.frame()
@@ -526,7 +526,7 @@ plot_3D_vs_error_all_metrics_by_cell_combination_and_slice_box_plot <- function(
 #     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
 #     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
 #     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-#     labs(title = "Error Distribution by Metric, for one cell combination and for each slice",
+#     labs(title = "Error Distribution by Metric, for one cell pair and for each slice",
 #          x = "Metric",
 #          y = "Error (%)") +
 #     theme_minimal() +
@@ -548,7 +548,7 @@ fig_3D_vs_2D <- plot_3D_vs_2D(metric_df_list,
                               metric)
 
 # This is for a SINGLE metric
-fig_3D_vs_error_by_combination_box_plot <- plot_3D_vs_error_by_cell_combination_box_plot(metric_df_list,
+fig_3D_vs_error_by_pair_box_plot <- plot_3D_vs_error_by_pair_box_plot(metric_df_list,
                                                                                          metric)
 
 # This is for a SINGLE metric
@@ -556,35 +556,40 @@ fig_3D_vs_error_by_slice_box_plot <- plot_3D_vs_error_by_slice_box_plot(metric_d
                                                                         metric)
 
 
-fig_3D_vs_error_all_metrics_by_cell_combination_box_plot <- 
-  plot_3D_vs_error_all_metrics_by_cell_combination_box_plot(metric_df_list,
+fig_3D_vs_error_all_metrics_by_pair_box_plot <- 
+  plot_3D_vs_error_all_metrics_by_pair_box_plot(metric_df_list,
                                                             metrics)
+
+# fig_3D_vs_error_all_metrics_by_all_pair_box_plot <-
+#   plot_3D_vs_error_all_metrics_by_all_pair_box_plot(metric_df_list,
+#                                                                 metrics)
 
 fig_3D_vs_error_all_metrics_by_slice_box_plot <- 
   plot_3D_vs_error_all_metrics_by_slice_box_plot(metric_df_list,
                                                  metrics)
 
-fig_3D_vs_error_all_metrics_by_combination_and_slice_box_plot <- 
-  plot_3D_vs_error_all_metrics_by_cell_combination_and_slice_box_plot(metric_df_list,
+fig_3D_vs_error_all_metrics_by_pair_and_slice_box_plot <- 
+  plot_3D_vs_error_all_metrics_by_pair_and_slice_box_plot(metric_df_list,
                                                                       metrics)
 
-fig_3D_vs_2D_all_metrics_for_one_cell_combination_and_by_slice_box_plot <-
-  plot_3D_vs_2D_all_metrics_for_one_cell_combination_and_by_slice_box_plot(metric_df_list,
-                                                                           metrics)
-
-fig_3D_vs_error_all_metrics_for_one_cell_combination_and_by_slice_box_plot <-
-  plot_3D_vs_error_all_metrics_for_one_cell_combination_and_by_slice_box_plot(metric_df_list,
-                                                                              metrics)
+# fig_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot <-
+#   plot_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
+#                                                                            metrics)
+# 
+# fig_3D_vs_error_all_metrics_for_one_pair_and_by_slice_box_plot <-
+#   plot_3D_vs_error_all_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
+#                                                                               metrics)
 
 
 methods::show(fig_3D_vs_2D)
-methods::show(fig_3D_vs_error_by_combination_box_plot)
+methods::show(fig_3D_vs_error_by_pair_box_plot)
 methods::show(fig_3D_vs_error_by_slice_box_plot)
-methods::show(fig_3D_vs_error_all_metrics_by_cell_combination_box_plot)
+methods::show(fig_3D_vs_error_all_metrics_by_pair_box_plot)
+# methods::show(fig_3D_vs_error_all_metrics_by_all_pair_box_plot)
 methods::show(fig_3D_vs_error_all_metrics_by_slice_box_plot)
-methods::show(fig_3D_vs_error_all_metrics_by_combination_and_slice_box_plot)
-# methods::show(fig_3D_vs_2D_all_metrics_for_one_cell_combination_and_by_slice_box_plot)
-# methods::show(fig_3D_vs_error_all_metrics_for_one_cell_combination_and_by_slice_box_plot)
+methods::show(fig_3D_vs_error_all_metrics_by_pair_and_slice_box_plot)
+# methods::show(fig_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot)
+# methods::show(fig_3D_vs_error_all_metrics_for_one_pair_and_by_slice_box_plot)
 
 
 ### Plotting and upload ------
@@ -592,12 +597,12 @@ setwd("~/R/plots/public_data")
 pdf(file_name, width = 12, height = 8)
 
 print(fig_3D_vs_2D)
-print(fig_3D_vs_error_by_combination_box_plot)
+print(fig_3D_vs_error_by_pair_box_plot)
 print(fig_3D_vs_error_by_slice_box_plot)
-print(fig_3D_vs_error_all_metrics_by_cell_combination_box_plot)
+print(fig_3D_vs_error_all_metrics_by_pair_box_plot)
 print(fig_3D_vs_error_all_metrics_by_slice_box_plot)
-print(fig_3D_vs_error_all_metrics_by_combination_and_slice_box_plot)
-# print(fig_3D_vs_2D_all_metrics_for_one_cell_combination_and_by_slice_box_plot)
-# print(fig_3D_vs_error_all_metrics_for_one_cell_combination_and_by_slice_box_plot)
+print(fig_3D_vs_error_all_metrics_by_pair_and_slice_box_plot)
+# print(fig_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot)
+# print(fig_3D_vs_error_all_metrics_for_one_pair_and_by_slice_box_plot)
 
 dev.off()
