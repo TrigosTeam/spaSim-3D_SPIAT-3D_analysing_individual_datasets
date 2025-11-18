@@ -609,7 +609,7 @@ analyse_S1_simulations <- function(parameters_df) {
   }
   
   metric_df_list3D <- add_AUC_for_radii_gradient_metrics_to_metric_df_list(metric_df_list3D, c("simulation", "reference", "target"))
-  metric_df_list2D <- add_AUC_for_radii_gradient_metrics_to_metric_df_list(metric_df_list3D, c("simulation", "reference", "target"))
+  metric_df_list2D <- add_AUC_for_radii_gradient_metrics_to_metric_df_list(metric_df_list2D, c("simulation", "reference", "target"))
   
   # Combine 3D and 2D metric df lists
   metric_df_list_combined <- list()
