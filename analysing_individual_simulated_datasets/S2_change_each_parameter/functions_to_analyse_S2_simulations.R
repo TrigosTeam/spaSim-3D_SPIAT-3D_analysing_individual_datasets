@@ -825,7 +825,7 @@ analyse_S2_simulations <- function(parameters_df) {
 
 # Running the functions ------------
 updated_parameters_df <- generate_updated_parameters_for_arrangement_and_shape(
-  n_simulations_per_parameter = 1,
+  n_simulations_per_parameter = 1000,
   bg_prop_A_range = c("min" = 0, "max" = 0.10),
   bg_prop_B_range = c("min" = 0, "max" = 0.10),
   E_radius_x_range = c("min" = 75, "max" = 125),
