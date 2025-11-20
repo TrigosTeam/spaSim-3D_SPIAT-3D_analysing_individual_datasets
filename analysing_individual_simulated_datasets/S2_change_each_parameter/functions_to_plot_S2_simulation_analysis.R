@@ -58,6 +58,17 @@ get_parameters <- function(arrangement, shape) {
   return(parameters)
 }
 
+combine_metric_and_parameters_df <- function(metric_df, parameters_df) {
+  pairs <- unique(metric_df$pair)
+  metric_and_parameters_df <- data.frame()
+  for (slice in unique(metric_df$slice)) {
+    metric_and_parameters_df <- rbind(metric_and_parameters_df, 
+                                      cbind(metric_df[metric_df$slice == slice, ], 
+                                            parameters_df[rep(1:nrow(parameters_df), each = length(pairs)), ]))
+  }
+  return(metric_and_parameters_df)
+}
+
 plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_df_list, parameters_df, metric) {
   
   fig_list <- list()
@@ -68,7 +79,6 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
   
   # Subset the metric_df_list
   metric_df <- metric_df_list[[metric]]
-  metric_df <- metric_df[metric_df$slice == 0, ] # slice == 0 refers to 3D values
   
   # Add 'pair' column to metric_df
   metric_df <- add_pair_to_metric_df(metric_df, metric)
@@ -84,8 +94,11 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
   parameters_df$variable_parameter[parameters_df$variable_parameter == "cluster1_x_coord"] <- "distance"
   
   # Combine metric_df with parameters_df
-  metric_df <- cbind(metric_df, parameters_df[rep(1:nrow(parameters_df), each = length(pairs)), ])
+  metric_df <- combine_metric_and_parameters_df(metric_df, parameters_df)
   
+  # Subset for 3D values only
+  metric_df <- metric_df[metric_df$slice == 0, ]
+
   for (arrangement in arrangements) {
     for (shape in shapes) {
       
@@ -107,7 +120,7 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
         for (parameter in parameters) {
           # Subset for parameter
           plot_df <- metric_arrangement_shape_pair_df[metric_arrangement_shape_pair_df$variable_parameter == parameter, ]
-          
+
           # Get correlation and p-value
           correlation_test <- cor.test(plot_df[[parameter]], plot_df[[metric]], method = "spearman")
           correlation <- correlation_test$estimate
@@ -129,7 +142,7 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
           }
           
           fig <- ggplot(plot_df, aes_string(parameter, metric)) +
-            geom_point(size = 1) +
+            geom_point(size = 0.5) +
             ggtitle(paste("r:", round(correlation, 3), ", p:", p_value)) +
             theme_minimal() +
             theme(
@@ -216,9 +229,9 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
   parameters_df$variable_parameter[parameters_df$variable_parameter == "E_radius_x"] <- "E_volume"
   parameters_df$variable_parameter[parameters_df$variable_parameter == "cluster1_x_coord"] <- "distance"
   
-  # Combine metric_df with parameters_df, use '4' as 3 slices + 3D value
-  metric_df <- cbind(metric_df, do.call(rbind, replicate(4, parameters_df[rep(1:nrow(parameters_df), each = length(pairs)), ], simplify = FALSE)))
-
+  # Combine metric_df with parameters_df
+  metric_df <- combine_metric_and_parameters_df(metric_df, parameters_df)
+  
   for (arrangement in arrangements) {
     for (shape in shapes) {
       
@@ -242,7 +255,7 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
           plot_df <- metric_arrangement_shape_pair_df[metric_arrangement_shape_pair_df$variable_parameter == parameter, ]
           
           fig <- ggplot(plot_df, aes_string(parameter, metric, color = "slice")) +
-            geom_point(size = 1) +
+            geom_point(size = 0.5) +
             theme_minimal() +
             theme(
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
@@ -252,7 +265,15 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
               legend.position = "none"
             ) +
             scale_x_continuous(breaks = pretty_breaks(n = 3)) + 
-            scale_y_continuous(breaks = pretty_breaks(n = 3)) 
+            scale_y_continuous(breaks = pretty_breaks(n = 3)) +
+            scale_color_manual(
+              values = c(
+                "0" = "black",
+                "1" = "#bb0036",
+                "2" = "#007128",
+                "3" = "#0062c5"
+              )
+            )
           
           fig_list[[arrangement_shape]][[pair]][[parameter]] <- fig
         }
