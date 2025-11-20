@@ -204,7 +204,8 @@ plot_3D_vs_parameters_for_gradient_metrics_line_graph <- function(metric_df_list
 }
 
 plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_df_list, parameters_df, metric) {
-  fig_list <- list()
+ 
+   fig_list <- list()
   
   # Define parameters
   arrangements <- c("mixed", "ringed", "separated")
@@ -269,9 +270,9 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
             scale_color_manual(
               values = c(
                 "0" = "black",
-                "1" = "#bb0036",
-                "2" = "#007128",
-                "3" = "#0062c5"
+                "1" = "#33135b",
+                "2" = "#9437a8",
+                "3" = "#d99dff"
               )
             )
           
@@ -292,8 +293,6 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
       pair_figs <- list()
       
       for (pair in pairs) {
-        
-        parameters <- get_parameters(arrangement, shape)
         
         pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
                               ncol = length(fig_list[[arrangement_shape]][[pair]]))
@@ -322,10 +321,246 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
 
 plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_df_list, parameters_df, metric) {
   
+  fig_list <- list()
+  
+  # Define parameters
+  arrangements <- c("mixed", "ringed", "separated")
+  shapes <- c("ellipsoid", "network")
+  
+  # Subset the metric_df_list
+  metric_df <- metric_df_list[[metric]]
+  
+  # Add 'pair' column to metric_df
+  metric_df <- add_pair_to_metric_df(metric_df, metric)
+  
+  pairs <- unique(metric_df$pair)
+  
+  # Make 'slice' column categorical
+  metric_df$slice <- as.character(metric_df$slice)
+  
+  # Add to parameters_df
+  parameters_df$distance <- 450 - parameters_df$cluster1_x_coord # 450 is the x-coordinate of cluster2
+  parameters_df$E_volume <- (4 / 3) * pi * parameters_df$E_radius_x * parameters_df$E_radius_y * parameters_df$E_radius_z
+  
+  # Update parameters_df
+  parameters_df$variable_parameter[parameters_df$variable_parameter == "E_radius_x"] <- "E_volume"
+  parameters_df$variable_parameter[parameters_df$variable_parameter == "cluster1_x_coord"] <- "distance"
+  
+  # Combine metric_df with parameters_df
+  metric_df <- combine_metric_and_parameters_df(metric_df, parameters_df)
+  
+  # Add error column to metric_df
+  metric_df$error <- metric_df[[metric]] / rep(metric_df[[metric]][metric_df$slice == "0"], 4) * 100
+  
+  for (arrangement in arrangements) {
+    for (shape in shapes) {
+      
+      # Get a merged arrangement shape variable
+      arrangement_shape <- paste(arrangement, shape, sep = "_")
+      fig_list[[arrangement_shape]] <- list()
+      
+      # Subset metric_df for arrangement and shape
+      metric_arrangement_shape_df <- metric_df[metric_df$arrangement == arrangement & metric_df$shape == shape, ]
+      
+      # Get parameters
+      parameters <- get_parameters(arrangement, shape)
+      
+      for (pair in pairs) {
+        # Subset for pair
+        metric_arrangement_shape_pair_df <- metric_arrangement_shape_df[metric_arrangement_shape_df$pair == pair, ]
+        fig_list[[arrangement_shape]][[pair]] <- list()
+        
+        for (parameter in parameters) {
+          # Subset for parameter
+          plot_df <- metric_arrangement_shape_pair_df[metric_arrangement_shape_pair_df$variable_parameter == parameter, ]
+          
+          # Remove 3D values
+          plot_df <- plot_df[plot_df$slice != "0", ]
+          
+          fig <- ggplot(plot_df, aes_string(parameter, "error", color = "slice")) +
+            geom_point(size = 0.5) +
+            geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
+            theme_minimal() +
+            labs(y = "error (%)") +
+            theme(
+              panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+              plot.title = element_text(size = 10),
+              axis.text.x = element_text(size = 8),  # make x-axis text smaller
+              axis.text.y = element_text(size = 8),   # make y-axis text smaller
+              legend.position = "none"
+            ) +
+            scale_x_continuous(breaks = pretty_breaks(n = 3)) + 
+            scale_y_continuous(breaks = pretty_breaks(n = 3)) +
+            scale_color_manual(
+              values = c(
+                "1" = "#33135b",
+                "2" = "#9437a8",
+                "3" = "#d99dff"
+              )
+            )
+          
+          fig_list[[arrangement_shape]][[pair]][[parameter]] <- fig
+        }
+      }
+    }
+  }
+  
+  arrangement_shape_figs <- list()
+  
+  for (shape in shapes) {  
+    for (arrangement in arrangements) {
+      
+      # Get a merged arrangement shape variable
+      arrangement_shape <- paste(arrangement, shape, sep = "_")
+      
+      pair_figs <- list()
+      
+      for (pair in pairs) {
+        
+        pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
+                              ncol = length(fig_list[[arrangement_shape]][[pair]]))
+        title <- ggdraw() + draw_label(paste("pair:", pair))
+        pair_fig <- plot_grid(title, pair_fig, ncol = 1, rel_heights = c(0.1, 1))
+        
+        pair_figs[[pair]] <- pair_fig
+      }
+      arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
+      
+      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
+      arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.02, 1))  + 
+        theme(plot.margin = margin(10, 10, 10, 10),
+              panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
+      
+      arrangement_shape_figs[[arrangement_shape]] <- arrangement_shape_fig
+    }
+  }
+  
+  fig <- plot_grid(plotlist = arrangement_shape_figs,
+                   nrow = length(shapes),
+                   ncol = length(arrangements))
+  
+  return(fig) 
 }
 
 plot_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_df_list, parameters_df, metric) {
   
+  fig_list <- list()
+  
+  # Define parameters
+  arrangements <- c("mixed", "ringed", "separated")
+  shapes <- c("ellipsoid", "network")
+  
+  # Subset the metric_df_list
+  metric_df <- metric_df_list[[metric]]
+  
+  # Add 'pair' column to metric_df
+  metric_df <- add_pair_to_metric_df(metric_df, metric)
+  
+  pairs <- unique(metric_df$pair)
+  
+  # Make 'slice' column categorical
+  metric_df$slice <- as.character(metric_df$slice)
+  
+  # Add to parameters_df
+  parameters_df$distance <- 450 - parameters_df$cluster1_x_coord # 450 is the x-coordinate of cluster2
+  parameters_df$E_volume <- (4 / 3) * pi * parameters_df$E_radius_x * parameters_df$E_radius_y * parameters_df$E_radius_z
+  
+  # Update parameters_df
+  parameters_df$variable_parameter[parameters_df$variable_parameter == "E_radius_x"] <- "E_volume"
+  parameters_df$variable_parameter[parameters_df$variable_parameter == "cluster1_x_coord"] <- "distance"
+  
+  # Combine metric_df with parameters_df
+  metric_df <- combine_metric_and_parameters_df(metric_df, parameters_df)
+  
+  for (arrangement in arrangements) {
+    for (shape in shapes) {
+      
+      # Get a merged arrangement shape variable
+      arrangement_shape <- paste(arrangement, shape, sep = "_")
+      fig_list[[arrangement_shape]] <- list()
+      
+      # Subset metric_df for arrangement and shape
+      metric_arrangement_shape_df <- metric_df[metric_df$arrangement == arrangement & metric_df$shape == shape, ]
+      
+      # Get parameters
+      parameters <- get_parameters(arrangement, shape)
+      
+      for (pair in pairs) {
+        # Subset for pair
+        metric_arrangement_shape_pair_df <- metric_arrangement_shape_df[metric_arrangement_shape_df$pair == pair, ]
+        fig_list[[arrangement_shape]][[pair]] <- list()
+        
+        for (parameter in parameters) {
+          # Subset for parameter
+          plot_df <- metric_arrangement_shape_pair_df[metric_arrangement_shape_pair_df$variable_parameter == parameter, ]
+          
+          # Remove 3D values
+          plot_df <- plot_df[plot_df$slice != "0", ]
+          
+          # Violin plot
+          fig <- ggplot(plot_df, aes_string(x = "slice", y = metric)) +
+            geom_violin() +
+            theme_minimal() +
+            theme(
+              panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+              plot.title = element_text(size = 10),
+              axis.text.x = element_text(size = 8),  # make x-axis text smaller
+              axis.text.y = element_text(size = 8),   # make y-axis text smaller
+              legend.position = "none"
+            ) +
+            scale_y_continuous(breaks = pretty_breaks(n = 3))
+          
+          fig_list[[arrangement_shape]][[pair]][[parameter]] <- fig
+        }
+      }
+    }
+  }
+  
+  arrangement_shape_figs <- list()
+  
+  for (shape in shapes) {  
+    for (arrangement in arrangements) {
+      
+      # Get a merged arrangement shape variable
+      arrangement_shape <- paste(arrangement, shape, sep = "_")
+      
+      pair_figs <- list()
+      
+      for (pair in pairs) {
+        
+        # If it is the final pair, add parameters to bottom
+        if (pair == pairs[length(pairs)]) {
+          parameters <- get_parameters(arrangement, shape) 
+          for (parameter in parameters) {
+            subtitle <- ggdraw() + draw_label(parameter)
+            fig_list[[arrangement_shape]][[pair]][[parameter]] <- plot_grid(fig_list[[arrangement_shape]][[pair]][[parameter]], 
+                                                                            subtitle, ncol = 1, rel_heights = c(1, 0.1))
+          }
+        }
+        
+        pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
+                              ncol = length(fig_list[[arrangement_shape]][[pair]]))
+        title <- ggdraw() + draw_label(paste("pair:", pair))
+        pair_fig <- plot_grid(title, pair_fig, ncol = 1, rel_heights = c(0.1, 1))
+        pair_figs[[pair]] <- pair_fig 
+      }
+      
+      arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
+      
+      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
+      arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.02, 1))  + 
+        theme(plot.margin = margin(10, 10, 10, 10),
+              panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
+      
+      arrangement_shape_figs[[arrangement_shape]] <- arrangement_shape_fig
+    }
+  }
+  
+  fig <- plot_grid(plotlist = arrangement_shape_figs,
+                   nrow = length(shapes),
+                   ncol = length(arrangements))
+  
+  return(fig) 
 }
 
 plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_df_list, parameters_df, metric) {
@@ -362,4 +597,38 @@ pdf("fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot.pdf", wid
 print(fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot)
 
 dev.off()
+
+
+
+
+
+fig_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot(metric_df_list,
+                                                                                                                                parameters_df,
+                                                                                                                                "AMD")
+
+setwd("~/R/plots/S2")
+pdf("fig_error_vs_parameters_for_non_gradient_metrics_scatter_plot.pdf", width = 25, height = 25)
+
+print(fig_error_vs_parameters_for_non_gradient_metrics_scatter_plot)
+
+dev.off()
+
+
+
+
+fig_2D_vs_slice_for_non_gradient_metrics_violin_plot <- plot_2D_vs_slice_for_non_gradient_metrics_violin_plot(metric_df_list,
+                                                                                                              parameters_df,
+                                                                                                              "AMD")
+
+setwd("~/R/plots/S2")
+pdf("fig_2D_vs_slice_for_non_gradient_metrics_violin_plot.pdf", width = 25, height = 25)
+
+print(fig_2D_vs_slice_for_non_gradient_metrics_violin_plot)
+
+dev.off()
+
+
+
+
+
 
