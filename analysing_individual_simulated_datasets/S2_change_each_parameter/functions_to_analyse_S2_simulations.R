@@ -23,10 +23,10 @@ generate_random_parameters <- function(
   n_parameters <- length(parameters) 
   n_simulations <- n_simulations_per_parameter * n_parameters
   
-  # Set parameter values to be the average of the min and max set in the parameter range
+  # Set parameter values to be the average of the min and max set in the parameter range, bg_props are an exception and will be equal to 0
   parameters_df <- data.frame(
-    bg_prop_A = mean(c(bg_prop_A_range["min"], bg_prop_A_range["max"])),
-    bg_prop_B = mean(c(bg_prop_B_range["min"], bg_prop_B_range["max"])),
+    bg_prop_A = 0,
+    bg_prop_B = 0,
     E_radius_x = mean(c(E_radius_x_range["min"], E_radius_x_range["max"])),
     E_radius_y = mean(c(E_radius_y_range["min"], E_radius_y_range["max"])),
     E_radius_z = mean(c(E_radius_z_range["min"], E_radius_z_range["max"])),
