@@ -622,7 +622,7 @@ analyse_S1_simulations <- function(parameters_df) {
 
 # Running the functions ----
 parameters_df <- generate_random_parameters(
-  n_simulations = 1,
+  n_simulations = 10000,
   bg_prop_A_range = c("min" = 0, "max" = 0.10),
   bg_prop_B_range = c("min" = 0, "max" = 0.10),
   E_radius_x_range = c("min" = 75, "max" = 125),

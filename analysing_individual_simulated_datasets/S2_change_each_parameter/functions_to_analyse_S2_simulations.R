@@ -589,7 +589,7 @@ analyse_S2_simulations <- function(parameters_df) {
           metric_df_list[["MS"]][pair_index, c("simulation", "slice", "reference", "target")] <- c(simulation_index, slice_index, reference_cell_type, target_cell_type)
           metric_df_list[["NMS"]][pair_index, c("simulation", "slice", "reference", "target")] <- c(simulation_index, slice_index, reference_cell_type, target_cell_type)
           metric_df_list[["AE"]][pair_index, c("simulation", "slice", "reference", "target")] <- c(simulation_index, slice_index, reference_cell_type, 
-                                                                                              paste(reference_cell_type, slice_index, target_cell_type, sep = ","))
+                                                                                              paste(reference_cell_type, target_cell_type, sep = ","))
           
           if (reference_cell_type == target_cell_type) {
             metric_df_list[["ACINP"]][pair_index, radii_colnames] <- Inf
