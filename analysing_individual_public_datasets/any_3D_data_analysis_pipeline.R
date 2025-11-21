@@ -5527,12 +5527,6 @@ analyse_3D_data <- function(
           metric_df_list[["AE"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, 
                                                                                      paste(reference_cell_type, target_cell_type, sep = ","))
           
-          if (reference_cell_type == target_cell_type) {
-            metric_df_list[["ACINP"]][pair_index, radii_colnames] <- Inf
-            metric_df_list[["MS"]][pair_index, radii_colnames] <- Inf
-            metric_df_list[["NMS"]][pair_index, radii_colnames] <- Inf
-            metric_df_list[["AE"]][pair_index, radii_colnames] <- Inf
-          }
           
           if (is.null(gradient_data)) {
             metric_df_list[["ACIN"]][pair_index, radii_colnames] <- NA
@@ -5540,6 +5534,10 @@ analyse_3D_data <- function(
             metric_df_list[["CLR"]][pair_index, radii_colnames] <- NA
             metric_df_list[["COO"]][pair_index, radii_colnames] <- NA
             metric_df_list[["CGR"]][pair_index, radii_colnames] <- NA
+            metric_df_list[["ACINP"]][pair_index, radii_colnames] <- NA
+            metric_df_list[["MS"]][pair_index, radii_colnames] <- NA
+            metric_df_list[["NMS"]][pair_index, radii_colnames] <- NA
+            metric_df_list[["AE"]][pair_index, radii_colnames] <- NA
           }
           else {
             metric_df_list[["ACIN"]][pair_index, radii_colnames] <- gradient_data[["cells_in_neighbourhood"]][[target_cell_type]]
@@ -5554,6 +5552,12 @@ analyse_3D_data <- function(
               metric_df_list[["NMS"]][pair_index, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$normalised_mixing_score
               metric_df_list[["AE"]][pair_index, radii_colnames] <- gradient_data[["entropy"]][[target_cell_type]]
             }
+          }
+          if (reference_cell_type == target_cell_type) {
+            metric_df_list[["ACINP"]][pair_index, radii_colnames] <- Inf
+            metric_df_list[["MS"]][pair_index, radii_colnames] <- Inf
+            metric_df_list[["NMS"]][pair_index, radii_colnames] <- Inf
+            metric_df_list[["AE"]][pair_index, radii_colnames] <- Inf
           }
           
           # Spatial heterogeneity metrics
