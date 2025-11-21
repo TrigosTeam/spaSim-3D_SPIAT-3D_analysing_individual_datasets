@@ -83,7 +83,7 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
   
   # Remove Inf rows
   metric_df <- metric_df[!is.infinite(metric_df[[metric]]), ]
-
+  
   # Add 'pair' column to metric_df
   metric_df <- add_pair_to_metric_df(metric_df, metric)
   
@@ -102,7 +102,7 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
   
   # Subset for 3D values only
   metric_df <- metric_df[metric_df$slice == 0, ]
-
+  
   for (arrangement in arrangements) {
     for (shape in shapes) {
       
@@ -122,32 +122,12 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
         fig_list[[arrangement_shape]][[pair]] <- list()
         
         for (parameter in parameters) {
+          
           # Subset for parameter
           plot_df <- metric_arrangement_shape_pair_df[metric_arrangement_shape_pair_df$variable_parameter == parameter, ]
           
-          # Get correlation and p-value
-          correlation_test <- cor.test(plot_df[[parameter]], plot_df[[metric]], method = "spearman")
-          correlation <- correlation_test$estimate
-          p_value <- correlation_test$p.value
-          
-          # Format correlation and p-value
-          formatCustomSci <- function(x) {
-            x_sci <- str_split_fixed(formatC(x, format = "e"), "e", 2)
-            alpha <- round(as.numeric(x_sci[ , 1]), 1)
-            power <- as.integer(x_sci[ , 2])
-            paste(alpha, power, sep = "e")
-          }
-          if (p_value == 0) p_value <- 2.2e-308
-          if (0 < p_value && p_value < 1e-3)  {
-            p_value <- formatCustomSci(p_value)
-          }
-          else {
-            p_value  <- round(p_value, 3)
-          }
-          
           fig <- ggplot(plot_df, aes_string(parameter, metric)) +
             geom_point(size = 0.5) +
-            ggtitle(paste("r:", round(correlation, 3), ", p:", p_value)) +
             theme_minimal() +
             theme(
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
@@ -158,6 +138,33 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
             scale_x_continuous(breaks = pretty_breaks(n = 3)) + 
             scale_y_continuous(breaks = pretty_breaks(n = 3)) 
           
+          # Get correlation and p-value       
+          p_value <- "N/A"
+          correlation <- "N/A"
+          if (sum(!is.na(plot_df[[metric]])) >= 2) {
+            
+            correlation_test <- cor.test(plot_df[[parameter]], plot_df[[metric]], method = "spearman")
+            correlation <- round(correlation_test$estimate, 3)
+            p_value <- correlation_test$p.value
+            
+            if (!is.na(p_value)) {
+              # Format correlation and p-value
+              formatCustomSci <- function(x) {
+                x_sci <- str_split_fixed(formatC(x, format = "e"), "e", 2)
+                alpha <- round(as.numeric(x_sci[ , 1]), 1)
+                power <- as.integer(x_sci[ , 2])
+                paste(alpha, power, sep = "e")
+              }
+              if (p_value == 0) p_value <- 2.2e-308
+              if (0 < p_value && p_value < 1e-3)  {
+                p_value <- formatCustomSci(p_value)
+              }
+              else {
+                p_value  <- round(p_value, 3)
+              }
+            }
+          }
+          fig <- fig + ggtitle(paste("r:", correlation, ", p:", p_value))
           fig_list[[arrangement_shape]][[pair]][[parameter]] <- fig
         }
       }
@@ -168,14 +175,14 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
   
   for (shape in shapes) {  
     for (arrangement in arrangements) {
-
+      
       # Get a merged arrangement shape variable
       arrangement_shape <- paste(arrangement, shape, sep = "_")
       
       pair_figs <- list()
       
       for (pair in pairs) {
-
+        
         parameters <- get_parameters(arrangement, shape)
         
         pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
@@ -208,8 +215,8 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
 # }
 
 plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_df_list, parameters_df, metric) {
- 
-   fig_list <- list()
+  
+  fig_list <- list()
   
   # Define parameters
   arrangements <- c("mixed", "ringed", "separated")
@@ -511,42 +518,9 @@ plot_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_df_list
           # Remove 3D values
           plot_df <- plot_df[plot_df$slice != "0", ]
           
-          # Factor slice column
-          plot_df$slice <- factor(plot_df$slice, c("1", "2", "3"), ordered = TRUE)
-          
-          # Get JT value
-          slice1_mean_value <- mean(plot_df[[metric]][plot_df$slice == "1"], na.rm = TRUE)
-          slice3_mean_value <- mean(plot_df[[metric]][plot_df$slice == "3"], na.rm = TRUE)
-          
-          if (slice3_mean_value > slice1_mean_value) {
-            trend_direction <- "increasing"
-          }
-          else {
-            trend_direction <- "decreasing"
-          }
-          jt_test <- JonckheereTerpstraTest(plot_df[[metric]], plot_df$slice, alternative = trend_direction)
-          
-          p_value <- jt_test$p.value
-          
-          # Format correlation and p-value
-          formatCustomSci <- function(x) {
-            x_sci <- str_split_fixed(formatC(x, format = "e"), "e", 2)
-            alpha <- round(as.numeric(x_sci[ , 1]), 1)
-            power <- as.integer(x_sci[ , 2])
-            paste(alpha, power, sep = "e")
-          }
-          if (p_value == 0) p_value <- 2.2e-308
-          if (0 < p_value && p_value < 1e-3)  {
-            p_value <- formatCustomSci(p_value)
-          }
-          else {
-            p_value  <- round(p_value, 3)
-          }
-          
           # Violin plot
           fig <- ggplot(plot_df, aes_string(x = "slice", y = metric, fill = "slice")) +
             geom_violin() +
-            ggtitle(paste("p:", p_value)) +
             theme_minimal() +
             theme(
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
@@ -564,6 +538,47 @@ plot_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_df_list
               )
             )
           
+          # Get JT p-value if possible
+          p_value <- "N/A"
+          if (sum(!is.na(plot_df[[metric]][plot_df$slice == "1"])) > 0 &&
+              sum(!is.na(plot_df[[metric]][plot_df$slice == "2"])) > 0 &&
+              sum(!is.na(plot_df[[metric]][plot_df$slice == "3"])) > 0) {
+            
+            # Factor slice column
+            plot_df$slice <- factor(plot_df$slice, c("1", "2", "3"), ordered = TRUE)
+            
+            # Get JT value
+            slice1_mean_value <- mean(plot_df[[metric]][plot_df$slice == "1"], na.rm = TRUE)
+            slice3_mean_value <- mean(plot_df[[metric]][plot_df$slice == "3"], na.rm = TRUE)
+            
+            if (slice3_mean_value > slice1_mean_value) {
+              trend_direction <- "increasing"
+            }
+            else {
+              trend_direction <- "decreasing"
+            }
+            jt_test <- JonckheereTerpstraTest(plot_df[[metric]], plot_df$slice, alternative = trend_direction)
+            
+            p_value <- jt_test$p.value
+            
+            if (!is.na(p_value)) {
+              # Format correlation and p-value
+              formatCustomSci <- function(x) {
+                x_sci <- str_split_fixed(formatC(x, format = "e"), "e", 2)
+                alpha <- round(as.numeric(x_sci[ , 1]), 1)
+                power <- as.integer(x_sci[ , 2])
+                paste(alpha, power, sep = "e")
+              }
+              if (p_value == 0) p_value <- 2.2e-308
+              if (0 < p_value && p_value < 1e-3)  {
+                p_value <- formatCustomSci(p_value)
+              }
+              else {
+                p_value  <- round(p_value, 3)
+              }
+            }
+          }
+          fig <- fig + ggtitle(paste("p:", p_value)) 
           fig_list[[arrangement_shape]][[pair]][[parameter]] <- fig
         }
       }
@@ -675,45 +690,9 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
           # Change slice index for 3D value to "3D"
           plot_df$slice[plot_df$slice == "0"] <- "3D"
           
-          # Create separate df with only 2D values
-          df2D <- plot_df[plot_df$slice != "3D", ]
-          
-          # Factor slice column
-          df2D$slice <- factor(df2D$slice, c("1", "2", "3"), ordered = TRUE)
-          
-          # Get JT value
-          slice1_mean_value <- mean(df2D[[metric]][df2D$slice == "1"], na.rm = TRUE)
-          slice3_mean_value <- mean(df2D[[metric]][df2D$slice == "3"], na.rm = TRUE)
-          
-          if (slice3_mean_value > slice1_mean_value) {
-            trend_direction <- "increasing"
-          }
-          else {
-            trend_direction <- "decreasing"
-          }
-          jt_test <- JonckheereTerpstraTest(df2D[[metric]], df2D$slice, alternative = trend_direction)
-          
-          p_value <- jt_test$p.value
-          
-          # Format correlation and p-value
-          formatCustomSci <- function(x) {
-            x_sci <- str_split_fixed(formatC(x, format = "e"), "e", 2)
-            alpha <- round(as.numeric(x_sci[ , 1]), 1)
-            power <- as.integer(x_sci[ , 2])
-            paste(alpha, power, sep = "e")
-          }
-          if (p_value == 0) p_value <- 2.2e-308
-          if (0 < p_value && p_value < 1e-3)  {
-            p_value <- formatCustomSci(p_value)
-          }
-          else {
-            p_value  <- round(p_value, 3)
-          }
-          
           # Violin plot
           fig <- ggplot(plot_df, aes_string(x = "slice", y = metric, fill = "slice")) +
             geom_violin() +
-            ggtitle(paste("p:", p_value)) +
             theme_minimal() +
             theme(
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
@@ -732,6 +711,50 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
               )
             )
           
+          # Get JT p-value if possible
+          p_value <- "N/A"
+          if (sum(!is.na(plot_df[[metric]][plot_df$slice == "1"])) > 0 &&
+              sum(!is.na(plot_df[[metric]][plot_df$slice == "2"])) > 0 &&
+              sum(!is.na(plot_df[[metric]][plot_df$slice == "3"])) > 0) {
+            
+            # Create separate df with only 2D values
+            df2D <- plot_df[plot_df$slice != "3D", ]
+            
+            # Factor slice column
+            df2D$slice <- factor(df2D$slice, c("1", "2", "3"), ordered = TRUE)
+            
+            # Get JT value
+            slice1_mean_value <- mean(df2D[[metric]][df2D$slice == "1"], na.rm = TRUE)
+            slice3_mean_value <- mean(df2D[[metric]][df2D$slice == "3"], na.rm = TRUE)
+            
+            if (slice3_mean_value > slice1_mean_value) {
+              trend_direction <- "increasing"
+            }
+            else {
+              trend_direction <- "decreasing"
+            }
+            jt_test <- JonckheereTerpstraTest(df2D[[metric]], df2D$slice, alternative = trend_direction)
+            
+            p_value <- jt_test$p.value
+            
+            if (!is.na(p_value)) {
+              # Format correlation and p-value
+              formatCustomSci <- function(x) {
+                x_sci <- str_split_fixed(formatC(x, format = "e"), "e", 2)
+                alpha <- round(as.numeric(x_sci[ , 1]), 1)
+                power <- as.integer(x_sci[ , 2])
+                paste(alpha, power, sep = "e")
+              }
+              if (p_value == 0) p_value <- 2.2e-308
+              if (0 < p_value && p_value < 1e-3)  {
+                p_value <- formatCustomSci(p_value)
+              }
+              else {
+                p_value  <- round(p_value, 3)
+              }
+            }
+          }
+          fig <- fig + ggtitle(paste("p:", p_value)) 
           fig_list[[arrangement_shape]][[pair]][[parameter]] <- fig
         }
       }
@@ -793,7 +816,7 @@ metrics_with_2_pairs <- c("ACINP_AUC", "AE_AUC", "MS_AUC", "NMS_AUC", "PBSAC", "
 
 
 setwd("~/R/plots/S2")
-pdf("fig_3D_vs_parameters_for_non_gradient_metrics_4_pairs_scatter_plot.pdf", width = 25, height = 25)
+pdf("fig_3D_vs_parameters_for_non_gradient_metrics_4_pairs_scatter_plot.pdf", width = 26, height = 25)
 
 for (metric in metrics_with_4_pairs) {
   
@@ -806,7 +829,8 @@ for (metric in metrics_with_4_pairs) {
 dev.off()
 
 
-pdf("fig_3D_vs_parameters_for_non_gradient_metrics_2_pairs_scatter_plot.pdf", width = 25, height = 13)
+setwd("~/R/plots/S2")
+pdf("fig_3D_vs_parameters_for_non_gradient_metrics_2_pairs_scatter_plot.pdf", width = 26, height = 13)
 
 for (metric in metrics_with_2_pairs) {
   
@@ -824,58 +848,131 @@ dev.off()
 
 
 
-fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot(metric_df_list,
-                                                                                                                                        parameters_df,
-                                                                                                                                        "AMD")
+setwd("~/R/plots/S2")
+pdf("fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_4_pairs_scatter_plot.pdf", width = 26, height = 25)
+
+for (metric in metrics_with_4_pairs) {
+  
+  fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot(metric_df_list,
+                                                                                                                                          parameters_df,
+                                                                                                                                          metric)
+  print(fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot)
+  
+}
+dev.off()
+
 
 setwd("~/R/plots/S2")
-pdf("fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot.pdf", width = 25, height = 25)
+pdf("fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_2_pairs_scatter_plot.pdf", width = 26, height = 13)
 
-print(fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot)
-
+for (metric in metrics_with_2_pairs) {
+  
+  fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot(metric_df_list,
+                                                                                                                                          parameters_df,
+                                                                                                                                          metric)
+  print(fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot)
+  
+}
 dev.off()
 
 
 
 
 
-fig_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot(metric_df_list,
-                                                                                                                                parameters_df,
-                                                                                                                                "AMD")
+setwd("~/R/plots/S2")
+pdf("fig_error_vs_parameters_for_non_gradient_metrics_4_pairs_scatter_plot.pdf", width = 26, height = 25)
+
+for (metric in metrics_with_4_pairs) {
+  
+  fig_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot(metric_df_list,
+                                                                                                                                  parameters_df,
+                                                                                                                                  metric)
+  print(fig_error_vs_parameters_for_non_gradient_metrics_scatter_plot)
+  
+}
+dev.off()
+
 
 setwd("~/R/plots/S2")
-pdf("fig_error_vs_parameters_for_non_gradient_metrics_scatter_plot.pdf", width = 25, height = 25)
+pdf("fig_error_vs_parameters_for_non_gradient_metrics_2_pairs_scatter_plot.pdf", width = 26, height = 13)
 
-print(fig_error_vs_parameters_for_non_gradient_metrics_scatter_plot)
-
+for (metric in metrics_with_2_pairs) {
+  
+  fig_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot(metric_df_list,
+                                                                                                                                  parameters_df,
+                                                                                                                                  metric)
+  print(fig_error_vs_parameters_for_non_gradient_metrics_scatter_plot)
+  
+}
 dev.off()
 
 
 
 
-fig_2D_vs_slice_for_non_gradient_metrics_violin_plot <- plot_2D_vs_slice_for_non_gradient_metrics_violin_plot(metric_df_list,
-                                                                                                              parameters_df,
-                                                                                                              "AMD")
+
+
+
 
 setwd("~/R/plots/S2")
-pdf("fig_2D_vs_slice_for_non_gradient_metrics_violin_plot.pdf", width = 25, height = 25)
+pdf("fig_2D_vs_slice_for_non_gradient_metrics_4_pairs_violin_plot.pdf", width = 26, height = 25)
 
-print(fig_2D_vs_slice_for_non_gradient_metrics_violin_plot)
-
+for (metric in metrics_with_4_pairs) {
+  
+  fig_2D_vs_slice_for_non_gradient_metrics_violin_plot <- plot_2D_vs_slice_for_non_gradient_metrics_violin_plot(metric_df_list,
+                                                                                                                parameters_df,
+                                                                                                                metric)
+  print(fig_2D_vs_slice_for_non_gradient_metrics_violin_plot)
+  
+}
 dev.off()
 
 
 
-fig_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot(metric_df_list,
-                                                                                                                            parameters_df,
-                                                                                                                            "AMD")
-
 setwd("~/R/plots/S2")
-pdf("fig_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot.pdf", width = 30, height = 25)
+pdf("fig_2D_vs_slice_for_non_gradient_metrics_2_pairs_violin_plot.pdf", width = 26, height = 13)
 
-print(fig_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot)
-
+for (metric in metrics_with_2_pairs) {
+  
+  fig_2D_vs_slice_for_non_gradient_metrics_violin_plot <- plot_2D_vs_slice_for_non_gradient_metrics_violin_plot(metric_df_list,
+                                                                                                                parameters_df,
+                                                                                                                metric)
+  print(fig_2D_vs_slice_for_non_gradient_metrics_violin_plot)
+  
+}
 dev.off()
 
+
+
+
+
+
+
+setwd("~/R/plots/S2")
+pdf("fig_3D_and_2D_vs_slice_for_non_gradient_metrics_4_pairs_violin_plot.pdf", width = 26, height = 25)
+
+for (metric in metrics_with_4_pairs) {
+  
+  fig_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot(metric_df_list,
+                                                                                                                              parameters_df,
+                                                                                                                              metric)
+  print(fig_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot)
+  
+}
+dev.off()
+
+
+
+setwd("~/R/plots/S2")
+pdf("fig_3D_and_2D_vs_slice_for_non_gradient_metrics_2_pairs_violin_plot.pdf", width = 26, height = 13)
+
+for (metric in metrics_with_2_pairs) {
+  
+  fig_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot(metric_df_list,
+                                                                                                                              parameters_df,
+                                                                                                                              metric)
+  print(fig_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot)
+  
+}
+dev.off()
 
 
