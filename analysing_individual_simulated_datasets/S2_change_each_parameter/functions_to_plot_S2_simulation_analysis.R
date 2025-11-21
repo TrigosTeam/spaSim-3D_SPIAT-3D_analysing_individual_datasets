@@ -368,8 +368,8 @@ plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metri
   metric_df <- combine_metric_and_parameters_df(metric_df, parameters_df)
   
   # Add error column to metric_df
-  metric_df$error <- metric_df[[metric]] / rep(metric_df[[metric]][metric_df$slice == "0"], 4) * 100
-  
+  metric_df$error <- ((metric_df[[metric]] -  rep(metric_df[[metric]][metric_df$slice == "0"], 4)) / rep(metric_df[[metric]][metric_df$slice == "0"], 4)) * 100
+
   for (arrangement in arrangements) {
     for (shape in shapes) {
       
@@ -1261,7 +1261,7 @@ plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metri
   metric_df <- combine_metric_and_parameters_df(metric_df, parameters_df)
   
   # Add error column to metric_df
-  metric_df$error <- metric_df[[metric]] / rep(metric_df[[metric]][metric_df$slice == "0"], 4) * 100
+  metric_df$error <- ((metric_df[[metric]] -  rep(metric_df[[metric]][metric_df$slice == "0"], 4)) / rep(metric_df[[metric]][metric_df$slice == "0"], 4)) * 100
   
   for (arrangement in arrangements) {
     for (shape in shapes) {
