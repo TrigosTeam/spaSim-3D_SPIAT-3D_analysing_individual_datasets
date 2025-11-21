@@ -334,7 +334,7 @@ analyse_S1_simulations <- function(parameters_df) {
           else {
             PBSAC <- calculate_spatial_autocorrelation3D(proportion_grid_metrics, 
                                                          "proportion",
-                                                         weight_method = 0.1)
+                                                         weight_method = "queen")
             
             PBP_df <- calculate_prevalence_gradient3D(proportion_grid_metrics,
                                                       "proportion",
@@ -358,7 +358,7 @@ analyse_S1_simulations <- function(parameters_df) {
           else {
             EBSAC <- calculate_spatial_autocorrelation3D(entropy_grid_metrics, 
                                                          "entropy",
-                                                         weight_method = 0.1)
+                                                         weight_method = "queen")
             
             EBP_df <- calculate_prevalence_gradient3D(entropy_grid_metrics,
                                                       "entropy",
@@ -485,7 +485,7 @@ analyse_S1_simulations <- function(parameters_df) {
           else {
             PBSAC <- calculate_spatial_autocorrelation2D(proportion_grid_metrics, 
                                                          "proportion",
-                                                         weight_method = 0.1)
+                                                         weight_method = "queen")
             
             PBP_df <- calculate_prevalence_gradient2D(proportion_grid_metrics,
                                                       "proportion",
@@ -509,7 +509,7 @@ analyse_S1_simulations <- function(parameters_df) {
           else {
             EBSAC <- calculate_spatial_autocorrelation2D(entropy_grid_metrics, 
                                                          "entropy",
-                                                         weight_method = 0.1)
+                                                         weight_method = "queen")
             
             EBP_df <- calculate_prevalence_gradient2D(entropy_grid_metrics,
                                                       "entropy",
