@@ -219,12 +219,12 @@ plot_error_vs_3D_by_metric_and_pair_box_plot <- function(metric_df_list,
   pairs <- unique(plot_df$pair)
   
   fig <- ggplot(plot_df, aes(x = metric, y = error, color = pair)) +
-    geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
+    geom_boxplot(fill = "lightgray") +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
     labs(title = "Error Distribution by Metric, showing Error for each Pair",
          x = "Metric",
          y = "Error (%)") +
-    scale_y_continuous(limits = c(-100, 300)) +
+    scale_y_continuous(limits = c(-100, 400)) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
