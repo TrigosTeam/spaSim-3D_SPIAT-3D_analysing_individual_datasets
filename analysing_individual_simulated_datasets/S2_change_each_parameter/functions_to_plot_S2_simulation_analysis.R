@@ -8,7 +8,7 @@ library(scales)
 library(DescTools)
 
 # Read data and set up ----
-setwd("~/R/spaSim-3D_SPIAT-3D_analysing_individual_datasets/analysing_individual_simulated_datasets/S2_change_each_parameter")
+setwd("~/R/S2_data")
 metric_df_list <- readRDS("S2_metric_df_list.RDS")
 parameters_df <- readRDS("S2_parameters_df.RDS")
 

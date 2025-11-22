@@ -6,7 +6,7 @@ library(stringr)
 library(dplyr)
 
 # Read data and set up ----
-setwd("~/R/spaSim-3D_SPIAT-3D_analysing_individual_datasets/analysing_individual_simulated_datasets/S1_change_all_parameters")
+setwd("~/R/S1_data")
 
 metric_df_list <- readRDS("S1_metric_df_list.RDS")
 
