@@ -4,7 +4,7 @@
 # "Cell.Z.Position" contains discrete values.
 # cell_types consists of only cells in the "Cell.Type" column, and at least two cells.
 
-analyse_3D_data <- function(
+analyse_3D_data_with_2D_slices <- function(
     data3D,
     cell_types,
     radii = seq(20, 100, 10),
