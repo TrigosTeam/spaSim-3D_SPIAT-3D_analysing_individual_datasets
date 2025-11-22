@@ -244,7 +244,7 @@ plot_3D_vs_error_by_slice_box_plot <- function(metric_df_list,
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
     labs(title = "Error Distribution by Slice",
-         x = "Slice index",
+         x = "Slice Index",
          y = "Error (%)") +
     theme_minimal() +
     theme(
@@ -311,13 +311,84 @@ plot_3D_vs_error_all_metrics_by_pair_box_plot <- function(metric_df_list,
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by metric, showing median error for each Pair",
+    labs(title = "Error Distribution by Metric, showing Median Error for each Pair",
          x = "Metric",
          y = "Error (%)") +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
     )
+  
+  return(fig)
+}
+
+plot_3D_vs_error_all_metrics_by_all_pairs_box_plot <- function(metric_df_list,
+                                                               metrics) {
+  
+  plot_df <- data.frame()
+  
+  for (metric in metrics) {
+    
+    # Get metric_df for current metric
+    metric_df <- metric_df_list[[metric]]
+    
+    # Change and further subset columns of metric_df
+    colnames(metric_df)[colnames(metric_df) == metric] <- "value"
+    
+    # Obtain 3D value
+    value_3D <- metric_df[["value"]][metric_df[["slice"]] == as.character(max(as.numeric(metric_df$slice)))]
+    
+    # Calculate error
+    metric_df[["error"]] <- ((metric_df[["value"]] - value_3D) / value_3D) * 100
+    
+    # Remove value column (only using error now)
+    metric_df["value"] <- NULL
+    
+    # Remove 3D data (integrated into error)
+    metric_df <- metric_df[metric_df[["slice"]] != max(as.integer(metric_df$slice)), ]
+    
+    if (metric %in% c("EBSAC", "EBP_AUC")) {
+      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
+      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
+    }
+    else if (metric %in% c("AE_AUC")) {
+      # For AE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+      metric_df$pair <- gsub(',', '/', metric_df$target)
+    }
+    else {
+      # Add reference-target column
+      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
+    }
+    
+    metric_df$metric <- metric  
+    
+    # Add metric_df to plot_df
+    plot_df <- rbind(plot_df, metric_df[ , c("error", "slice", "pair", "metric")])
+  }
+  
+  fig <- ggplot(plot_df, aes(x = metric, y = error, color = pair)) +
+    geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
+    geom_jitter(width = 0.2, alpha = 0.5, aes(color = pair)) +  # Add dots with slight horizontal jitter
+    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
+    labs(title = "Error Distribution by Metric, showing Error for each Pair",
+         x = "Metric",
+         y = "Error (%)") +
+    theme_minimal() +
+    theme(
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
+    ) +
+    scale_color_manual(values = c(
+      "Tumour/Tumour" = "#007128",
+      "Tumour/Immune" = "#0062c5",
+      "Immune/Tumour" = "#f77e3b",
+      "Immune/Immune" = "#bb0036"
+    )) +
+    scale_fill_manual(values = c(
+      "Tumour/Tumour" = "#007128",
+      "Tumour/Immune" = "#0062c5",
+      "Immune/Tumour" = "#f77e3b",
+      "Immune/Immune" = "#bb0036"
+    ))
   
   return(fig)
 }
@@ -365,7 +436,7 @@ plot_3D_vs_error_all_metrics_by_slice_box_plot <- function(metric_df_list,
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by Metric, showing median error for each Slice",
+    labs(title = "Error Distribution by Metric, showing Median Error for each Slice",
          x = "Metric",
          y = "Error (%)") +
     theme_minimal() +
@@ -415,7 +486,7 @@ plot_3D_vs_error_all_metrics_by_pair_and_slice_box_plot <- function(metric_df_li
   fig <- ggplot(plot_df, aes(x = metric, y = error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by Metric, showing all error values",
+    labs(title = "Error Distribution by Metric, showing all Error Values",
          x = "Metric",
          y = "Error (%)") +
     theme_minimal() +
@@ -426,116 +497,116 @@ plot_3D_vs_error_all_metrics_by_pair_and_slice_box_plot <- function(metric_df_li
   return(fig)
 }
 
-# plot_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot <- function(metric_df_list,
-#                                                                                      metrics) {
-#   
-#   plot_df <- data.frame()
-#   
-#   for (metric in metrics) {
-#     
-#     # Get metric_df for current metric
-#     metric_df <- metric_df_list[[metric]]
-#     
-#     metric_df <- subset_metric_df(metric,
-#                                   metric_df,
-#                                   index = 1)
-#     
-#     # Change and further subset columns of metric_df
-#     colnames(metric_df)[colnames(metric_df) == metric] <- "value"
-#     
-#     # Add metric column
-#     metric_df$metric <- metric
-#     
-#     # Keep value, metric and slice column
-#     metric_df <- metric_df[ , c("value", "metric", "slice")]
-#     
-#     # Add median_df to plot_df
-#     plot_df <- rbind(plot_df, metric_df)
-#   }
-#   
-#   # Add dummy column
-#   plot_df$dummy <- paste("dummy")
-#   
-#   fig <- ggplot(plot_df, aes(x = dummy, y = value)) +
-#     geom_boxplot(data = plot_df[plot_df$slice != as.character(max(as.numeric(plot_df$slice))), ],
-#                  outlier.shape = NA, fill = "lightgray") +
-#     geom_jitter(data = plot_df[plot_df$slice != as.character(max(as.numeric(plot_df$slice))), ],
-#                 width = 0.2, alpha = 0.5, color = "#0062c5") +
-#     geom_point(data = plot_df[plot_df$slice == as.character(max(as.numeric(plot_df$slice))), ],
-#                shape = 8, color = "#bb0036", size = 3) +
-#     facet_wrap(~ metric, scales = "free_y") +  # Facet by metric with independent y-axes
-#     labs(title = "Value of Metric Distribution by Metric, for one cell pair and for each slice",
-#          x = "",
-#          y = "") +
-#     theme_minimal() +
-#     theme(
-#       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
-#       strip.background = element_rect(fill = "gray90"),
-#       strip.text = element_text(face = "bold"),
-#       axis.text.x = element_blank(),
-#       axis.ticks.x = element_blank(),
-#       axis.title.x = element_blank(),
-#       axis.line.x = element_blank(),
-#     )
-#   
-#   
-#   
-#   return(fig)
-# }
-# 
-# plot_3D_vs_error_all_metrics_for_one_pair_and_by_slice_box_plot <- function(metric_df_list,
-#                                                                                         metrics) {
-#   
-#   plot_df <- data.frame()
-#   
-#   for (metric in metrics) {
-#     
-#     # Get metric_df for current metric
-#     metric_df <- metric_df_list[[metric]]
-#     
-#     metric_df <- subset_metric_df(metric,
-#                                   metric_df,
-#                                   index = 1)
-#     
-#     # Change and further subset columns of metric_df
-#     colnames(metric_df)[colnames(metric_df) == metric] <- "value"
-#     
-#     # Obtain 3D value
-#     value_3D <- metric_df[["value"]][metric_df[["slice"]] == as.character(max(as.numeric(metric_df$slice)))]
-#     
-#     # Calculate error
-#     metric_df[["error"]] <- ((metric_df[["value"]] - value_3D) / value_3D) * 100
-#     
-#     # Remove value column (only using error now)
-#     metric_df["value"] <- NULL
-#     
-#     # Remove 3D data (integrated into error)
-#     metric_df <- metric_df[metric_df[["slice"]] != max(as.integer(metric_df$slice)), ]
-#     
-#     # Add metric column
-#     metric_df$metric <- metric
-#     
-#     # Keep error and metric column
-#     metric_df <- metric_df[ , c("error", "metric")]
-#     
-#     # Add median_df to plot_df
-#     plot_df <- rbind(plot_df, metric_df)
-#   }
-#   
-#   fig <- ggplot(plot_df, aes(x = metric, y = error)) +
-#     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
-#     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
-#     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-#     labs(title = "Error Distribution by Metric, for one cell pair and for each slice",
-#          x = "Metric",
-#          y = "Error (%)") +
-#     theme_minimal() +
-#     theme(
-#       panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
-#     )
-#   
-#   return(fig)
-# }
+plot_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot <- function(metric_df_list,
+                                                                         metrics) {
+  
+  plot_df <- data.frame()
+  
+  for (metric in metrics) {
+    
+    # Get metric_df for current metric
+    metric_df <- metric_df_list[[metric]]
+    
+    metric_df <- subset_metric_df(metric,
+                                  metric_df,
+                                  index = 1)
+    
+    # Change and further subset columns of metric_df
+    colnames(metric_df)[colnames(metric_df) == metric] <- "value"
+    
+    # Add metric column
+    metric_df$metric <- metric
+    
+    # Keep value, metric and slice column
+    metric_df <- metric_df[ , c("value", "metric", "slice")]
+    
+    # Add median_df to plot_df
+    plot_df <- rbind(plot_df, metric_df)
+  }
+  
+  # Add dummy column
+  plot_df$dummy <- paste("dummy")
+  
+  fig <- ggplot(plot_df, aes(x = dummy, y = value)) +
+    geom_boxplot(data = plot_df[plot_df$slice != as.character(max(as.numeric(plot_df$slice))), ],
+                 outlier.shape = NA, fill = "lightgray") +
+    geom_jitter(data = plot_df[plot_df$slice != as.character(max(as.numeric(plot_df$slice))), ],
+                width = 0.2, alpha = 0.5, color = "#0062c5") +
+    geom_point(data = plot_df[plot_df$slice == as.character(max(as.numeric(plot_df$slice))), ],
+               shape = 8, color = "#bb0036", size = 3) +
+    facet_wrap(~ metric, scales = "free_y") +  # Facet by metric with independent y-axes
+    labs(title = "Value of Metric Distribution by Metric, for one cell pair and for each slice",
+         x = "",
+         y = "") +
+    theme_minimal() +
+    theme(
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      strip.background = element_rect(fill = "gray90"),
+      strip.text = element_text(face = "bold"),
+      axis.text.x = element_blank(),
+      axis.ticks.x = element_blank(),
+      axis.title.x = element_blank(),
+      axis.line.x = element_blank(),
+    )
+  
+  
+  
+  return(fig)
+}
+
+plot_3D_vs_error_all_metrics_for_one_pair_and_by_slice_box_plot <- function(metric_df_list,
+                                                                            metrics) {
+  
+  plot_df <- data.frame()
+  
+  for (metric in metrics) {
+    
+    # Get metric_df for current metric
+    metric_df <- metric_df_list[[metric]]
+    
+    metric_df <- subset_metric_df(metric,
+                                  metric_df,
+                                  index = 1)
+    
+    # Change and further subset columns of metric_df
+    colnames(metric_df)[colnames(metric_df) == metric] <- "value"
+    
+    # Obtain 3D value
+    value_3D <- metric_df[["value"]][metric_df[["slice"]] == as.character(max(as.numeric(metric_df$slice)))]
+    
+    # Calculate error
+    metric_df[["error"]] <- ((metric_df[["value"]] - value_3D) / value_3D) * 100
+    
+    # Remove value column (only using error now)
+    metric_df["value"] <- NULL
+    
+    # Remove 3D data (integrated into error)
+    metric_df <- metric_df[metric_df[["slice"]] != max(as.integer(metric_df$slice)), ]
+    
+    # Add metric column
+    metric_df$metric <- metric
+    
+    # Keep error and metric column
+    metric_df <- metric_df[ , c("error", "metric")]
+    
+    # Add median_df to plot_df
+    plot_df <- rbind(plot_df, metric_df)
+  }
+  
+  fig <- ggplot(plot_df, aes(x = metric, y = error)) +
+    geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
+    geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
+    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
+    labs(title = "Error Distribution by Metric, for one cell pair and for each slice",
+         x = "Metric",
+         y = "Error (%)") +
+    theme_minimal() +
+    theme(
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
+    )
+  
+  return(fig)
+}
 
 
 ## Get plot
@@ -560,9 +631,9 @@ fig_3D_vs_error_all_metrics_by_pair_box_plot <-
   plot_3D_vs_error_all_metrics_by_pair_box_plot(metric_df_list,
                                                 metrics)
 
-# fig_3D_vs_error_all_metrics_by_all_pair_box_plot <-
-#   plot_3D_vs_error_all_metrics_by_all_pair_box_plot(metric_df_list,
-#                                                                 metrics)
+fig_3D_vs_error_all_metrics_by_all_pairs_box_plot <-
+  plot_3D_vs_error_all_metrics_by_all_pairs_box_plot(metric_df_list,
+                                                     metrics)
 
 fig_3D_vs_error_all_metrics_by_slice_box_plot <- 
   plot_3D_vs_error_all_metrics_by_slice_box_plot(metric_df_list,
@@ -581,17 +652,6 @@ fig_3D_vs_error_all_metrics_by_pair_and_slice_box_plot <-
 #                                                                               metrics)
 
 
-methods::show(fig_3D_vs_2D)
-methods::show(fig_3D_vs_error_by_pair_box_plot)
-methods::show(fig_3D_vs_error_by_slice_box_plot)
-methods::show(fig_3D_vs_error_all_metrics_by_pair_box_plot)
-# methods::show(fig_3D_vs_error_all_metrics_by_all_pair_box_plot)
-methods::show(fig_3D_vs_error_all_metrics_by_slice_box_plot)
-methods::show(fig_3D_vs_error_all_metrics_by_pair_and_slice_box_plot)
-# methods::show(fig_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot)
-# methods::show(fig_3D_vs_error_all_metrics_for_one_pair_and_by_slice_box_plot)
-
-
 ### Plotting and upload ------
 setwd("~/R/plots/public_data")
 pdf(file_name, width = 12, height = 8)
@@ -600,6 +660,7 @@ print(fig_3D_vs_2D)
 print(fig_3D_vs_error_by_pair_box_plot)
 print(fig_3D_vs_error_by_slice_box_plot)
 print(fig_3D_vs_error_all_metrics_by_pair_box_plot)
+# print(fig_3D_vs_error_all_metrics_by_all_pairs_box_plot)
 print(fig_3D_vs_error_all_metrics_by_slice_box_plot)
 print(fig_3D_vs_error_all_metrics_by_pair_and_slice_box_plot)
 # print(fig_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot)
