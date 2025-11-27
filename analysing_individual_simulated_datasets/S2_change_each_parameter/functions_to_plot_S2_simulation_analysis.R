@@ -284,7 +284,7 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
             scale_color_manual(
               values = c(
                 "0" = "black",
-                "1" = "#f77e3b",
+                "1" = "#9437a8",
                 "2" = "#007128",
                 "3" = "#b8db50"
                 
@@ -411,7 +411,7 @@ plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metri
             scale_y_continuous(breaks = pretty_breaks(n = 3)) +
             scale_color_manual(
               values = c(
-                "1" = "#f77e3b",
+                "1" = "#9437a8",
                 "2" = "#007128",
                 "3" = "#b8db50"
               )
@@ -532,7 +532,7 @@ plot_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_df_list
             scale_y_continuous(breaks = pretty_breaks(n = 3)) +
             scale_fill_manual(
               values = c(
-                "1" = "#f77e3b",
+                "1" = "#9437a8",
                 "2" = "#007128",
                 "3" = "#b8db50"
               )
@@ -704,7 +704,7 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
             scale_y_continuous(breaks = pretty_breaks(n = 3)) +
             scale_fill_manual(
               values = c(
-                "1" = "#f77e3b",
+                "1" = "#9437a8",
                 "2" = "#007128",
                 "3" = "#b8db50",
                 "3D" = "white"
@@ -1177,7 +1177,7 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
             scale_color_manual(
               values = c(
                 "0" = "black",
-                "1" = "#f77e3b",
+                "1" = "#9437a8",
                 "2" = "#007128",
                 "3" = "#b8db50"
                 
@@ -1304,7 +1304,7 @@ plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metri
             scale_y_continuous(breaks = pretty_breaks(n = 3)) +
             scale_color_manual(
               values = c(
-                "1" = "#f77e3b",
+                "1" = "#9437a8",
                 "2" = "#007128",
                 "3" = "#b8db50"
               )
@@ -1425,7 +1425,7 @@ plot_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_df_list
             scale_y_continuous(breaks = pretty_breaks(n = 3)) +
             scale_fill_manual(
               values = c(
-                "1" = "#f77e3b",
+                "1" = "#9437a8",
                 "2" = "#007128",
                 "3" = "#b8db50"
               )
@@ -1597,7 +1597,7 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
             scale_y_continuous(breaks = pretty_breaks(n = 3)) +
             scale_fill_manual(
               values = c(
-                "1" = "#f77e3b",
+                "1" = "#9437a8",
                 "2" = "#007128",
                 "3" = "#b8db50",
                 "3D" = "white"
