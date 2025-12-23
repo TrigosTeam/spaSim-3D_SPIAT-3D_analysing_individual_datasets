@@ -282,8 +282,15 @@ plot_3D_vs_error_all_metrics_by_pair_box_plot <- function(metric_df_list,
     metric_df <- metric_df[metric_df[["slice"]] != max(as.integer(metric_df$slice)), ]
     
     if (!(metric %in% c("EBSAC", "EBP_AUC"))) {
-      # Add pair column
-      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
+      
+      if (metric %in% c("ANE_AUC")) {
+        # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+        metric_df$pair <- gsub(',', '/', metric_df$target)
+      }
+      else {
+        # Add pair column
+        metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/") 
+      }
       
       # Extract median values for error for each pair
       median_df <- metric_df %>%
