@@ -253,7 +253,7 @@ plot_error_vs_3D_by_metric_and_pair_box_plot <- function(metric_df_list,
 #   metric_df_list_subset[[metric]] <- metric_df_subset
 # }
 
-metrics <- c("AMD", "ANC_AUC", "ACIN_AUC", "ANE_AUC", "MS_AUC", "NMS_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+metrics <- c("AMD", "ANC_AUC", "ACIN_AUC", "ANE_AUC", "MS_AUC", "NMS_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 
 fig_2D_vs_3D_by_metric_and_pair_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_scatter_plot(metric_df_list,

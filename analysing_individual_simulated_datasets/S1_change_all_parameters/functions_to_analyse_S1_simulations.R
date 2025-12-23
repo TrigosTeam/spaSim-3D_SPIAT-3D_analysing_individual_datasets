@@ -191,7 +191,7 @@ analyse_S1_simulations <- function(parameters_df) {
     MS_df <- data.frame(matrix(nrow = n_simulations * n_cell_type_combinations, ncol = length(MS_df_colnames)))
     colnames(MS_df) <- MS_df_colnames
     
-    NMS_df <- ANC_df <- ANE_df <- ACIN_df <- CKR_df <- CLR_df <- COO_df <- CGR_df <- MS_df
+    NMS_df <- ANC_df <- ANE_df <- ACIN_df <- CKR_df <- CLR_df <- COO_df <- CGR_df <- CK_df <- CL_df <- CG_df <- MS_df
     
     # Define SAC and prevalence data frames as well as constants
     thresholds_colnames <- paste("t", thresholds, sep = "")
@@ -223,6 +223,9 @@ analyse_S1_simulations <- function(parameters_df) {
                            CKR = CKR_df,
                            CLR = CLR_df,
                            CGR = CGR_df,
+                           CK = CK_df,
+                           CL = CL_df,
+                           CG = CG_df,
                            COO = COO_df,
                            PBSAC = PBSAC_df,
                            PBP = PBP_df,
@@ -276,6 +279,9 @@ analyse_S1_simulations <- function(parameters_df) {
         metric_df_list[["CLR"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["COO"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["CGR"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["CK"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["CL"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["CG"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["MS"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["NMS"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["ANE"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, 
@@ -287,6 +293,9 @@ analyse_S1_simulations <- function(parameters_df) {
           metric_df_list[["CLR"]][pair_index, radii_colnames] <- NA
           metric_df_list[["COO"]][pair_index, radii_colnames] <- NA
           metric_df_list[["CGR"]][pair_index, radii_colnames] <- NA
+          metric_df_list[["CK"]][pair_index, radii_colnames] <- NA
+          metric_df_list[["CL"]][pair_index, radii_colnames] <- NA
+          metric_df_list[["CG"]][pair_index, radii_colnames] <- NA
           metric_df_list[["ACIN"]][pair_index, radii_colnames] <- NA
           metric_df_list[["MS"]][pair_index, radii_colnames] <- NA
           metric_df_list[["NMS"]][pair_index, radii_colnames] <- NA
@@ -298,6 +307,9 @@ analyse_S1_simulations <- function(parameters_df) {
           metric_df_list[["CLR"]][pair_index, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] / gradient_data[["cross_L"]][["expected"]]
           metric_df_list[["COO"]][pair_index, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
           metric_df_list[["CGR"]][pair_index, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] / gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
+          metric_df_list[["CK"]][pair_index, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]] - gradient_data[["cross_K"]][["expected"]]
+          metric_df_list[["CL"]][pair_index, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] - gradient_data[["cross_L"]][["expected"]]
+          metric_df_list[["CG"]][pair_index, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] - gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
           
           if (reference_cell_type != target_cell_type) {
             metric_df_list[["ACIN"]][pair_index, radii_colnames] <- gradient_data[["cells_in_neighbourhood"]][[target_cell_type]]
@@ -426,6 +438,9 @@ analyse_S1_simulations <- function(parameters_df) {
         metric_df_list[["CLR"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["COO"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["CGR"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["CK"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["CL"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
+        metric_df_list[["CG"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["MS"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["NMS"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, target_cell_type)
         metric_df_list[["ANE"]][pair_index, c("simulation", "reference", "target")] <- c(simulation_index, reference_cell_type, 
@@ -438,6 +453,9 @@ analyse_S1_simulations <- function(parameters_df) {
           metric_df_list[["CLR"]][pair_index, radii_colnames] <- NA
           metric_df_list[["COO"]][pair_index, radii_colnames] <- NA
           metric_df_list[["CGR"]][pair_index, radii_colnames] <- NA
+          metric_df_list[["CK"]][pair_index, radii_colnames] <- NA
+          metric_df_list[["CL"]][pair_index, radii_colnames] <- NA
+          metric_df_list[["CG"]][pair_index, radii_colnames] <- NA
           metric_df_list[["ACIN"]][pair_index, radii_colnames] <- NA
           metric_df_list[["MS"]][pair_index, radii_colnames] <- NA
           metric_df_list[["NMS"]][pair_index, radii_colnames] <- NA
@@ -449,6 +467,9 @@ analyse_S1_simulations <- function(parameters_df) {
           metric_df_list[["CLR"]][pair_index, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] / gradient_data[["cross_L"]][["expected"]]
           metric_df_list[["COO"]][pair_index, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
           metric_df_list[["CGR"]][pair_index, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] / gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
+          metric_df_list[["CK"]][pair_index, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]] - gradient_data[["cross_K"]][["expected"]]
+          metric_df_list[["CL"]][pair_index, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] - gradient_data[["cross_L"]][["expected"]]
+          metric_df_list[["CG"]][pair_index, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] - gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
           
           if (reference_cell_type != target_cell_type) {
             metric_df_list[["ACIN"]][pair_index, radii_colnames] <- gradient_data[["cells_in_neighbourhood"]][[target_cell_type]]
@@ -576,12 +597,12 @@ analyse_S1_simulations <- function(parameters_df) {
   }
   
   add_AUC_for_radii_gradient_metrics_to_metric_df_list <- function(metric_df_list) {
-    gradient_radii_metrics <- c("MS", "NMS", "ACIN", "ANE", "ANC", "CKR", "CLR", "COO", "CGR")
+    gradient_radii_metrics <- c("MS", "NMS", "ACIN", "ANE", "ANC", "CKR", "CLR", "COO", "CGR", "CK", "CL", "CG")
     
     for (metric in gradient_radii_metrics) {
       metric_AUC_name <- paste(metric, "AUC", sep = "_")
       
-      if (metric %in% c("MS", "NMS", "ANC", "ACIN", "ANE", "CKR", "CLR", "COO", "CGR")) {
+      if (metric %in% c("MS", "NMS", "ANC", "ACIN", "ANE", "CKR", "CLR", "COO", "CGR", "CK", "CL", "CG")) {
         subset_colnames <- c("simulation", "reference", "target", metric_AUC_name)
       }
       else {
