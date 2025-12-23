@@ -811,7 +811,7 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
 
 
 # Running the functions for 4 pair metrics ----
-metrics_with_4_pairs <- c("AMD", "ANC_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC")
+metrics_with_4_pairs <- c("AMD", "ANC_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "CK_AUC", "CL_AUC", "CG_AUC")
 
 
 setwd("~/R/plots/S2")
