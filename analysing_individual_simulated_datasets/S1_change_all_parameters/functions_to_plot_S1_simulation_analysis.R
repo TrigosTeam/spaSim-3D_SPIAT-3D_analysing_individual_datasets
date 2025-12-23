@@ -36,8 +36,8 @@ plot_2D_vs_3D_by_metric_and_pair_scatter_plot <- function(metric_df_list,
       # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
       metric_df$pair <- gsub(',', '/', metric_df$cell_types)
     }
-    else if (metric %in% c("AE_AUC")) {
-      # For AE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+    else if (metric %in% c("ANE_AUC")) {
+      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
       metric_df$pair <- gsub(',', '/', metric_df$target)
     }
     else {
@@ -138,8 +138,8 @@ plot_error_vs_3D_by_metric_and_pair_scatter_plot <- function(metric_df_list,
       # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
       metric_df$pair <- gsub(',', '/', metric_df$cell_types)
     }
-    else if (metric %in% c("AE_AUC")) {
-      # For AE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+    else if (metric %in% c("ANE_AUC")) {
+      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
       metric_df$pair <- gsub(',', '/', metric_df$target)
     }
     else {
@@ -197,8 +197,8 @@ plot_error_vs_3D_by_metric_and_pair_box_plot <- function(metric_df_list,
       # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
       metric_df$pair <- gsub(',', '/', metric_df$cell_types)
     }
-    else if (metric %in% c("AE_AUC")) {
-      # For AE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+    else if (metric %in% c("ANE_AUC")) {
+      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
       metric_df$pair <- gsub(',', '/', metric_df$target)
     }
     else {
@@ -253,7 +253,7 @@ plot_error_vs_3D_by_metric_and_pair_box_plot <- function(metric_df_list,
 #   metric_df_list_subset[[metric]] <- metric_df_subset
 # }
 
-metrics <- c("AMD", "ACIN_AUC", "ACINP_AUC", "AE_AUC", "MS_AUC", "NMS_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+metrics <- c("AMD", "ANC_AUC", "ACIN_AUC", "ANE_AUC", "MS_AUC", "NMS_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 
 fig_2D_vs_3D_by_metric_and_pair_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_scatter_plot(metric_df_list,
