@@ -47,7 +47,7 @@ get_AUC_for_radii_gradient_metrics <- function(y) {
 radii <- seq(20, 100, 10)
 radii_colnames <- paste("r", radii, sep = "")
 
-gradient_radii_metrics <- c("MS", "NMS", "ACIN", "ANE", "ANC", "CKR", "CLR", "COO", "CGR")
+gradient_radii_metrics <- c("MS", "NMS", "ACIN", "ANE", "ANC", "CKR", "CLR", "COO", "CGR", "CK", "CL", "CG")
 
 
 for (metric in gradient_radii_metrics) {
@@ -89,7 +89,7 @@ metric_df_list[["EBP_AUC"]] <- EBP_AUC_df
 # Utility function to get metric cell types
 get_metric_cell_types <- function(metric) {
   # Get metric_cell_types
-  if (metric %in% c("AMD", "ANC", "ACIN", "CKR", "ANC_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC")) {
+  if (metric %in% c("AMD", "ANC", "ACIN", "CKR", "ANC_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "CK_AUC", "CL_AUC", "CG_AUC")) {
     metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
     metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
   }
@@ -121,7 +121,7 @@ subset_metric_df <- function(metric,
   
   metric_cell_types <- get_metric_cell_types(metric)
   
-  if (metric %in% c("AMD", "ANC", "ACIN", "CKR", "CLR", "COO", "CGR", "MS", "NMS", "ANC_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "MS_AUC", "NMS_AUC", "PBSAC", "PBP", "PBP_AUC")) {
+  if (metric %in% c("AMD", "ANC", "ACIN", "CKR", "CLR", "COO", "CGR", "CK", "CL", "CG", "MS", "NMS", "ANC_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "MS_AUC", "NMS_AUC", "PBSAC", "PBP", "PBP_AUC")) {
     metric_df_subset <- metric_df[metric_df$reference == metric_cell_types[index, "ref"] & metric_df$target == metric_cell_types[index, "tar"], ] 
   }
   else if (metric %in% c("ANE", "ANE_AUC")) {
@@ -351,8 +351,8 @@ plot_3D_vs_error_all_metrics_by_all_pairs_box_plot <- function(metric_df_list,
       # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
       metric_df$pair <- gsub(',', '/', metric_df$cell_types)
     }
-    else if (metric %in% c("AE_AUC")) {
-      # For AE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+    else if (metric %in% c("ANE_AUC")) {
+      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
       metric_df$pair <- gsub(',', '/', metric_df$target)
     }
     else {
@@ -611,7 +611,7 @@ plot_3D_vs_error_all_metrics_for_one_pair_and_by_slice_box_plot <- function(metr
 
 ## Get plot
 metric <- "AMD"
-metrics <- c("AMD", "ANC_AUC", "ACIN_AUC", "ANE_AUC", "MS_AUC", "NMS_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+metrics <- c("AMD", "ANC_AUC", "ACIN_AUC", "ANE_AUC", "MS_AUC", "NMS_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 
 # This is for a SINGLE metric
