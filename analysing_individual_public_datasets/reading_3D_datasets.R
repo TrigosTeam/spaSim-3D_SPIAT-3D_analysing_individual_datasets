@@ -47,22 +47,5 @@ setwd("~/R/data3D/spateo")
 data3D <- read.csv("mouse_E11.5_embryo.csv")
 data3D$Cell.Type[data3D$Cell.Type == ""] <- "Empty"
 
-# pick and choose the cell types...
-cell_types <- c(
-  "Neural progenitors",
-  "Spinal cord neuroectoderm",
-  "Telencephalon neuroectoderm",
-  "Cajal-Retzius cells",
-  "GABAergic interneurons",
-  "Glutamatergic neurons",
-  "Neural crest (PNS neurons)",
-  "Neural crest (PNS glia)",
-  "Somitic muscle progenitors",
-  "Cardiac mesoderm",
-  "Myoblasts",
-  "Endothelium",
-  "Hematopoietic progenitors",
-  "Primitive erythroid cells",
-  "Hepatocytes",
-  "Lung progenitor cells"
-)
+# Pick 10 most abundant cell types
+cell_types <- names(sort(table(data3D$Cell.Type), decreasing = TRUE))[1:10]
