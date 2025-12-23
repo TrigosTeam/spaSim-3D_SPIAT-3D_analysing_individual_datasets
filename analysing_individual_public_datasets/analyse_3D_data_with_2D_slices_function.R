@@ -31,14 +31,14 @@ analyse_3D_data_with_2D_slices <- function(
     AMD_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(AMD_df_colnames)))
     colnames(AMD_df) <- AMD_df_colnames
     
-    # Define MS, NMS, ACIN, ACINP, CKR, CLR, CGR, COO, AE data frames as well as constants
+    # Define MS, NMS, ANC, ACIN, CKR, CLR, CGR, COO, ANE data frames as well as constants
     radii_colnames <- paste("r", radii, sep = "")
     
     MS_df_colnames <- c("slice", "reference", "target", radii_colnames)
     MS_df <- data.frame(matrix(nrow = (n_slices + 1) * n_cell_type_combinations, ncol = length(MS_df_colnames)))
     colnames(MS_df) <- MS_df_colnames
     
-    NMS_df <- ACIN_df <- AE_df <- ACINP_df <- CKR_df <- CLR_df <- COO_df <- CGR_df <- MS_df
+    NMS_df <- ANC_df <- ANE_df <- ACIN_df <- CKR_df <- CLR_df <- COO_df <- CGR_df <- MS_df
     
     # Define SAC and prevalence data frames as well as constants
     thresholds_colnames <- paste("t", thresholds, sep = "")
@@ -64,9 +64,9 @@ analyse_3D_data_with_2D_slices <- function(
     metric_df_list <- list(AMD = AMD_df,
                            MS = MS_df,
                            NMS = NMS_df,
-                           ACINP = ACINP_df,
-                           AE = AE_df,
                            ACIN = ACIN_df,
+                           ANE = ANE_df,
+                           ANC = ANC_df,
                            CKR = CKR_df,
                            CLR = CLR_df,
                            CGR = CGR_df,
@@ -127,48 +127,48 @@ analyse_3D_data_with_2D_slices <- function(
         
         for (target_cell_type in cell_types) {
           print(paste(reference_cell_type, target_cell_type, sep = "/"))
+          metric_df_list[["ANC"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["ACIN"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-          metric_df_list[["ACINP"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["CKR"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["CLR"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["COO"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["CGR"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["MS"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["NMS"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-          metric_df_list[["AE"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, 
+          metric_df_list[["ANE"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, 
                                                                                          paste(reference_cell_type, target_cell_type, sep = ","))
           
           
           if (is.null(gradient_data)) {
-            metric_df_list[["ACIN"]][pair_index, radii_colnames] <- NA
+            metric_df_list[["ANC"]][pair_index, radii_colnames] <- NA
             metric_df_list[["CKR"]][pair_index, radii_colnames] <- NA
             metric_df_list[["CLR"]][pair_index, radii_colnames] <- NA
             metric_df_list[["COO"]][pair_index, radii_colnames] <- NA
             metric_df_list[["CGR"]][pair_index, radii_colnames] <- NA
-            metric_df_list[["ACINP"]][pair_index, radii_colnames] <- NA
+            metric_df_list[["ACIN"]][pair_index, radii_colnames] <- NA
             metric_df_list[["MS"]][pair_index, radii_colnames] <- NA
             metric_df_list[["NMS"]][pair_index, radii_colnames] <- NA
-            metric_df_list[["AE"]][pair_index, radii_colnames] <- NA
+            metric_df_list[["ANE"]][pair_index, radii_colnames] <- NA
           }
           else {
-            metric_df_list[["ACIN"]][pair_index, radii_colnames] <- gradient_data[["cells_in_neighbourhood"]][[target_cell_type]]
+            metric_df_list[["ANC"]][pair_index, radii_colnames] <- gradient_data[["neighbourhood_counts"]][[target_cell_type]]
             metric_df_list[["CKR"]][pair_index, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]] / gradient_data[["cross_K"]][["expected"]]
             metric_df_list[["CLR"]][pair_index, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] / gradient_data[["cross_L"]][["expected"]]
             metric_df_list[["COO"]][pair_index, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
             metric_df_list[["CGR"]][pair_index, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] / gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
             
             if (reference_cell_type != target_cell_type) {
-              metric_df_list[["ACINP"]][pair_index, radii_colnames] <- gradient_data[["cells_in_neighbourhood_proportion"]][[target_cell_type]]
+              metric_df_list[["ACIN"]][pair_index, radii_colnames] <- gradient_data[["cells_in_neighbourhood"]][[target_cell_type]]
               metric_df_list[["MS"]][pair_index, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$mixing_score
               metric_df_list[["NMS"]][pair_index, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$normalised_mixing_score
-              metric_df_list[["AE"]][pair_index, radii_colnames] <- gradient_data[["entropy"]][[target_cell_type]]
+              metric_df_list[["ANE"]][pair_index, radii_colnames] <- gradient_data[["neighbourhood_entropy"]][[target_cell_type]]
             }
           }
           if (reference_cell_type == target_cell_type) {
-            metric_df_list[["ACINP"]][pair_index, radii_colnames] <- Inf
+            metric_df_list[["ACIN"]][pair_index, radii_colnames] <- Inf
             metric_df_list[["MS"]][pair_index, radii_colnames] <- Inf
             metric_df_list[["NMS"]][pair_index, radii_colnames] <- Inf
-            metric_df_list[["AE"]][pair_index, radii_colnames] <- Inf
+            metric_df_list[["ANE"]][pair_index, radii_colnames] <- Inf
           }
           
           # Spatial heterogeneity metrics
@@ -267,48 +267,48 @@ analyse_3D_data_with_2D_slices <- function(
         
         for (target_cell_type in cell_types) {
           print(paste(reference_cell_type, target_cell_type, sep = "/"))
+          metric_df_list[["ANC"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["ACIN"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-          metric_df_list[["ACINP"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["CKR"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["CLR"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["COO"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["CGR"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["MS"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
           metric_df_list[["NMS"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, target_cell_type)
-          metric_df_list[["AE"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, 
+          metric_df_list[["ANE"]][pair_index, c("slice", "reference", "target")] <- c(i, reference_cell_type, 
                                                                                          paste(reference_cell_type, target_cell_type, sep = ","))
           
           
           if (is.null(gradient_data)) {
-            metric_df_list[["ACIN"]][pair_index, radii_colnames] <- NA
+            metric_df_list[["ANC"]][pair_index, radii_colnames] <- NA
             metric_df_list[["CKR"]][pair_index, radii_colnames] <- NA
             metric_df_list[["CLR"]][pair_index, radii_colnames] <- NA
             metric_df_list[["COO"]][pair_index, radii_colnames] <- NA
             metric_df_list[["CGR"]][pair_index, radii_colnames] <- NA
-            metric_df_list[["ACINP"]][pair_index, radii_colnames] <- NA
+            metric_df_list[["ACIN"]][pair_index, radii_colnames] <- NA
             metric_df_list[["MS"]][pair_index, radii_colnames] <- NA
             metric_df_list[["NMS"]][pair_index, radii_colnames] <- NA
-            metric_df_list[["AE"]][pair_index, radii_colnames] <- NA
+            metric_df_list[["ANE"]][pair_index, radii_colnames] <- NA
           }
           else {
-            metric_df_list[["ACIN"]][pair_index, radii_colnames] <- gradient_data[["cells_in_neighbourhood"]][[target_cell_type]]
+            metric_df_list[["ANC"]][pair_index, radii_colnames] <- gradient_data[["neighbourhood_counts"]][[target_cell_type]]
             metric_df_list[["CKR"]][pair_index, radii_colnames] <- gradient_data[["cross_K"]][[target_cell_type]] / gradient_data[["cross_K"]][["expected"]]
             metric_df_list[["CLR"]][pair_index, radii_colnames] <- gradient_data[["cross_L"]][[target_cell_type]] / gradient_data[["cross_L"]][["expected"]]
             metric_df_list[["COO"]][pair_index, radii_colnames] <- gradient_data[["co_occurrence"]][[target_cell_type]]
             metric_df_list[["CGR"]][pair_index, radii_colnames] <- gradient_data[["cross_G"]][[target_cell_type]][["observed_cross_G"]] / gradient_data[["cross_G"]][[target_cell_type]][["expected_cross_G"]]
             
             if (reference_cell_type != target_cell_type) {
-              metric_df_list[["ACINP"]][pair_index, radii_colnames] <- gradient_data[["cells_in_neighbourhood_proportion"]][[target_cell_type]]
+              metric_df_list[["ACIN"]][pair_index, radii_colnames] <- gradient_data[["cells_in_neighbourhood"]][[target_cell_type]]
               metric_df_list[["MS"]][pair_index, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$mixing_score
               metric_df_list[["NMS"]][pair_index, radii_colnames] <- gradient_data[["mixing_score"]][[target_cell_type]]$normalised_mixing_score
-              metric_df_list[["AE"]][pair_index, radii_colnames] <- gradient_data[["entropy"]][[target_cell_type]]
+              metric_df_list[["ANE"]][pair_index, radii_colnames] <- gradient_data[["neighbourhood_entropy"]][[target_cell_type]]
             }
           }
           if (reference_cell_type == target_cell_type) {
-            metric_df_list[["ACINP"]][pair_index, radii_colnames] <- Inf
+            metric_df_list[["ACIN"]][pair_index, radii_colnames] <- Inf
             metric_df_list[["MS"]][pair_index, radii_colnames] <- Inf
             metric_df_list[["NMS"]][pair_index, radii_colnames] <- Inf
-            metric_df_list[["AE"]][pair_index, radii_colnames] <- Inf
+            metric_df_list[["ANE"]][pair_index, radii_colnames] <- Inf
           }
           
           # Spatial heterogeneity metrics
