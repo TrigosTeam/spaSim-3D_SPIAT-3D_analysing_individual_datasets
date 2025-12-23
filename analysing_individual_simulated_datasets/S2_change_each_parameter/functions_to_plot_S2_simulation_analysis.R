@@ -21,8 +21,8 @@ add_pair_to_metric_df <- function(metric_df, metric) {
     # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
     metric_df$pair <- gsub(',', '/', metric_df$cell_types)
   }
-  else if (metric %in% c("AE_AUC")) {
-    # For AE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+  else if (metric %in% c("ANE_AUC")) {
+    # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
     metric_df$pair <- gsub(',', '/', metric_df$target)
   }
   else {
@@ -811,7 +811,7 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
 
 
 # Running the functions for 4 pair metrics ----
-metrics_with_4_pairs <- c("AMD", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC")
+metrics_with_4_pairs <- c("AMD", "ANC_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC")
 
 
 setwd("~/R/plots/S2")
@@ -914,8 +914,8 @@ add_pair_to_metric_df <- function(metric_df, metric) {
     # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
     metric_df$pair <- gsub(',', '/', metric_df$cell_types)
   }
-  else if (metric %in% c("AE_AUC")) {
-    # For AE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+  else if (metric %in% c("ANE_AUC")) {
+    # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
     metric_df$pair <- gsub(',', '/', metric_df$target)
   }
   else {
@@ -1704,7 +1704,7 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
 
 
 # Running the functions for 2 pair metrics ----
-metrics_with_2_pairs <- c("ACINP_AUC", "AE_AUC", "MS_AUC", "NMS_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+metrics_with_2_pairs <- c("ACIN_AUC", "ANE_AUC", "MS_AUC", "NMS_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 
 setwd("~/R/plots/S2")
