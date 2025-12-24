@@ -764,7 +764,7 @@ parameters_df <- generate_random_parameters(
   E_radius_y_range = c("min" = 75, "max" = 125),
   E_radius_z_range = c("min" = 75, "max" = 125),
   N_width_range = c("min" = 25, "max" = 35),
-  cluster_prop_A_range = c("min" = 0.5, "max" = 0.9),
+  cluster_prop_A_range = c("min" = 0.3, "max" = 0.7),
   ring_width_factor_range = c("min" = 0.1, "max" = 0.2) ,
   cluster1_x_coord_range = c("min" = 125, "max" = 175)
 )
