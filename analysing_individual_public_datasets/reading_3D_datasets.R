@@ -52,19 +52,22 @@ cell_types <- names(sort(table(data3D$Cell.Type), decreasing = TRUE))[1:10]
 
 # STOMICS fly datasets -------
 setwd("~/R/data3D/stomics_fly")
-
 data3D <- read.csv("E14-16h_df.csv")
 cell_types <- c("CNS", "epidermis", "carcass", "muscle", "fat body")
 
+setwd("~/R/data3D/stomics_fly")
 data3D <- read.csv("E16-18h_df.csv")
 cell_types <- c("CNS", "epidermis", "carcass", "muscle", "fat body")
 
+setwd("~/R/data3D/stomics_fly")
 data3D <- read.csv("L1_df.csv")
 cell_types <- c("CNS", "epidermis", "carcass", "muscle", "fat body")
 
+setwd("~/R/data3D/stomics_fly")
 data3D <- read.csv("L2_df.csv")
 cell_types <- c("CNS", "epidermis", "carcass", "muscle", "fat body")
 
+setwd("~/R/data3D/stomics_fly")
 data3D <- read.csv("L3_df.csv")
 cell_types <- c("CNS", "epidermis", "carcass", "muscle", "fat body")
 
