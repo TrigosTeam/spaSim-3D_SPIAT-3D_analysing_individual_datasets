@@ -671,6 +671,7 @@ plot_error_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(me
 }
 
 
+
 # Plot 2D vs 3D for each metric and pair for a random slice, annotating for tissue structure
 plot_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot <- function(metric_df_list,
                                                                                              metrics,
@@ -751,7 +752,8 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot
 
 # Plot error vs 3D for each metric and pair for a random slice, annotating for tissue structure
 plot_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot <- function(metric_df_list,
-                                                                                                metrics) {
+                                                                                                metrics,
+                                                                                                parameters_df) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -846,17 +848,43 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_p
 metrics <- c("AMD", "ANC_AUC", "ACIN_AUC", "ANE_AUC", "MS_AUC", "NMS_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 
-fig_2D_vs_3D_by_metric_and_pair_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_scatter_plot(metric_df_list,
-                                                                                              metrics)
+fig_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot(metric_df_list,
+                                                                                                                                metrics)
 
-fig_error_vs_3D_by_metric_and_pair_scatter_plot <- plot_error_vs_3D_by_metric_and_pair_scatter_plot(metric_df_list,
-                                                                                                    metrics)
+fig_error_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- plot_error_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot(metric_df_list,
+                                                                                                                                      metrics)
 
-fig_error_vs_3D_by_metric_and_pair_box_plot <- plot_error_vs_3D_by_metric_and_pair_box_plot(metric_df_list,
-                                                                                            metrics)
+fig_error_vs_3D_by_metric_and_pair_for_random_slice_box_plot <- plot_error_vs_3D_by_metric_and_pair_for_random_slice_box_plot(metric_df_list,
+                                                                                                                              metrics)
 
 
 
+fig_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot(metric_df_list,
+                                                                                                                                    metrics)
+
+fig_error_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot(metric_df_list,
+                                                                                                                                          metrics)
+
+fig_error_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot <- plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot(metric_df_list,
+                                                                                                                                  metrics)
+
+
+
+fig_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot(metric_df_list,
+                                                                                                                                metrics)
+
+fig_error_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- plot_error_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot(metric_df_list,
+                                                                                                                                      metrics)
+
+
+
+fig_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot(metric_df_list,
+                                                                                                                                                                    metrics,
+                                                                                                                                                                    parameters_df)
+
+fig_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot <- plot_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot(metric_df_list,
+                                                                                                                                                                          metrics,
+                                                                                                                                                                          parameters_df)
 
 setwd("~/R/plots/S1")
 pdf(file_name, width = 18, height = 10)
@@ -864,5 +892,12 @@ pdf(file_name, width = 18, height = 10)
 print(fig_2D_vs_3D_by_metric_and_pair_scatter_plot)
 print(fig_error_vs_3D_by_metric_and_pair_scatter_plot)
 print(fig_error_vs_3D_by_metric_and_pair_box_plot)
+print(fig_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot)
+print(fig_error_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot)
+print(fig_error_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot)
+print(fig_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot)
+print(fig_error_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot)
+print(fig_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot)
+print(fig_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot)
 
 dev.off()
