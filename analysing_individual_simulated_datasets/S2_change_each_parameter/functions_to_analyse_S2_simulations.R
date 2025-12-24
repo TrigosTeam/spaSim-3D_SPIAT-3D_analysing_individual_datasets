@@ -93,15 +93,15 @@ generate_updated_parameters_for_arrangement_and_shape <- function(
     for (shape in shapes) {
       parameters_df <- generate_random_parameters(
         n_simulations_per_parameter = n_simulations_per_parameter,
-        bg_prop_A_range = c("min" = 0, "max" = 0.10),
-        bg_prop_B_range = c("min" = 0, "max" = 0.10),
-        E_radius_x_range = c("min" = 75, "max" = 125),
-        E_radius_y_range = c("min" = 75, "max" = 125),
-        E_radius_z_range = c("min" = 75, "max" = 125),
-        N_width_range = c("min" = 25, "max" = 35),
-        cluster_prop_A_range = c("min" = 0.5, "max" = 0.9),
-        ring_width_factor_range = c("min" = 0.1, "max" = 0.2) ,
-        cluster1_x_coord_range = c("min" = 125, "max" = 175)
+        bg_prop_A_range = bg_prop_A_range,
+        bg_prop_B_range = bg_prop_B_range,
+        E_radius_x_range = E_radius_x_range,
+        E_radius_y_range = E_radius_y_range,
+        E_radius_z_range = E_radius_z_range,
+        N_width_range = N_width_range,
+        cluster_prop_A_range = cluster_prop_A_range,
+        ring_width_factor_range = ring_width_factor_range,
+        cluster1_x_coord_range = cluster1_x_coord_range
       )   
       
       parameters_df$arrangement <- arrangement
