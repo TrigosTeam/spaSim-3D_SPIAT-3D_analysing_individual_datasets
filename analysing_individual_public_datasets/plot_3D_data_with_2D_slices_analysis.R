@@ -20,7 +20,7 @@ library(alphashape3d)
 ### Format data -----
 
 get_gradient <- function(metric) {
-  if (metric %in% c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR")) {
+  if (metric %in% c("MS", "NMS", "ACINP", "AE", "ACIN", "CKR", "CLR", "COO", "CGR", "CK", "CL", "CG")) {
     return("radius")
   }
   else if (metric %in% c("PBP", "EBP")) {
