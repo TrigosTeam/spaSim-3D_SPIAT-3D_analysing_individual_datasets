@@ -86,38 +86,39 @@ metric_df_list[["EBP_AUC"]] <- EBP_AUC_df
 ### Plotting functions -----
 
 ## Functions to plot
-# Utility function to get metric cell types
-get_metric_cell_types <- function(metric) {
-  # Get metric_cell_types
-  if (metric %in% c("AMD", "ANC", "ACIN", "CKR", "ANC_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "CK_AUC", "CL_AUC", "CG_AUC")) {
-    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
-    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
-  }
-  else if (metric %in% c("MS", "NMS", "MS_AUC", "NMS_AUC")) {
-    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
-    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
-  }
-  else if (metric %in% c("ANE", "ANE_AUC")) {
-    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Tumour,Immune"))
-    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
-  }
-  else if (metric %in% c("PBSAC", "PBP", "PBP_AUC")) {
-    metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
-    metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
-  }
-  else if (metric %in% c("EBSAC", "EBP", "EBP_AUC")) {
-    metric_cell_types <- data.frame(cell_types = c("Tumour,Immune"))
-  }
-  else {
-    stop("metric not found")
-  }
-  return(metric_cell_types)
-}
 
 # Utility function to subset metric_df
 subset_metric_df <- function(metric,
                              metric_df,
                              index) {
+  
+  # Utility function to get metric cell types
+  get_metric_cell_types <- function(metric) {
+    # Get metric_cell_types
+    if (metric %in% c("AMD", "ANC", "ACIN", "CKR", "ANC_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "CK_AUC", "CL_AUC", "CG_AUC")) {
+      metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
+      metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+    }
+    else if (metric %in% c("MS", "NMS", "MS_AUC", "NMS_AUC")) {
+      metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
+      metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+    }
+    else if (metric %in% c("ANE", "ANE_AUC")) {
+      metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Tumour,Immune"))
+      metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+    }
+    else if (metric %in% c("PBSAC", "PBP", "PBP_AUC")) {
+      metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
+      metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
+    }
+    else if (metric %in% c("EBSAC", "EBP", "EBP_AUC")) {
+      metric_cell_types <- data.frame(cell_types = c("Tumour,Immune"))
+    }
+    else {
+      stop("metric not found")
+    }
+    return(metric_cell_types)
+  }
   
   metric_cell_types <- get_metric_cell_types(metric)
   
@@ -504,7 +505,7 @@ plot_error_vs_metrics_for_pairs_and_slices_box_plot <- function(metric_df_list,
   return(fig)
 }
 
-plot_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot <- function(metric_df_list,
+plot_3D_and_2D_vs_metrics_for_one_pair_and_by_slice_box_plot <- function(metric_df_list,
                                                                          metrics) {
   
   plot_df <- data.frame()
@@ -561,8 +562,8 @@ plot_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot <- function(metric_
   return(fig)
 }
 
-plot_3D_vs_error_all_metrics_for_one_pair_and_by_slice_box_plot <- function(metric_df_list,
-                                                                            metrics) {
+plot_error_vs_metrics_for_one_pair_and_by_slice_box_plot <- function(metric_df_list,
+                                                                     metrics) {
   
   plot_df <- data.frame()
   
@@ -650,13 +651,13 @@ fig_error_vs_metrics_for_pairs_and_slices_box_plot <-
   plot_error_vs_metrics_for_pairs_and_slices_box_plot(metric_df_list,
                                                       metrics)
 
-# fig_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot <-
-#   plot_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
-#                                                                            metrics)
+# fig_3D_and_2D_vs_metrics_for_one_pair_and_by_slice_box_plot <-
+#   plot_3D_and_2D_vs_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
+#                                                                metrics)
 # 
 # fig_3D_vs_error_all_metrics_for_one_pair_and_by_slice_box_plot <-
 #   plot_3D_vs_error_all_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
-#                                                                               metrics)
+#                                                                   metrics)
 
 
 ### Plotting and upload ------
