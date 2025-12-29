@@ -661,7 +661,7 @@ fig_3D_vs_error_all_metrics_by_pair_and_slice_box_plot <-
 
 ### Plotting and upload ------
 setwd("~/R/plots/public_data")
-pdf(file_name, width = 12, height = 8)
+pdf(file_name, width = 14, height = 8)
 
 print(fig_3D_vs_2D)
 print(fig_3D_vs_error_by_pair_box_plot)
