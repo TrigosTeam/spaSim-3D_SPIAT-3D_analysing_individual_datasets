@@ -53,7 +53,7 @@ gradient_radii_metrics <- c("MS", "NMS", "ACIN", "ANE", "ANC", "CKR", "CLR", "CO
 for (metric in gradient_radii_metrics) {
   metric_AUC_name <- paste(metric, "AUC", sep = "_")
   
-  if (metric %in% c("MS", "NMS", "ANC", "CKR", "CLR", "COO", "CGR")) {
+  if (metric %in% c("MS", "NMS", "ANC", "CKR", "CLR", "COO", "CGR", "CK", "CL", "CG")) {
     subset_colnames <- c("slice", "reference", "target", metric_AUC_name)
   }
   else {
