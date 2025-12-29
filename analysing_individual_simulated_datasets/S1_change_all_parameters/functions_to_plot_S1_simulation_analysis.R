@@ -566,6 +566,8 @@ plot_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(metri
   # Change slice column back to character for plotting
   plot_df$slice <- as.character(metric_df$slice)
   
+  plot_df$slice <- factor(plot_df$slice, levels = c('7', '10', '13'))
+  
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D, color = slice)) +
     geom_point(alpha = 0.5, size = 1) +
     geom_abline(slope = 1, intercept = 0, linetype = "dotted", color = "#bb0036", linewidth = 1) + # Dotted line of the equation y = x
@@ -645,6 +647,8 @@ plot_error_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(me
   # Change slice column back to character for plotting
   plot_df$slice <- as.character(metric_df$slice)
   
+  plot_df$slice <- factor(plot_df$slice, levels = c('7', '10', '13'))
+  
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
   
@@ -661,7 +665,7 @@ plot_error_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(me
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
       axis.text.x = element_text(size = 6),  # make x-axis text smaller
       axis.text.y = element_text(size = 6)   # make y-axis text smaller
-    )
+    ) +
     scale_color_manual(
       values = c(
         "7" = "#9437a8",
@@ -823,7 +827,7 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_p
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
       axis.text.x = element_text(size = 6),  # make x-axis text smaller
       axis.text.y = element_text(size = 6)   # make y-axis text smaller
-    )
+    ) +
     scale_color_manual(
       values = c(
         "mixed_ellipsoid" = "#007128",
@@ -838,6 +842,86 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_p
   return(fig)
 }
 
+# Plot 2D vs 3D correlation vs tissue structure for each metric and pair for a random slice
+plot_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_for_random_slice_bar_plot <- function(metric_df_list,
+                                                                                                       metrics,
+                                                                                                       parameters_df) {
+  plot_df <- data.frame()
+  
+  for (metric in metrics) {
+    
+    # Get metric_df for current metric
+    metric_df <- metric_df_list[[metric]]
+    
+    # Change slice column to numeric for safety
+    metric_df$slice <- as.numeric(metric_df$slice)
+    
+    # Add pair column
+    if (metric %in% c("EBSAC", "EBP_AUC")) {
+      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
+      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
+    }
+    else if (metric %in% c("ANE_AUC")) {
+      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+      metric_df$pair <- gsub(',', '/', metric_df$target)
+    }
+    else {
+      # Add reference-target column
+      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
+    }
+    
+    # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
+    # Choose a random slice for 2D values
+    metric_values2D <- metric_df[[metric]][metric_df[["slice"]] == sample(unique(metric_df[["slice"]]), 1)]
+    # Slice == 0 is the 3D value
+    metric_df <- metric_df[metric_df[["slice"]] == 0, ]
+    metric_df[["value2D"]] <- metric_values2D
+    colnames(metric_df)[colnames(metric_df) == metric] <- "value3D"
+    
+    # Merge metric_df and parameters_df
+    parameters_df$simulation <- seq(nrow(parameters_df))
+    metric_df <- metric_df %>% left_join(parameters_df[, c("simulation", "arrangement", "shape")], by = "simulation")
+    
+    # Get structure column
+    metric_df$structure <- paste(metric_df$arrangement, metric_df$shape, sep = "_")
+    
+    metric_df$metric <- metric  
+    
+    # Add metric_df to plot_df
+    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "structure")])
+    
+  }
+
+  # Compute spearman correlation
+  corr_df <- plot_df %>%
+    group_by(pair, metric, structure) %>%
+    summarise(
+      spearman_corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"),
+      .groups = "drop"
+    )
+  
+  pairs <- unique(plot_df$pair)
+  
+  fig <- ggplot(corr_df, aes(x = structure, y = spearman_corr, fill = structure)) + 
+    geom_col(alpha = 0.8) + 
+    labs(title = "Bar plots showing Spearman Correlation vs Structure, for each Metric and Pair, for a random slice", x = "Structure", y = "Spearman Correlation") + 
+    facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +
+    theme_minimal() + 
+    theme(panel.border = element_rect(color = "black", fill = NA, linewidth = 1), 
+          axis.text.x = element_text(angle = 45, hjust = 1)) + 
+    scale_fill_manual(
+      values = c(
+        "mixed_ellipsoid" = "#007128",
+        "mixed_network" = "#b8db50",
+        "ringed_ellipsoid" = "#9437a8",
+        "ringed_network" = "#d99dff",
+        "separated_ellipsoid" = "#770026",
+        "separated_network" = "#bb0036"
+      )
+    )
+
+  return(fig)
+}
 
 
 # Plots only showing pair A/B
@@ -1002,6 +1086,10 @@ fig_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_pl
                                                                                                                                                                           metrics,
                                                                                                                                                                           parameters_df)
 
+fig_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_for_random_slice_bar_plot <- plot_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_for_random_slice_bar_plot(metric_df_list,
+                                                                                                                                                                                        metrics,
+                                                                                                                                                                                        parameters_df)
+
 
 
 fig_2D_vs_3D_by_metric_for_random_slice_and_for_pair_A_B_scatter_plot <- plot_2D_vs_3D_by_metric_for_random_slice_and_for_pair_A_B_scatter_plot(metric_df_list,
@@ -1041,6 +1129,7 @@ pdf("random_slice_showing_structure.pdf", width = 24, height = 10)
 
 print(fig_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot)
 print(fig_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot)
+print(fig_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_for_random_slice_bar_plot)
 
 dev.off()
 
