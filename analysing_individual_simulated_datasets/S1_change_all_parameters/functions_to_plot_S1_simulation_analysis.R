@@ -10,7 +10,7 @@ setwd("~/R/S1_data")
 
 metric_df_list <- readRDS("S1_metric_df_list.RDS")
 
-file_name <- "S1_plots.pdf"
+parameters_df <- readRDS("parameters_df.RDS")
 
 # Functions ----
 
@@ -96,7 +96,7 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(metri
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
     geom_abline(slope = 1, intercept = 0, linetype = "dotted", color = "#bb0036", linewidth = 1) + # Dotted line of the equation y = x
-    labs(title = "Scatterplots showing 2D vs 3D, for each Metric and Pair",
+    labs(title = "Scatterplots showing 2D vs 3D, for each Metric and Pair, for a random slice",
          x = "3D value",
          y = "2D value") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +
@@ -167,7 +167,7 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(me
   fig <- ggplot(plot_df, aes(x = value3D, y = error)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatterplots showing Error vs 3D, for each Metric and Pair",
+    labs(title = "Scatterplots showing Error vs 3D, for each Metric and Pair, for a random slice",
          x = "3D value",
          y = "Error (%)") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +  
@@ -227,7 +227,7 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_box_plot <- function(metric
   fig <- ggplot(plot_df, aes(x = metric, y = error, color = pair)) +
     geom_boxplot(fill = "lightgray") +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by Metric, showing Error for each Pair",
+    labs(title = "Error Distribution by Metric, showing Error for each Pair, for a random slice",
          x = "Metric",
          y = "Error (%)") +
     scale_y_continuous(limits = c(-100, 400)) +
@@ -261,21 +261,7 @@ plot_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(met
     # Change slice column to numeric for safety
     metric_df$slice <- as.numeric(metric_df$slice)
     
-    # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
-    colnames(metric_df)[colnames(metric_df) == metric] <- "metric_value"
-    metric_df$sim_pair <- paste(x$simulation, x$reference, x$target, sep = "_")
-    
-    metric_df3D <- metric_df[metric_df[["slice"]] == 0, ]
-    colnames(metric_df3D)[colnames(metric_df3D) == "metric_value"] <- "value3D"
-    
-    # Take the average of all slices for each simulation and pair to get 2D values
-    metric_df2D <- metric_df[metric_df[["slice"]] != 0, ] %>%
-      group_by(sim_pair) %>%
-      summarise(value2D = mean(metric_value, na.rm = T))
-    
-    # Merge metric_df3D and metric_df2D
-    metric_df <- merge(metric_df3D, metric_df2D, by = "sim_pair")
-    
+    # Add pair column
     if (metric %in% c("EBSAC", "EBP_AUC")) {
       # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
       metric_df$pair <- gsub(',', '/', metric_df$cell_types)
@@ -288,12 +274,27 @@ plot_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(met
       # Add reference-target column
       metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
     }
+
+    # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
+    colnames(metric_df)[colnames(metric_df) == metric] <- "metric_value"
+    metric_df$sim_pair <- paste(metric_df$simulation, metric_df$pair, sep = "_")
+    
+    metric_df3D <- metric_df[metric_df[["slice"]] == 0, ]
+    colnames(metric_df3D)[colnames(metric_df3D) == "metric_value"] <- "value3D"
+    
+    # Take the average of all slices for each simulation and pair to get 2D values
+    metric_df2D <- metric_df[metric_df[["slice"]] != 0, ] %>%
+      group_by(sim_pair) %>%
+      summarise(value2D = mean(metric_value, na.rm = T))
+    
+    # Merge metric_df3D and metric_df2D
+    metric_df <- merge(metric_df3D, metric_df2D, by = "sim_pair")
     
     metric_df$metric <- metric  
     
     # Add metric_df to plot_df
     plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric")])
-    
+
     # Add to pval_df
     p_values <- c()
     for (pair in unique(metric_df$pair)) {
@@ -336,7 +337,7 @@ plot_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(met
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
     geom_abline(slope = 1, intercept = 0, linetype = "dotted", color = "#bb0036", linewidth = 1) + # Dotted line of the equation y = x
-    labs(title = "Scatterplots showing 2D vs 3D, for each Metric and Pair",
+    labs(title = "Scatterplots showing 2D vs 3D, for each Metric and Pair, for averaged slices",
          x = "3D value",
          y = "2D value") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +
@@ -375,21 +376,7 @@ plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(
     # Change slice column to numeric for safety
     metric_df$slice <- as.numeric(metric_df$slice)
     
-    # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
-    colnames(metric_df)[colnames(metric_df) == metric] <- "metric_value"
-    metric_df$sim_pair <- paste(metric_df$simulation, metric_df$reference, metric_df$target, sep = "_")
-    
-    metric_df3D <- metric_df[metric_df[["slice"]] == 0, ]
-    colnames(metric_df3D)[colnames(metric_df3D) == "metric_value"] <- "value3D"
-    
-    # Take the average of all slices for each simulation and pair to get 2D values
-    metric_df2D <- metric_df[metric_df[["slice"]] != 0, ] %>%
-      group_by(sim_pair) %>%
-      summarise(value2D = mean(metric_value, na.rm = T))
-    
-    # Merge metric_df3D and metric_df2D
-    metric_df <- merge(metric_df3D, metric_df2D, by = "sim_pair")
-    
+    # Add pair column
     if (metric %in% c("EBSAC", "EBP_AUC")) {
       # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
       metric_df$pair <- gsub(',', '/', metric_df$cell_types)
@@ -402,6 +389,21 @@ plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(
       # Add reference-target column
       metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
     }
+    
+    # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
+    colnames(metric_df)[colnames(metric_df) == metric] <- "metric_value"
+    metric_df$sim_pair <- paste(metric_df$simulation, metric_df$pair, sep = "_")
+    
+    metric_df3D <- metric_df[metric_df[["slice"]] == 0, ]
+    colnames(metric_df3D)[colnames(metric_df3D) == "metric_value"] <- "value3D"
+    
+    # Take the average of all slices for each simulation and pair to get 2D values
+    metric_df2D <- metric_df[metric_df[["slice"]] != 0, ] %>%
+      group_by(sim_pair) %>%
+      summarise(value2D = mean(metric_value, na.rm = T))
+    
+    # Merge metric_df3D and metric_df2D
+    metric_df <- merge(metric_df3D, metric_df2D, by = "sim_pair")
     
     metric_df$metric <- metric  
     
@@ -418,7 +420,7 @@ plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(
   fig <- ggplot(plot_df, aes(x = value3D, y = error)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatterplots showing Error vs 3D, for each Metric and Pair",
+    labs(title = "Scatterplots showing Error vs 3D, for each Metric and Pair, for averaged slices",
          x = "3D value",
          y = "Error (%)") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +  
@@ -435,7 +437,6 @@ plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(
 
 # Plot error vs 3D for each metric and pair for averaged slice
 plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot <- function(metric_df_list,
-                                                                            
                                                                             metrics) {
   plot_df <- data.frame()
   
@@ -447,21 +448,7 @@ plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot <- function(metr
     # Change slice column to numeric for safety
     metric_df$slice <- as.numeric(metric_df$slice)
     
-    # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
-    colnames(metric_df)[colnames(metric_df) == metric] <- "metric_value"
-    metric_df$sim_pair <- paste(metric_df$simulation, metric_df$reference, metric_df$target, sep = "_")
-    
-    metric_df3D <- metric_df[metric_df[["slice"]] == 0, ]
-    colnames(metric_df3D)[colnames(metric_df3D) == "metric_value"] <- "value3D"
-    
-    # Take the average of all slices for each simulation and pair to get 2D values
-    metric_df2D <- metric_df[metric_df[["slice"]] != 0, ] %>%
-      group_by(sim_pair) %>%
-      summarise(value2D = mean(metric_value, na.rm = T))
-    
-    # Merge metric_df3D and metric_df2D
-    metric_df <- merge(metric_df3D, metric_df2D, by = "sim_pair")
-    
+    # Add pair column
     if (metric %in% c("EBSAC", "EBP_AUC")) {
       # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
       metric_df$pair <- gsub(',', '/', metric_df$cell_types)
@@ -474,6 +461,21 @@ plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot <- function(metr
       # Add reference-target column
       metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
     }
+    
+    # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
+    colnames(metric_df)[colnames(metric_df) == metric] <- "metric_value"
+    metric_df$sim_pair <- paste(metric_df$simulation, metric_df$pair, sep = "_")
+    
+    metric_df3D <- metric_df[metric_df[["slice"]] == 0, ]
+    colnames(metric_df3D)[colnames(metric_df3D) == "metric_value"] <- "value3D"
+    
+    # Take the average of all slices for each simulation and pair to get 2D values
+    metric_df2D <- metric_df[metric_df[["slice"]] != 0, ] %>%
+      group_by(sim_pair) %>%
+      summarise(value2D = mean(metric_value, na.rm = T))
+    
+    # Merge metric_df3D and metric_df2D
+    metric_df <- merge(metric_df3D, metric_df2D, by = "sim_pair")
     
     metric_df$metric <- metric  
     
@@ -490,7 +492,7 @@ plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot <- function(metr
   fig <- ggplot(plot_df, aes(x = metric, y = error, color = pair)) +
     geom_boxplot(fill = "lightgray") +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by Metric, showing Error for each Pair",
+    labs(title = "Error Distribution by Metric, showing Error for each Pair, for averaged slices",
          x = "Metric",
          y = "Error (%)") +
     scale_y_continuous(limits = c(-100, 400)) +
@@ -523,21 +525,7 @@ plot_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(metri
     # Change slice column to numeric for safety
     metric_df$slice <- as.numeric(metric_df$slice)
     
-    # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
-    colnames(metric_df)[colnames(metric_df) == metric] <- "metric_value"
-    metric_df$sim_pair <- paste(metric_df$simulation, metric_df$reference, metric_df$target, sep = "_")
-    
-    metric_df3D <- metric_df[metric_df[["slice"]] == 0, ]
-    colnames(metric_df3D)[colnames(metric_df3D) == "metric_value"] <- "value3D"
-    
-    # Take 3 slices for each simulation and pair to get 2D values
-    # Slice indices 7, 10, 13 correspond with 145, 175, 205 z coord
-    metric_df2D <- metric_df[metric_df[["slice"]] %in% c(7, 10, 13), ] 
-    
-    # Merge metric_df3D and metric_df2D
-    metric_df <- metric_df2D %>% left_join(metric_df3D[, c("sim_pair", "value3D")], by = "sim_pair")
-    colnames(metric_df)[colnames(metric_df) == "metric_value"] <- "value2D"
-    
+    # Add pair column
     if (metric %in% c("EBSAC", "EBP_AUC")) {
       # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
       metric_df$pair <- gsub(',', '/', metric_df$cell_types)
@@ -551,10 +539,25 @@ plot_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(metri
       metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
     }
     
+    # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
+    colnames(metric_df)[colnames(metric_df) == metric] <- "metric_value"
+    metric_df$sim_pair <- paste(metric_df$simulation, metric_df$pair, sep = "_")
+    
+    metric_df3D <- metric_df[metric_df[["slice"]] == 0, ]
+    colnames(metric_df3D)[colnames(metric_df3D) == "metric_value"] <- "value3D"
+    
+    # Take 3 slices for each simulation and pair to get 2D values
+    # Slice indices 7, 10, 13 correspond with 145, 175, 205 z coord
+    metric_df2D <- metric_df[metric_df[["slice"]] %in% c(7, 10, 13), ] 
+    
+    # Merge metric_df3D and metric_df2D
+    metric_df <- metric_df2D %>% left_join(metric_df3D[, c("sim_pair", "value3D")], by = "sim_pair")
+    colnames(metric_df)[colnames(metric_df) == "metric_value"] <- "value2D"
+    
     metric_df$metric <- metric  
     
     # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric")])
+    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "slice")])
     
   }
   
@@ -566,7 +569,7 @@ plot_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(metri
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D, color = slice)) +
     geom_point(alpha = 0.5, size = 1) +
     geom_abline(slope = 1, intercept = 0, linetype = "dotted", color = "#bb0036", linewidth = 1) + # Dotted line of the equation y = x
-    labs(title = "Scatterplots showing 2D vs 3D, for each Metric and Pair",
+    labs(title = "Scatterplots showing 2D vs 3D, for each Metric and Pair for 3 slices",
          x = "3D value",
          y = "2D value") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +
@@ -578,9 +581,9 @@ plot_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(metri
     ) +
     scale_color_manual(
       values = c(
-        "1" = "#9437a8",
-        "2" = "#007128",
-        "3" = "#b8db50"
+        "7" = "#9437a8",
+        "10" = "#007128",
+        "13" = "#b8db50"
         
       )
     )
@@ -601,21 +604,7 @@ plot_error_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(me
     # Change slice column to numeric for safety
     metric_df$slice <- as.numeric(metric_df$slice)
     
-    # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
-    colnames(metric_df)[colnames(metric_df) == metric] <- "metric_value"
-    metric_df$sim_pair <- paste(metric_df$simulation, metric_df$reference, metric_df$target, sep = "_")
-    
-    metric_df3D <- metric_df[metric_df[["slice"]] == 0, ]
-    colnames(metric_df3D)[colnames(metric_df3D) == "metric_value"] <- "value3D"
-    
-    # Take 3 slices for each simulation and pair to get 2D values
-    # Slice indices 7, 10, 13 correspond with 145, 175, 205 z coord
-    metric_df2D <- metric_df[metric_df[["slice"]] %in% c(7, 10, 13), ] 
-    
-    # Merge metric_df3D and metric_df2D
-    metric_df <- metric_df2D %>% left_join(metric_df3D[, c("sim_pair", "value3D")], by = "sim_pair")
-    colnames(metric_df)[colnames(metric_df) == "metric_value"] <- "value2D"
-    
+    # Add pair column
     if (metric %in% c("EBSAC", "EBP_AUC")) {
       # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
       metric_df$pair <- gsub(',', '/', metric_df$cell_types)
@@ -629,10 +618,25 @@ plot_error_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(me
       metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
     }
     
+    # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
+    colnames(metric_df)[colnames(metric_df) == metric] <- "metric_value"
+    metric_df$sim_pair <- paste(metric_df$simulation, metric_df$pair, sep = "_")
+    
+    metric_df3D <- metric_df[metric_df[["slice"]] == 0, ]
+    colnames(metric_df3D)[colnames(metric_df3D) == "metric_value"] <- "value3D"
+    
+    # Take 3 slices for each simulation and pair to get 2D values
+    # Slice indices 7, 10, 13 correspond with 145, 175, 205 z coord
+    metric_df2D <- metric_df[metric_df[["slice"]] %in% c(7, 10, 13), ] 
+    
+    # Merge metric_df3D and metric_df2D
+    metric_df <- metric_df2D %>% left_join(metric_df3D[, c("sim_pair", "value3D")], by = "sim_pair")
+    colnames(metric_df)[colnames(metric_df) == "metric_value"] <- "value2D"
+    
     metric_df$metric <- metric  
     
     # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric")])
+    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "slice")])
     
   }
   
@@ -647,7 +651,7 @@ plot_error_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(me
   fig <- ggplot(plot_df, aes(x = value3D, y = error, color = slice)) +
     geom_point(alpha = 0.5, size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatterplots showing Error vs 3D, for each Metric and Pair",
+    labs(title = "Scatterplots showing Error vs 3D, for each Metric and Pair, for 3 slices",
          x = "3D value",
          y = "Error (%)") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +  
@@ -660,9 +664,9 @@ plot_error_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(me
     )
     scale_color_manual(
       values = c(
-        "1" = "#9437a8",
-        "2" = "#007128",
-        "3" = "#b8db50"
+        "7" = "#9437a8",
+        "10" = "#007128",
+        "13" = "#b8db50"
         
       )
     )
@@ -686,6 +690,20 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot
     # Change slice column to numeric for safety
     metric_df$slice <- as.numeric(metric_df$slice)
     
+    # Add pair column
+    if (metric %in% c("EBSAC", "EBP_AUC")) {
+      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
+      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
+    }
+    else if (metric %in% c("ANE_AUC")) {
+      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+      metric_df$pair <- gsub(',', '/', metric_df$target)
+    }
+    else {
+      # Add reference-target column
+      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
+    }
+    
     # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
     # Choose a random slice for 2D values
     metric_values2D <- metric_df[[metric]][metric_df[["slice"]] == sample(unique(metric_df[["slice"]]), 1)]
@@ -701,19 +719,6 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot
     # Get structure column
     metric_df$structure <- paste(metric_df$arrangement, metric_df$shape, sep = "_")
     
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-    }
-    else if (metric %in% c("ANE_AUC")) {
-      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-      metric_df$pair <- gsub(',', '/', metric_df$target)
-    }
-    else {
-      # Add reference-target column
-      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-    }
-    
     metric_df$metric <- metric  
     
     # Add metric_df to plot_df
@@ -726,7 +731,7 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D, color = structure)) +
     geom_point(alpha = 0.5, size = 1) +
     geom_abline(slope = 1, intercept = 0, linetype = "dotted", color = "#bb0036", linewidth = 1) + # Dotted line of the equation y = x
-    labs(title = "Scatterplots showing 2D vs 3D, for each Metric and Pair",
+    labs(title = "Scatterplots showing 2D vs 3D, for each Metric and Pair, showing structure",
          x = "3D value",
          y = "2D value") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +
@@ -764,6 +769,20 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_p
     # Change slice column to numeric for safety
     metric_df$slice <- as.numeric(metric_df$slice)
     
+    # Add pair column
+    if (metric %in% c("EBSAC", "EBP_AUC")) {
+      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
+      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
+    }
+    else if (metric %in% c("ANE_AUC")) {
+      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+      metric_df$pair <- gsub(',', '/', metric_df$target)
+    }
+    else {
+      # Add reference-target column
+      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
+    }
+    
     # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
     # Choose a random slice for 2D values
     metric_values2D <- metric_df[[metric]][metric_df[["slice"]] == sample(unique(metric_df[["slice"]]), 1)]
@@ -778,19 +797,6 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_p
     
     # Get structure column
     metric_df$structure <- paste(metric_df$arrangement, metric_df$shape, sep = "_")
-    
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-    }
-    else if (metric %in% c("ANE_AUC")) {
-      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-      metric_df$pair <- gsub(',', '/', metric_df$target)
-    }
-    else {
-      # Add reference-target column
-      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-    }
     
     metric_df$metric <- metric  
     
@@ -807,7 +813,7 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_p
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D, color = structure)) +
     geom_point(alpha = 0.5, size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatterplots showing Error vs 3D, for each Metric and Pair",
+    labs(title = "Scatterplots showing Error vs 3D, for each Metric and Pair, showing structure",
          x = "3D value",
          y = "Error (%)") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +  
@@ -829,6 +835,116 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_p
       )
     )
 
+  return(fig)
+}
+
+
+
+# Plots only showing pair A/B
+# Plot 2D vs 3D for each metric for a random slice and for pair A/B
+plot_2D_vs_3D_by_metric_for_random_slice_and_for_pair_A_B_scatter_plot <- function(metric_df_list,
+                                                                                   metrics) {
+  plot_df <- data.frame()
+  pval_df <- data.frame()
+  
+  for (metric in metrics) {
+    
+    # Get metric_df for current metric
+    metric_df <- metric_df_list[[metric]]
+    
+    # Change slice column to numeric for safety
+    metric_df$slice <- as.numeric(metric_df$slice)
+    
+    # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
+    # Choose a random slice for 2D values
+    metric_values2D <- metric_df[[metric]][metric_df[["slice"]] == sample(unique(metric_df[["slice"]]), 1)]
+    # Slice == 0 is the 3D value
+    metric_df <- metric_df[metric_df[["slice"]] == 0, ]
+    metric_df[["value2D"]] <- metric_values2D
+    colnames(metric_df)[colnames(metric_df) == metric] <- "value3D"
+    
+    if (metric %in% c("EBSAC", "EBP_AUC")) {
+      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
+      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
+    }
+    else if (metric %in% c("ANE_AUC")) {
+      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+      metric_df$pair <- gsub(',', '/', metric_df$target)
+    }
+    else {
+      # Add reference-target column
+      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
+    }
+    
+    # Subset for A/B pair
+    metric_df <- metric_df[metric_df$pair == "A/B", ]
+    
+    metric_df$metric <- metric  
+    
+    # Add metric_df to plot_df
+    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "metric")])
+
+    # Add to pval_df
+    p_values <- c()
+      
+    # Ignore when pair is invalid
+    if (sum(is.finite(metric_df[["value3D"]])) == 0) {
+      next
+    } 
+    
+    wilcox_test  <- wilcox.test(metric_df[["value3D"]], 
+                                metric_df[["value2D"]], 
+                                paired = TRUE)
+    p_value <- wilcox_test$p.value
+    
+    # Format p-value
+    formatCustomSci <- function(x) {
+      x_sci <- str_split_fixed(formatC(x, format = "e"), "e", 2)
+      alpha <- round(as.numeric(x_sci[ , 1]), 1)
+      power <- as.integer(x_sci[ , 2])
+      paste(alpha, power, sep = "e")
+    }
+    if (p_value == 0) p_value <- 2.2e-308
+    if (0 < p_value && p_value < 1e-3)  {
+      p_value <- formatCustomSci(p_value)
+    }
+    else {
+      p_value  <- round(p_value, 3)
+    }
+
+    p_values <- c(p_values, p_value)
+
+    pval_df <- rbind(pval_df, 
+                     data.frame(metric = metric,
+                                p_value = p_values))
+  }
+  
+  fig <- ggplot(plot_df, aes(x = value3D, y = value2D)) +
+    geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dotted", color = "#bb0036", linewidth = 1) + # Dotted line of the equation y = x
+    labs(title = "Scatterplots showing 2D vs 3D, for each Metric, for a random slice, for pair A/B",
+         x = "3D value",
+         y = "2D value") +
+    facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +
+    theme_minimal() +
+    theme(
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      axis.text.x = element_text(size = 4),  # make x-axis text smaller
+      axis.text.y = element_text(size = 4)   # make y-axis text smaller
+    ) +
+    # Add p-value text
+    geom_text(
+      data = pval_df,
+      aes(
+        x = Inf, y = -Inf,   # bottom-right corner
+        label = paste0("p: ", p_value)
+      ),
+      inherit.aes = FALSE,
+      hjust = 1.1, vjust = -0.5,
+      size = 2,
+      color = "black"
+    )
+  
   return(fig)
 }
 
@@ -886,18 +1002,54 @@ fig_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_pl
                                                                                                                                                                           metrics,
                                                                                                                                                                           parameters_df)
 
-setwd("~/R/plots/S1")
-pdf(file_name, width = 18, height = 10)
 
-print(fig_2D_vs_3D_by_metric_and_pair_scatter_plot)
-print(fig_error_vs_3D_by_metric_and_pair_scatter_plot)
-print(fig_error_vs_3D_by_metric_and_pair_box_plot)
+
+fig_2D_vs_3D_by_metric_for_random_slice_and_for_pair_A_B_scatter_plot <- plot_2D_vs_3D_by_metric_for_random_slice_and_for_pair_A_B_scatter_plot(metric_df_list,
+                                                                                                                                                metrics)
+
+setwd("~/R/plots/S1")
+pdf("random_slice.pdf", width = 24, height = 10)
+
+print(fig_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot)
+print(fig_error_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot)
+print(fig_error_vs_3D_by_metric_and_pair_for_random_slice_box_plot)
+
+dev.off()
+
+
+setwd("~/R/plots/S1")
+pdf("averaged_slices.pdf", width = 24, height = 10)
+
 print(fig_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot)
 print(fig_error_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot)
 print(fig_error_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot)
+
+dev.off()
+
+
+setwd("~/R/plots/S1")
+pdf("three_slices.pdf", width = 24, height = 10)
+
 print(fig_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot)
 print(fig_error_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot)
+
+dev.off()
+
+
+setwd("~/R/plots/S1")
+pdf("random_slice_showing_structure.pdf", width = 24, height = 10)
+
 print(fig_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot)
 print(fig_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot)
 
 dev.off()
+
+
+
+setwd("~/R/plots/S1")
+pdf("pair_A_B.pdf", width = 24, height = 4)
+
+print(fig_2D_vs_3D_by_metric_for_random_slice_and_for_pair_A_B_scatter_plot)
+
+dev.off()
+
