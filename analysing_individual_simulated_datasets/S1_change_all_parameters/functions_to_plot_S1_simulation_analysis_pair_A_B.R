@@ -16,7 +16,7 @@ parameters_df <- readRDS("parameters_df.RDS")
 
 # Plot 2D vs 3D for each metric and pair for a random slice
 plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(metric_df_list,
-                                                                           metrics) {
+                                                                               metrics) {
   plot_df <- data.frame()
   pval_df <- data.frame()
   
@@ -59,7 +59,7 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(m
     
     # Add to pval_df
     p_values <- c()
-      
+    
     # Ignore when pair is invalid
     if (sum(is.finite(metric_df[["value3D"]])) == 0) {
       next
@@ -123,7 +123,7 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(m
 
 # Plot error vs 3D for each metric and pair for a random slice
 plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(metric_df_list,
-                                                                              metrics) {
+                                                                                  metrics) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -184,7 +184,7 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- functio
 
 # Plot error vs 3D for each metric and pair for a random slice
 plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_box_plot <- function(metric_df_list,
-                                                                          metrics) {
+                                                                              metrics) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -225,25 +225,57 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_box_plot <- function(me
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
   
-
+  # Get correlation
+  corr_df <- plot_df %>% 
+    group_by(metric) %>% 
+    summarise(
+      corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
+      .groups = "drop")
   
-  fig <- ggplot(plot_df, aes(x = metric, y = error, color = pair)) +
+  # map corr ∈ [-1,1] → error ∈ [-100,400]
+  corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
+  
+  # inverse transform for the secondary axis
+  error_to_corr <- function(e) scales::rescale(e, to = c(0, 1), from = c(-100, 400))
+  
+  corr_df$y_trans <- corr_to_error(corr_df$corr)
+  
+  
+  fig <- ggplot(plot_df, aes(x = metric, y = error)) +
     geom_boxplot(fill = "lightgray") +
-    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by Metric, for a random slice and pair A/B",
-         x = "Metric",
-         y = "Error (%)") +
-    scale_y_continuous(limits = c(-100, 400)) +
+    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) +
+    
+    # median labels
+    stat_summary(
+      fun = function(z) median(z, na.rm = TRUE),
+      geom = "text",
+      aes(label = after_stat(sprintf("%.1f", y))),
+      vjust = -0.5,
+      size = 3.5,
+      color = "black"
+    ) +
+    
+    # ⭐ correlation stars
+    geom_point(data = corr_df, 
+               aes(x = metric, y = y_trans), 
+              shape = 8, # star 
+              size = 5, 
+              color = "#0062c5") +
+    
+    labs(
+      title = "Error Distribution by Metric, for a random slice and pair A/B, with Spearman Correlation",
+      x = "Metric",
+      y = "Error (%)"
+    ) +
+
+    scale_y_continuous(limits = c(-100, 400), 
+                      sec.axis = sec_axis(~ error_to_corr(.), name = "Spearman Correlation")) +
+    
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
-    ) +
-    scale_color_manual(values = c(
-      "A/A" = "#bb0036",
-      "A/B" = "#0062c5",
-      "B/A" = "#007128",
-      "B/B" = "#f77e3b"
-    ))
+    )
+  
   
   return(fig)
 }
@@ -252,7 +284,7 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_box_plot <- function(me
 
 # Plot 2D vs 3D for each metric and pair for averaged slice
 plot_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- function(metric_df_list,
-                                                                             metrics) {
+                                                                                 metrics) {
   plot_df <- data.frame()
   pval_df <- data.frame()
   
@@ -277,7 +309,7 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- function
       # Add reference-target column
       metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
     }
-
+    
     # Subset for A/B pair
     metric_df <- metric_df[metric_df$pair == "A/B", ]
     
@@ -300,7 +332,7 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- function
     
     # Add metric_df to plot_df
     plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric")])
-
+    
     # Add to pval_df
     p_values <- c()
     
@@ -330,13 +362,13 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- function
     }
     
     p_values <- c(p_values, p_value)
-  
+    
     pval_df <- rbind(pval_df, 
                      data.frame(metric = metric,
                                 p_value = p_values))
   }
   
-
+  
   
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
@@ -369,7 +401,7 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- function
 
 # Plot error vs 3D for each metric and pair for averaged slice
 plot_error_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- function(metric_df_list,
-                                                                                metrics) {
+                                                                                    metrics) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -442,7 +474,7 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- funct
 
 # Plot error vs 3D for each metric and pair for averaged slice
 plot_error_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_box_plot <- function(metric_df_list,
-                                                                            metrics) {
+                                                                                metrics) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -495,13 +527,49 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_box_plot <- function(
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
   
+  # Get correlation
+  corr_df <- plot_df %>% 
+    group_by(metric) %>% 
+    summarise(
+      corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
+      .groups = "drop")
+  
+  # map corr ∈ [-1,1] → error ∈ [-100,400]
+  corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
+  
+  # inverse transform for the secondary axis
+  error_to_corr <- function(e) scales::rescale(e, to = c(0, 1), from = c(-100, 400))
+  
+  corr_df$y_trans <- corr_to_error(corr_df$corr)
+  
   fig <- ggplot(plot_df, aes(x = metric, y = error)) +
     geom_boxplot(fill = "lightgray") +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
+    
+    # Median labels
+    stat_summary(
+      fun = function(z) median(z, na.rm = TRUE),
+      geom = "text",
+      aes(label = after_stat(sprintf("%.1f", y))),
+      vjust = -0.5,
+      size = 3.5,
+      color = "black"
+    ) +
+    
+    # ⭐ correlation stars
+    geom_point(data = corr_df, 
+               aes(x = metric, y = y_trans), 
+               shape = 8, # star 
+               size = 5, 
+               color = "#0062c5") +
+    
     labs(title = "Error Distribution by Metric, for averaged slices and pair A/B",
          x = "Metric",
          y = "Error (%)") +
-    scale_y_continuous(limits = c(-100, 400)) +
+    
+    scale_y_continuous(limits = c(-100, 400), 
+                       sec.axis = sec_axis(~ error_to_corr(.), name = "Spearman Correlation")) +
+    
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
@@ -514,7 +582,7 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_box_plot <- function(
 
 # Plot 2D vs 3D for each metric and pair for 3 slices
 plot_2D_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot <- function(metric_df_list,
-                                                                           metrics) {
+                                                                               metrics) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -596,7 +664,7 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot <- function(m
 
 # Plot error vs 3D for each metric and pair for 3 slices
 plot_error_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot <- function(metric_df_list,
-                                                                              metrics) {
+                                                                                  metrics) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -684,8 +752,8 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot <- functio
 
 # Plot 2D vs 3D for each metric and pair for a random slice, annotating for tissue structure
 plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot <- function(metric_df_list,
-                                                                                             metrics,
-                                                                                             parameters_df) {
+                                                                                                 metrics,
+                                                                                                 parameters_df) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -735,7 +803,7 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_
     
   }
   
-
+  
   
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D, color = structure)) +
     geom_point(alpha = 0.5, size = 1) +
@@ -766,8 +834,8 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_
 
 # Plot error vs 3D for each metric and pair for a random slice, annotating for tissue structure
 plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot <- function(metric_df_list,
-                                                                                                metrics,
-                                                                                                parameters_df) {
+                                                                                                    metrics,
+                                                                                                    parameters_df) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -844,14 +912,14 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatt
         "separated_network" = "#bb0036"
       )
     )
-
+  
   return(fig)
 }
 
 # Plot 2D vs 3D correlation vs tissue structure for each metric and pair for a random slice
 plot_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_A_B_for_random_slice_bar_plot <- function(metric_df_list,
-                                                                                                       metrics,
-                                                                                                       parameters_df) {
+                                                                                                           metrics,
+                                                                                                           parameters_df) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -900,7 +968,7 @@ plot_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_A_B_for_random_
     plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "structure")])
     
   }
-
+  
   # Compute spearman correlation
   corr_df <- plot_df %>%
     group_by(pair, metric, structure) %>%
@@ -909,7 +977,7 @@ plot_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_A_B_for_random_
       .groups = "drop"
     )
   
-
+  
   
   fig <- ggplot(corr_df, aes(x = structure, y = spearman_corr, fill = structure)) + 
     geom_col(alpha = 0.8) + 
@@ -928,7 +996,7 @@ plot_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_A_B_for_random_
         "separated_network" = "#bb0036"
       )
     )
-
+  
   return(fig)
 }
 
@@ -950,46 +1018,46 @@ metrics <- c("AMD", "ANC_AUC", "ACIN_AUC", "ANE_AUC", "MS_AUC", "NMS_AUC", "CKR_
 
 
 fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot(metric_df_list,
-                                                                                                                                metrics)
+                                                                                                                                        metrics)
 
 fig_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot(metric_df_list,
-                                                                                                                                      metrics)
+                                                                                                                                              metrics)
 
 fig_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_box_plot <- plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_box_plot(metric_df_list,
-                                                                                                                              metrics)
+                                                                                                                                      metrics)
 
 
 
 fig_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot(metric_df_list,
-                                                                                                                                    metrics)
+                                                                                                                                            metrics)
 
 fig_error_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- plot_error_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot(metric_df_list,
-                                                                                                                                          metrics)
+                                                                                                                                                  metrics)
 
 fig_error_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_box_plot <- plot_error_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_box_plot(metric_df_list,
-                                                                                                                                  metrics)
+                                                                                                                                          metrics)
 
 
 
 fig_2D_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot(metric_df_list,
-                                                                                                                                metrics)
+                                                                                                                                        metrics)
 
 fig_error_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot <- plot_error_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot(metric_df_list,
-                                                                                                                                      metrics)
+                                                                                                                                              metrics)
 
 
 
 fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot(metric_df_list,
-                                                                                                                                                                    metrics,
-                                                                                                                                                                    parameters_df)
+                                                                                                                                                                            metrics,
+                                                                                                                                                                            parameters_df)
 
 fig_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot <- plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot(metric_df_list,
-                                                                                                                                                                          metrics,
-                                                                                                                                                                          parameters_df)
+                                                                                                                                                                                  metrics,
+                                                                                                                                                                                  parameters_df)
 
 fig_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_A_B_for_random_slice_bar_plot <- plot_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_A_B_for_random_slice_bar_plot(metric_df_list,
-                                                                                                                                                                                        metrics,
-                                                                                                                                                                                        parameters_df)
+                                                                                                                                                                                                metrics,
+                                                                                                                                                                                                parameters_df)
 
 setwd("~/R/plots/S1")
 pdf("random_slice_pair_A_B.pdf", width = 24, height = 3)
