@@ -194,7 +194,7 @@ pairs <- "A/B"
         
         pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
                               ncol = length(fig_list[[arrangement_shape]][[pair]]))
-        pair_fig <- plot_grid(title, pair_fig, ncol = 1, rel_heights = c(0.1, 1))
+
         
         pair_figs[[pair]] <- pair_fig
       }
@@ -278,27 +278,43 @@ pairs <- "A/B"
           # Subset for parameter
           plot_df <- metric_arrangement_shape_pair_df[metric_arrangement_shape_pair_df$variable_parameter == parameter, ]
           
-          fig <- ggplot(plot_df, aes_string(parameter, metric, color = "slice")) +
-            geom_point(size = 0.5, alpha = 0.5) +
+          fig <- ggplot(plot_df, aes_string(parameter, metric)) +
+            
+            # 1) First draw all *non‑zero* slices
+            geom_point(
+              data = subset(plot_df, slice != "0"),
+              aes(color = slice),
+              size = 0.5,
+              alpha = 0.5
+            ) +
+            
+            # 2) Then draw slice 0 on top
+            geom_point(
+              data = subset(plot_df, slice == "0"),
+              color = "black",
+              size = 0.5,
+              alpha = 0.5
+            ) +
+            
             theme_minimal() +
             theme(
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
               plot.title = element_text(size = 10),
-              axis.text.x = element_text(size = 8),  # make x-axis text smaller
-              axis.text.y = element_text(size = 8),   # make y-axis text smaller
+              axis.text.x = element_text(size = 8),
+              axis.text.y = element_text(size = 8),
               legend.position = "none"
             ) +
-            scale_x_continuous(breaks = pretty_breaks(n = 3)) + 
+            scale_x_continuous(breaks = pretty_breaks(n = 3)) +
             scale_y_continuous(breaks = pretty_breaks(n = 3)) +
             scale_color_manual(
               values = c(
-                "0" = "black",
                 "1" = "#9437a8",
                 "2" = "#007128",
                 "3" = "#b8db50"
-                
+                # no need to include "0" here since we draw it manually
               )
             )
+          
           
           fig_list[[arrangement_shape]][[pair]][[parameter]] <- fig
         }
@@ -321,7 +337,7 @@ pairs <- "A/B"
         pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
                               ncol = length(fig_list[[arrangement_shape]][[pair]]))
 
-        pair_fig <- plot_grid(title, pair_fig, ncol = 1, rel_heights = c(0.1, 1))
+
         
         pair_figs[[pair]] <- pair_fig
       }
@@ -450,7 +466,7 @@ pairs <- "A/B"
         pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
                               ncol = length(fig_list[[arrangement_shape]][[pair]]))
 
-        pair_fig <- plot_grid(title, pair_fig, ncol = 1, rel_heights = c(0.1, 1))
+
         
         pair_figs[[pair]] <- pair_fig
       }
@@ -625,7 +641,7 @@ pairs <- "A/B"
         pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
                               ncol = length(fig_list[[arrangement_shape]][[pair]]))
 
-        pair_fig <- plot_grid(title, pair_fig, ncol = 1, rel_heights = c(0.1, 1))
+
         pair_figs[[pair]] <- pair_fig 
       }
       
@@ -804,7 +820,7 @@ pairs <- "A/B"
         pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
                               ncol = length(fig_list[[arrangement_shape]][[pair]]))
 
-        pair_fig <- plot_grid(title, pair_fig, ncol = 1, rel_heights = c(0.1, 1))
+
         pair_figs[[pair]] <- pair_fig 
       }
       
@@ -829,11 +845,11 @@ pairs <- "A/B"
 
 
 # Running the functions ----
-metrics <- c("ACIN_AUC", "ANE_AUC", "MS_AUC", "NMS_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+metrics <- c("AMD", "ANC_AUC", "ACIN_AUC", "ANE_AUC", "MS_AUC", "NMS_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
 
 
 setwd("~/R/plots/S2")
-pdf("fig_3D_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 26, height = 13)
+pdf("fig_3D_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 26, height = 6)
 
 for (metric in metrics) {
   
@@ -852,7 +868,7 @@ dev.off()
 
 
 setwd("~/R/plots/S2")
-pdf("fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 26, height = 13)
+pdf("fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 26, height = 6)
 
 for (metric in metrics) {
   
@@ -869,7 +885,7 @@ dev.off()
 
 
 setwd("~/R/plots/S2")
-pdf("fig_error_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 26, height = 13)
+pdf("fig_error_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 26, height = 6)
 
 for (metric in metrics) {
   
@@ -890,7 +906,7 @@ dev.off()
 
 
 setwd("~/R/plots/S2")
-pdf("fig_2D_vs_slice_for_non_gradient_metrics_A_B_violin_plot.pdf", width = 26, height = 13)
+pdf("fig_2D_vs_slice_for_non_gradient_metrics_A_B_violin_plot.pdf", width = 26, height = 6)
 
 for (metric in metrics) {
   
@@ -909,7 +925,7 @@ dev.off()
 
 
 setwd("~/R/plots/S2")
-pdf("fig_3D_and_2D_vs_slice_for_non_gradient_metrics_A_B_violin_plot.pdf", width = 26, height = 13)
+pdf("fig_3D_and_2D_vs_slice_for_non_gradient_metrics_A_B_violin_plot.pdf", width = 26, height = 6)
 
 for (metric in metrics) {
   
@@ -920,5 +936,6 @@ for (metric in metrics) {
   
 }
 dev.off()
+
 
 
