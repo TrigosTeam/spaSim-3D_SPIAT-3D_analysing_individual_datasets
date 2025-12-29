@@ -992,7 +992,7 @@ fig_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_A_B_for_random_s
                                                                                                                                                                                         parameters_df)
 
 setwd("~/R/plots/S1")
-pdf("random_slice_pair_A_B.pdf", width = 24, height = 10)
+pdf("random_slice_pair_A_B.pdf", width = 24, height = 3)
 
 print(fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot)
 print(fig_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot)
@@ -1002,7 +1002,7 @@ dev.off()
 
 
 setwd("~/R/plots/S1")
-pdf("averaged_slices_pair_A_B.pdf", width = 24, height = 10)
+pdf("averaged_slices_pair_A_B.pdf", width = 24, height = 3)
 
 print(fig_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot)
 print(fig_error_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot)
@@ -1012,7 +1012,7 @@ dev.off()
 
 
 setwd("~/R/plots/S1")
-pdf("three_slices_pair_A_B.pdf", width = 24, height = 10)
+pdf("three_slices_pair_A_B.pdf", width = 24, height = 3)
 
 print(fig_2D_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot)
 print(fig_error_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot)
@@ -1021,7 +1021,7 @@ dev.off()
 
 
 setwd("~/R/plots/S1")
-pdf("random_slice_showing_structure_pair_A_B.pdf", width = 24, height = 10)
+pdf("random_slice_showing_structure_pair_A_B.pdf", width = 24, height = 3)
 
 print(fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot)
 print(fig_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot)
