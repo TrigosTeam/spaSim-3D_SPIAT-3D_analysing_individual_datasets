@@ -91,7 +91,7 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
   # Add 'pair' column to metric_df
   metric_df <- add_pair_to_metric_df(metric_df, metric)
   
-  pairs <- unique(metric_df$pair)
+pairs <- "A/B"
   
   # Add to parameters_df
   parameters_df$distance <- 450 - parameters_df$cluster1_x_coord # 450 is the x-coordinate of cluster2
@@ -237,7 +237,7 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
   # Add 'pair' column to metric_df
   metric_df <- add_pair_to_metric_df(metric_df, metric)
   
-  pairs <- unique(metric_df$pair)
+pairs <- "A/B"
   
   # Make 'slice' column categorical
   metric_df$slice <- as.character(metric_df$slice)
@@ -320,7 +320,7 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
         
         pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
                               ncol = length(fig_list[[arrangement_shape]][[pair]]))
-        title <- ggdraw() + draw_label(paste("pair:", pair))
+
         pair_fig <- plot_grid(title, pair_fig, ncol = 1, rel_heights = c(0.1, 1))
         
         pair_figs[[pair]] <- pair_fig
@@ -360,7 +360,7 @@ plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metri
   # Add 'pair' column to metric_df
   metric_df <- add_pair_to_metric_df(metric_df, metric)
   
-  pairs <- unique(metric_df$pair)
+pairs <- "A/B"
   
   # Make 'slice' column categorical
   metric_df$slice <- as.character(metric_df$slice)
@@ -449,7 +449,7 @@ plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metri
         
         pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
                               ncol = length(fig_list[[arrangement_shape]][[pair]]))
-        title <- ggdraw() + draw_label(paste("pair:", pair))
+
         pair_fig <- plot_grid(title, pair_fig, ncol = 1, rel_heights = c(0.1, 1))
         
         pair_figs[[pair]] <- pair_fig
@@ -489,7 +489,7 @@ plot_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_df_list
   # Add 'pair' column to metric_df
   metric_df <- add_pair_to_metric_df(metric_df, metric)
   
-  pairs <- unique(metric_df$pair)
+pairs <- "A/B"
   
   # Make 'slice' column categorical
   metric_df$slice <- as.character(metric_df$slice)
@@ -624,7 +624,7 @@ plot_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_df_list
         
         pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
                               ncol = length(fig_list[[arrangement_shape]][[pair]]))
-        title <- ggdraw() + draw_label(paste("pair:", pair))
+
         pair_fig <- plot_grid(title, pair_fig, ncol = 1, rel_heights = c(0.1, 1))
         pair_figs[[pair]] <- pair_fig 
       }
@@ -664,7 +664,7 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
   # Add 'pair' column to metric_df
   metric_df <- add_pair_to_metric_df(metric_df, metric)
   
-  pairs <- unique(metric_df$pair)
+pairs <- "A/B"
   
   # Make 'slice' column categorical
   metric_df$slice <- as.character(metric_df$slice)
@@ -803,7 +803,7 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
         
         pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
                               ncol = length(fig_list[[arrangement_shape]][[pair]]))
-        title <- ggdraw() + draw_label(paste("pair:", pair))
+
         pair_fig <- plot_grid(title, pair_fig, ncol = 1, rel_heights = c(0.1, 1))
         pair_figs[[pair]] <- pair_fig 
       }
