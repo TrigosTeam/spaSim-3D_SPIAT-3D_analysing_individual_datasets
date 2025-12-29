@@ -83,7 +83,7 @@ EBP_AUC_df <- EBP_df[ , c("slice", "cell_types", "EBP_AUC")]
 metric_df_list[["EBP_AUC"]] <- EBP_AUC_df
 
 
-### Plot analysis -----
+### Plotting functions -----
 
 ## Functions to plot
 # Utility function to get metric cell types
@@ -137,7 +137,7 @@ subset_metric_df <- function(metric,
   return(metric_df_subset)
 }
 
-plot_3D_vs_2D <- function(metric_df_list,
+plot_3D_and_2D_box_plot <- function(metric_df_list,
                           metric) {
   
   # Get metric_df for current metric
@@ -175,8 +175,8 @@ plot_3D_vs_2D <- function(metric_df_list,
   return(fig)
 }
 
-plot_3D_vs_error_by_pair_box_plot <- function(metric_df_list,
-                                              metric) {
+plot_error_vs_pair_box_plot <- function(metric_df_list,
+                                        metric) {
   
   # Get metric_df for current metric
   metric_df <- metric_df_list[[metric]]
@@ -215,8 +215,8 @@ plot_3D_vs_error_by_pair_box_plot <- function(metric_df_list,
   return(fig)
 }
 
-plot_3D_vs_error_by_slice_box_plot <- function(metric_df_list,
-                                               metric) {
+plot_error_vs_slice_box_plot <- function(metric_df_list,
+                                         metric) {
   
   # Get metric_df for current metric
   metric_df <- metric_df_list[[metric]]
@@ -256,8 +256,8 @@ plot_3D_vs_error_by_slice_box_plot <- function(metric_df_list,
 }
 
 
-plot_3D_vs_error_all_metrics_by_pair_box_plot <- function(metric_df_list,
-                                                          metrics) {
+plot_median_error_for_each_pair_vs_metrics_box_plot <- function(metric_df_list,
+                                                                metrics) {
   
   plot_df <- data.frame()
   
@@ -329,8 +329,8 @@ plot_3D_vs_error_all_metrics_by_pair_box_plot <- function(metric_df_list,
   return(fig)
 }
 
-plot_3D_vs_error_all_metrics_by_all_pairs_box_plot <- function(metric_df_list,
-                                                               metrics) {
+plot_error_vs_metrics_for_pairs_box_plot <- function(metric_df_list,
+                                                     metrics) {
   
   plot_df <- data.frame()
   
@@ -400,8 +400,8 @@ plot_3D_vs_error_all_metrics_by_all_pairs_box_plot <- function(metric_df_list,
   return(fig)
 }
 
-plot_3D_vs_error_all_metrics_by_slice_box_plot <- function(metric_df_list,
-                                                           metrics) {
+plot_median_error_for_each_slice_vs_metrics_box_plot <- function(metric_df_list,
+                                                                 metrics) {
   
   plot_df <- data.frame()
   
@@ -455,8 +455,8 @@ plot_3D_vs_error_all_metrics_by_slice_box_plot <- function(metric_df_list,
 }
 
 
-plot_3D_vs_error_all_metrics_by_pair_and_slice_box_plot <- function(metric_df_list,
-                                                                    metrics) {
+plot_error_vs_metrics_for_pairs_and_slices_box_plot <- function(metric_df_list,
+                                                                metrics) {
   
   plot_df <- data.frame()
   
@@ -622,33 +622,33 @@ metrics <- c("AMD", "ANC_AUC", "ACIN_AUC", "ANE_AUC", "MS_AUC", "NMS_AUC", "CKR_
 
 
 # This is for a SINGLE metric
-fig_3D_vs_2D <- plot_3D_vs_2D(metric_df_list,
-                              metric)
+fig_3D_and_2D_box_plot <- plot_3D_and_2D_box_plot(metric_df_list,
+                                                  metric)
 
 # This is for a SINGLE metric
-fig_3D_vs_error_by_pair_box_plot <- plot_3D_vs_error_by_pair_box_plot(metric_df_list,
-                                                                      metric)
+fig_error_vs_pair_box_plot <- plot_error_vs_pair_box_plot(metric_df_list,
+                                                          metric)
 
 # This is for a SINGLE metric
-fig_3D_vs_error_by_slice_box_plot <- plot_3D_vs_error_by_slice_box_plot(metric_df_list,
-                                                                        metric)
+fig_error_vs_slice_box_plot <- plot_error_vs_slice_box_plot(metric_df_list,
+                                                            metric)
 
 
-fig_3D_vs_error_all_metrics_by_pair_box_plot <- 
-  plot_3D_vs_error_all_metrics_by_pair_box_plot(metric_df_list,
-                                                metrics)
+fig_median_error_for_each_pair_vs_metrics_box_plot <- 
+  plot_median_error_for_each_pair_vs_metrics_box_plot(metric_df_list,
+                                                      metrics)
 
-fig_3D_vs_error_all_metrics_by_all_pairs_box_plot <-
-  plot_3D_vs_error_all_metrics_by_all_pairs_box_plot(metric_df_list,
-                                                     metrics)
+fig_error_vs_metrics_for_pairs_box_plot <-
+  plot_error_vs_metrics_for_pairs_box_plot(metric_df_list,
+                                           metrics)
 
-fig_3D_vs_error_all_metrics_by_slice_box_plot <- 
-  plot_3D_vs_error_all_metrics_by_slice_box_plot(metric_df_list,
-                                                 metrics)
+fig_median_error_for_each_slice_vs_metrics_box_plot <- 
+  plot_median_error_for_each_slice_vs_metrics_box_plot(metric_df_list,
+                                                       metrics)
 
-fig_3D_vs_error_all_metrics_by_pair_and_slice_box_plot <- 
-  plot_3D_vs_error_all_metrics_by_pair_and_slice_box_plot(metric_df_list,
-                                                          metrics)
+fig_error_vs_metrics_for_pairs_and_slices_box_plot <- 
+  plot_error_vs_metrics_for_pairs_and_slices_box_plot(metric_df_list,
+                                                      metrics)
 
 # fig_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot <-
 #   plot_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
@@ -663,13 +663,13 @@ fig_3D_vs_error_all_metrics_by_pair_and_slice_box_plot <-
 setwd("~/R/plots/public_data")
 pdf(file_name, width = 14, height = 8)
 
-print(fig_3D_vs_2D)
-print(fig_3D_vs_error_by_pair_box_plot)
-print(fig_3D_vs_error_by_slice_box_plot)
-print(fig_3D_vs_error_all_metrics_by_pair_box_plot)
-# print(fig_3D_vs_error_all_metrics_by_all_pairs_box_plot)
-print(fig_3D_vs_error_all_metrics_by_slice_box_plot)
-print(fig_3D_vs_error_all_metrics_by_pair_and_slice_box_plot)
+print(fig_error_vs_pair_box_plot)
+print(fig_error_vs_pair_box_plot)
+print(fig_error_vs_slice_box_plot)
+print(fig_median_error_for_each_pair_vs_metrics_box_plot)
+# print(fig_error_vs_metrics_for_pairs_box_plot)
+print(fig_median_error_for_each_slice_vs_metrics_box_plot)
+print(fig_error_vs_metrics_for_pairs_and_slices_box_plot)
 # print(fig_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot)
 # print(fig_3D_vs_error_all_metrics_for_one_pair_and_by_slice_box_plot)
 
