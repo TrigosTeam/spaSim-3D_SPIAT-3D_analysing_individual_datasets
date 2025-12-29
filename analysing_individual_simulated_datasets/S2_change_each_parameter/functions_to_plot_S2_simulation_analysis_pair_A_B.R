@@ -201,7 +201,7 @@ pairs <- "A/B"
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
       title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
-      arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.04, 1))  + 
+      arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.08, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
       
@@ -344,7 +344,7 @@ pairs <- "A/B"
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
       title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
-      arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.04, 1))  + 
+      arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.08, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
       
@@ -473,7 +473,7 @@ pairs <- "A/B"
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
       title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
-      arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.04, 1))  + 
+      arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.08, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
       
@@ -648,7 +648,7 @@ pairs <- "A/B"
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
       title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
-      arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.04, 1))  + 
+      arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.08, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
       
@@ -827,9 +827,9 @@ pairs <- "A/B"
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
       title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
-      arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.04, 1))  + 
+      arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.08, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
-              panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
+              panel.border = element_rect(color = "black", fill = NA, linewidth = 1))z  
       
       arrangement_shape_figs[[arrangement_shape]] <- arrangement_shape_fig
     }
