@@ -543,7 +543,7 @@ plot_3D_and_2D_vs_metrics_for_one_pair_and_by_slice_box_plot <- function(metric_
     geom_point(data = plot_df[plot_df$slice == as.character(max(as.numeric(plot_df$slice))), ],
                shape = 8, color = "#bb0036", size = 3) +
     facet_wrap(~ metric, scales = "free_y") +  # Facet by metric with independent y-axes
-    labs(title = "Value of Metric Distribution by Metric, for one cell pair and for each slice",
+    labs(title = "3D and 2D metric values, for one cell pair and for each slice",
          x = "",
          y = "") +
     theme_minimal() +
@@ -651,20 +651,20 @@ fig_error_vs_metrics_for_pairs_and_slices_box_plot <-
   plot_error_vs_metrics_for_pairs_and_slices_box_plot(metric_df_list,
                                                       metrics)
 
-# fig_3D_and_2D_vs_metrics_for_one_pair_and_by_slice_box_plot <-
-#   plot_3D_and_2D_vs_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
-#                                                                metrics)
-# 
-# fig_3D_vs_error_all_metrics_for_one_pair_and_by_slice_box_plot <-
-#   plot_3D_vs_error_all_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
-#                                                                   metrics)
+fig_3D_and_2D_vs_metrics_for_one_pair_and_by_slice_box_plot <-
+  plot_3D_and_2D_vs_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
+                                                               metrics)
+
+fig_error_vs_metrics_for_one_pair_and_by_slice_box_plot <-
+  plot_error_vs_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
+                                                           metrics)
 
 
 ### Plotting and upload ------
 setwd("~/R/plots/public_data")
 pdf(file_name, width = 14, height = 8)
 
-print(fig_error_vs_pair_box_plot)
+print(fig_3D_and_2D_box_plot)
 print(fig_error_vs_pair_box_plot)
 print(fig_error_vs_slice_box_plot)
 print(fig_median_error_for_each_pair_vs_metrics_box_plot)
@@ -672,6 +672,6 @@ print(fig_median_error_for_each_pair_vs_metrics_box_plot)
 print(fig_median_error_for_each_slice_vs_metrics_box_plot)
 print(fig_error_vs_metrics_for_pairs_and_slices_box_plot)
 # print(fig_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot)
-# print(fig_3D_vs_error_all_metrics_for_one_pair_and_by_slice_box_plot)
+# print(fig_error_vs_metrics_for_one_pair_and_by_slice_box_plot)
 
 dev.off()
