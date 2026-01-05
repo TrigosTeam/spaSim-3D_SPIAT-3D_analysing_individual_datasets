@@ -444,12 +444,23 @@ plot_median_error_for_each_slice_vs_metrics_box_plot <- function(metric_df_list,
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by Metric, showing Median Error for each Slice",
+    labs(title = "Error distribution by metric, showing median error for each slice",
          x = "Metric",
          y = "Error (%)") +
     theme_minimal() +
     theme(
-      panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      
+      # Axis tick labels 
+      axis.text.x = element_text(size = 15, angle = 90, vjust = 0.5, hjust = 1),
+      axis.text.y = element_text(size = 15), 
+      
+      # Axis titles 
+      axis.title.x = element_text(size = 15), 
+      axis.title.y = element_text(size = 15), 
+      
+      # Plot title 
+      plot.title = element_text(size = 18)
     )
   
   return(fig)
@@ -662,7 +673,7 @@ fig_error_vs_metrics_for_one_pair_and_by_slice_box_plot <-
 
 ### Plotting and upload ------
 setwd("~/R/plots/public_data")
-pdf(file_name, width = 14, height = 8)
+pdf(file_name, width = 9, height = 6)
 
 print(fig_3D_and_2D_box_plot)
 print(fig_error_vs_pair_box_plot)
