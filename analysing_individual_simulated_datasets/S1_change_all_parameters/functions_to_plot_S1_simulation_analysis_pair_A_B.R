@@ -92,31 +92,58 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(m
                                 p_value = p_values))
   }
   
+  sci_if_big <- function(x) { 
+    out <- ifelse( 
+      abs(x) >= 5e3, 
+      scales::scientific_format()(x), 
+      scales::number_format(big.mark = "", decimal.mark = ".")(x) ) # Remove leading zeros in exponent (e.g., 3e03 → 3e3) 
+    
+    out <- gsub("e([+-])0+", "e\\1", out) 
+    
+    out
+  } 
+  
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
-    geom_abline(slope = 1, intercept = 0, linetype = "dotted", color = "#bb0036", linewidth = 1) + # Dotted line of the equation y = x
-    labs(title = "Scatterplots showing 2D vs 3D, for each Metric, for a random slice and pair A/B",
-         x = "3D value",
-         y = "2D value") +
+    geom_abline(slope = 1, intercept = 0, linetype = "dotted",
+                color = "#bb0036", linewidth = 1) +
+    labs(
+      title = "Scatterplots showing 2D vs 3D, for each metric, a random slice and pair A/B",
+      x = "3D value",
+      y = "2D value"
+    ) +
     facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +
+    
+    scale_x_continuous(n.breaks = 3, labels = sci_if_big) + 
+    scale_y_continuous(n.breaks = 3, labels = sci_if_big) +
+    
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
-      axis.text.x = element_text(size = 4),  # make x-axis text smaller
-      axis.text.y = element_text(size = 4)   # make y-axis text smaller
+      
+      # Axis tick labels
+      axis.text.x = element_text(size = 12),
+      axis.text.y = element_text(size = 12),
+      
+      # Axis titles
+      axis.title.x = element_text(size = 12),
+      axis.title.y = element_text(size = 12),
+      
+      # Plot title
+      plot.title = element_text(size = 15),
+      
+      # Facet strip titles
+      strip.text = element_text(size = 12)
     ) +
-    # Add p-value text
     geom_text(
       data = pval_df,
-      aes(
-        x = Inf, y = -Inf,   # bottom-right corner
-        label = paste0("p: ", p_value)
-      ),
+      aes(x = Inf, y = -Inf, label = paste0("p: ", p_value)),
       inherit.aes = FALSE,
       hjust = 1.1, vjust = -0.5,
-      size = 2,
+      size = 4,   # p-value font size
       color = "black"
     )
+  
   
   return(fig)
 }
@@ -1060,7 +1087,7 @@ fig_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_A_B_for_random_s
                                                                                                                                                                                                 parameters_df)
 
 setwd("~/R/plots/S1")
-pdf("random_slice_pair_A_B.pdf", width = 24, height = 3)
+pdf("random_slice_pair_A_B.pdf", width = 28, height = 2)
 
 print(fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot)
 print(fig_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot)
