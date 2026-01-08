@@ -268,6 +268,9 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_box_plot <- function(me
   corr_df$y_trans <- corr_to_error(corr_df$corr)
   
   
+  # Factor metrics
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
   fig <- ggplot(plot_df, aes(x = metric, y = error)) +
     geom_boxplot(fill = "lightgray") +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) +
@@ -278,30 +281,38 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_box_plot <- function(me
       geom = "text",
       aes(label = after_stat(sprintf("%.1f", y))),
       vjust = -0.5,
-      size = 3.5,
+      size = 5,
       color = "black"
     ) +
     
     # ⭐ correlation stars
     geom_point(data = corr_df, 
                aes(x = metric, y = y_trans), 
-              shape = 8, # star 
-              size = 5, 
-              color = "#0062c5") +
+               shape = 8, # star 
+               size = 5, 
+               color = "#0062c5") +
     
     labs(
-      title = "Error Distribution by Metric, for a random slice and pair A/B, with Spearman Correlation",
+      title = "Error distribution by metric, for a random slice and pair A/B, with spearman correlation",
       x = "Metric",
       y = "Error (%)"
     ) +
-
+    
     scale_y_continuous(limits = c(-100, 400), 
-                      sec.axis = sec_axis(~ error_to_corr(.), name = "Spearman Correlation")) +
+                       sec.axis = sec_axis(~ error_to_corr(.), name = "Spearman Correlation")) +
     
     theme_minimal() +
     theme(
-      panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      
+      # Font sizes
+      plot.title      = element_text(size = 16),
+      axis.title.x    = element_text(size = 16),
+      axis.title.y    = element_text(size = 16),
+      axis.text.x     = element_text(size = 16),
+      axis.text.y     = element_text(size = 16)
     )
+  
   
   
   return(fig)
@@ -1041,7 +1052,11 @@ plot_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_A_B_for_random_
 #   metric_df_list_subset[[metric]] <- metric_df_subset
 # }
 
-metrics <- c("AMD", "ANC_AUC", "ACIN_AUC", "ANE_AUC", "MS_AUC", "NMS_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+metrics <- c("AMD",
+             "ANC_AUC", "ACIN_AUC", "ANE_AUC",
+             "MS_AUC", "NMS_AUC",
+             "CK_AUC", "CL_AUC", "CG_AUC",
+             "PBP_AUC", "EBP_AUC", "PBSAC", "EBSAC")
 
 
 fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot(metric_df_list,
@@ -1087,7 +1102,7 @@ fig_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_A_B_for_random_s
                                                                                                                                                                                                 parameters_df)
 
 setwd("~/R/plots/S1")
-pdf("random_slice_pair_A_B.pdf", width = 28, height = 2)
+pdf("random_slice_pair_A_B1.pdf", width = 18, height = 6)
 
 print(fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot)
 print(fig_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot)
