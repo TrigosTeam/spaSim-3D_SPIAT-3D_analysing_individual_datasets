@@ -167,9 +167,9 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(me
   fig <- ggplot(plot_df, aes(x = value3D, y = error)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatterplots showing Error vs 3D, for each Metric and Pair, for a random slice",
+    labs(title = "Scatterplots showing Percentage difference vs 3D, for each Metric and Pair, for a random slice",
          x = "3D value",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +  
     scale_y_continuous(limits = c(-100, 500)) +
     theme_minimal() +
@@ -227,9 +227,9 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_box_plot <- function(metric
   fig <- ggplot(plot_df, aes(x = metric, y = error, color = pair)) +
     geom_boxplot(fill = "lightgray") +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by Metric, showing Error for each Pair, for a random slice",
+    labs(title = "Percentage difference Distribution by Metric, showing Percentage difference for each Pair, for a random slice",
          x = "Metric",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     scale_y_continuous(limits = c(-100, 400)) +
     theme_minimal() +
     theme(
@@ -420,9 +420,9 @@ plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(
   fig <- ggplot(plot_df, aes(x = value3D, y = error)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatterplots showing Error vs 3D, for each Metric and Pair, for averaged slices",
+    labs(title = "Scatterplots showing Percentage difference vs 3D, for each Metric and Pair, for averaged slices",
          x = "3D value",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +  
     scale_y_continuous(limits = c(-100, 500)) +
     theme_minimal() +
@@ -492,9 +492,9 @@ plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot <- function(metr
   fig <- ggplot(plot_df, aes(x = metric, y = error, color = pair)) +
     geom_boxplot(fill = "lightgray") +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by Metric, showing Error for each Pair, for averaged slices",
+    labs(title = "Percentage difference Distribution by Metric, showing Percentage difference for each Pair, for averaged slices",
          x = "Metric",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     scale_y_continuous(limits = c(-100, 400)) +
     theme_minimal() +
     theme(
@@ -655,9 +655,9 @@ plot_error_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(me
   fig <- ggplot(plot_df, aes(x = value3D, y = error, color = slice)) +
     geom_point(alpha = 0.5, size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatterplots showing Error vs 3D, for each Metric and Pair, for 3 slices",
+    labs(title = "Scatterplots showing Percentage difference vs 3D, for each Metric and Pair, for 3 slices",
          x = "3D value",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +  
     scale_y_continuous(limits = c(-100, 500)) +
     theme_minimal() +
@@ -817,9 +817,9 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_p
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D, color = structure)) +
     geom_point(alpha = 0.5, size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatterplots showing Error vs 3D, for each Metric and Pair, showing structure",
+    labs(title = "Scatterplots showing Percentage difference vs 3D, for each Metric and Pair, showing structure",
          x = "3D value",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +  
     scale_y_continuous(limits = c(-100, 500)) +
     theme_minimal() +

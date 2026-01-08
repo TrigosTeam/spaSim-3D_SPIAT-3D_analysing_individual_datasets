@@ -427,7 +427,7 @@ pairs <- "A/B"
             geom_point(size = 0.5) +
             geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
             theme_minimal() +
-            labs(y = paste(metric, "Error (%)")) +
+            labs(y = paste(metric, "Percentage difference (%)")) +
             theme(
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
               plot.title = element_text(size = 10),

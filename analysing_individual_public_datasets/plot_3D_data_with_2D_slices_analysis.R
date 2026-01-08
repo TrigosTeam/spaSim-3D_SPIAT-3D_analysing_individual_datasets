@@ -204,9 +204,9 @@ plot_error_vs_pair_box_plot <- function(metric_df_list,
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by Pair",
+    labs(title = "Percentage difference Distribution by Pair",
          x = "Pair",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
@@ -244,9 +244,9 @@ plot_error_vs_slice_box_plot <- function(metric_df_list,
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by Slice",
+    labs(title = "Percentage difference Distribution by Slice",
          x = "Slice Index",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
@@ -319,9 +319,9 @@ plot_median_error_for_each_pair_vs_metrics_box_plot <- function(metric_df_list,
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by Metric, showing Median Error for each Pair",
+    labs(title = "Percentage difference Distribution by Metric, showing Median Percentage difference for each Pair",
          x = "Metric",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
@@ -378,9 +378,9 @@ plot_error_vs_metrics_for_pairs_box_plot <- function(metric_df_list,
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, aes(color = pair)) +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by Metric, showing Error for each Pair",
+    labs(title = "Percentage difference Distribution by Metric, showing Percentage difference for each Pair",
          x = "Metric",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
@@ -505,9 +505,9 @@ plot_error_vs_metrics_for_pairs_and_slices_box_plot <- function(metric_df_list,
   fig <- ggplot(plot_df, aes(x = metric, y = error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by Metric, showing all Error Values",
+    labs(title = "Percentage difference Distribution by Metric, showing all Percentage difference Values",
          x = "Metric",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
@@ -616,9 +616,9 @@ plot_error_vs_metrics_for_one_pair_and_by_slice_box_plot <- function(metric_df_l
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error Distribution by Metric, for one cell pair and for each slice",
+    labs(title = "Percentage difference Distribution by Metric, for one cell pair and for each slice",
          x = "Metric",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
