@@ -440,11 +440,14 @@ plot_median_error_for_each_slice_vs_metrics_box_plot <- function(metric_df_list,
     plot_df <- rbind(plot_df, median_df)
   }
   
+  # Factor metrics
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
   fig <- ggplot(plot_df, aes(x = metric, y = median_error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Percentage difference distribution by metric, showing median percentage difference for each slice",
+    labs(title = "Boxplots showing median percentage difference for each slice vs metrics",
          x = "Metric",
          y = "Percentage difference (%)") +
     theme_minimal() +
