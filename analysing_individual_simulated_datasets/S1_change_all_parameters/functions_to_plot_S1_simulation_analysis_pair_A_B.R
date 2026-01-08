@@ -194,9 +194,9 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- functio
   fig <- ggplot(plot_df, aes(x = value3D, y = error)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatterplots showing Error vs 3D, for each Metric, for a random slice and pair A/B",
+    labs(title = "Scatterplots showing percentage difference vs 3D, for each Metric, for a random slice and pair A/B",
          x = "3D value",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     facet_wrap(~ interaction(metric, pair), scales = "free", ncol = length(metrics)) +  
     scale_y_continuous(limits = c(-100, 500)) +
     theme_minimal() +
@@ -293,9 +293,9 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_box_plot <- function(me
                color = "#0062c5") +
     
     labs(
-      title = "Error distribution by metric, for a random slice and pair A/B, with spearman correlation",
+      title = "Percentage difference distribution by metric, for a random slice and pair A/B, with spearman correlation",
       x = "Metric",
-      y = "Error (%)"
+      y = "Percentage difference (%)"
     ) +
     
     scale_y_continuous(limits = c(-100, 400), 
@@ -495,9 +495,9 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- funct
   fig <- ggplot(plot_df, aes(x = value3D, y = error)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatterplots showing Error vs 3D, for each Metric, for averaged slices and pair A/B",
+    labs(title = "Scatterplots showing Percentage difference vs 3D, for each Metric, for averaged slices and pair A/B",
          x = "3D value",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +  
     scale_y_continuous(limits = c(-100, 500)) +
     theme_minimal() +
@@ -601,9 +601,9 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_box_plot <- function(
                size = 5, 
                color = "#0062c5") +
     
-    labs(title = "Error Distribution by Metric, for averaged slices and pair A/B",
+    labs(title = "Percentage difference Distribution by Metric, for averaged slices and pair A/B",
          x = "Metric",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     
     scale_y_continuous(limits = c(-100, 400), 
                        sec.axis = sec_axis(~ error_to_corr(.), name = "Spearman Correlation")) +
@@ -763,9 +763,9 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot <- functio
   fig <- ggplot(plot_df, aes(x = value3D, y = error, color = slice)) +
     geom_point(alpha = 0.5, size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatterplots showing Error vs 3D, for each Metric, 3 slices and pair A/B",
+    labs(title = "Scatterplots showing Percentage difference vs 3D, for each Metric, 3 slices and pair A/B",
          x = "3D value",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +  
     scale_y_continuous(limits = c(-100, 500)) +
     theme_minimal() +
@@ -929,9 +929,9 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatt
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D, color = structure)) +
     geom_point(alpha = 0.5, size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatterplots showing Error vs 3D, for each Metric and pair A/B, showing structure",
+    labs(title = "Scatterplots showing Percentage difference vs 3D, for each Metric and pair A/B, showing structure",
          x = "3D value",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +  
     scale_y_continuous(limits = c(-100, 500)) +
     theme_minimal() +
@@ -1102,7 +1102,7 @@ fig_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_A_B_for_random_s
                                                                                                                                                                                                 parameters_df)
 
 setwd("~/R/plots/S1")
-pdf("random_slice_pair_A_B1.pdf", width = 18, height = 6)
+pdf("random_slice_pair_A_B.pdf", width = 18, height = 6)
 
 print(fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot)
 print(fig_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot)
