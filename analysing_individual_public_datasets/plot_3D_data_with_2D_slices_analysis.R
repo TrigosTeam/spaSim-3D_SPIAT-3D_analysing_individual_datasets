@@ -444,9 +444,9 @@ plot_median_error_for_each_slice_vs_metrics_box_plot <- function(metric_df_list,
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Error distribution by metric, showing median error for each slice",
+    labs(title = "Percentage difference distribution by metric, showing median percentage difference for each slice",
          x = "Metric",
-         y = "Error (%)") +
+         y = "Percentage difference (%)") +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
