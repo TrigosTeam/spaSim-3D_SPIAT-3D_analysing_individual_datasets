@@ -237,7 +237,7 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
   # Add 'pair' column to metric_df
   metric_df <- add_pair_to_metric_df(metric_df, metric)
   
-pairs <- "A/B"
+  pairs <- "A/B"
   
   # Make 'slice' column categorical
   metric_df$slice <- as.character(metric_df$slice)
@@ -278,43 +278,63 @@ pairs <- "A/B"
           # Subset for parameter
           plot_df <- metric_arrangement_shape_pair_df[metric_arrangement_shape_pair_df$variable_parameter == parameter, ]
           
-          fig <- ggplot(plot_df, aes_string(parameter, metric)) +
+          sci_clean_threshold <- function(x) {
+            x[!(x %in% range(x, na.rm = T))] <- NA
             
-            # 1) First draw all *non‑zero* slices
+            sapply(x, function(v) {
+              if (is.na(v)) {
+                return('')
+              }
+              if (abs(v) < 1000) {
+                return(as.character(v))   # keep normal numbers
+              }
+              # scientific notation
+              s <- format(v, scientific = TRUE)   # e.g. "1e+03"
+              s <- gsub("\\+", "", s)             # remove "+"
+              s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
+              s
+            })
+          }
+          
+          
+          
+          fig <- ggplot(plot_df, aes_string(parameter, metric)) +
             geom_point(
               data = subset(plot_df, slice != "0"),
               aes(color = slice),
               size = 0.5,
               alpha = 0.5
             ) +
-            
-            # 2) Then draw slice 0 on top
             geom_point(
               data = subset(plot_df, slice == "0"),
               color = "black",
               size = 0.5,
               alpha = 0.5
             ) +
-            
             theme_minimal() +
             theme(
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
-              plot.title = element_text(size = 10),
-              axis.text.x = element_text(size = 8),
-              axis.text.y = element_text(size = 8),
+              axis.title.x = element_text(size = 12),
+              axis.title.y = element_text(size = 12),
+              axis.text.x  = element_text(size = 12),
+              axis.text.y  = element_text(size = 12),
               legend.position = "none"
             ) +
-            scale_x_continuous(breaks = pretty_breaks(n = 3)) +
-            scale_y_continuous(breaks = pretty_breaks(n = 3)) +
+            scale_x_continuous(
+              breaks = pretty_breaks(n = 3),
+              labels = sci_clean_threshold
+            ) +
+            scale_y_continuous(
+              breaks = pretty_breaks(n = 3),
+              labels = sci_clean_threshold
+            ) +
             scale_color_manual(
               values = c(
                 "1" = "#9437a8",
                 "2" = "#007128",
                 "3" = "#b8db50"
-                # no need to include "0" here since we draw it manually
               )
             )
-          
           
           fig_list[[arrangement_shape]][[pair]][[parameter]] <- fig
         }
@@ -343,10 +363,10 @@ pairs <- "A/B"
       }
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
-      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
-      arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.08, 1))  + 
-        theme(plot.margin = margin(10, 10, 10, 10),
-              panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
+      title <- ggdraw() + draw_label(paste(arrangement, "-", shape, sep = ""), fontface = "bold", size = 12)
+      arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.1, 1))  + 
+        theme(plot.margin = margin(2.5, 2.5, 1.25, 1.25),
+              panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5))  
       
       arrangement_shape_figs[[arrangement_shape]] <- arrangement_shape_fig
     }
@@ -849,11 +869,12 @@ metrics <- c("AMD",
              "ANC_AUC", "ACIN_AUC", "ANE_AUC",
              "MS_AUC", "NMS_AUC",
              "CK_AUC", "CL_AUC", "CG_AUC",
+             "COO_AUC",
              "PBP_AUC", "EBP_AUC", "PBSAC", "EBSAC")
 
 
 setwd("~/R/plots/S2")
-pdf("fig_3D_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 26, height = 6)
+pdf("fig_3D_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 18, height = 6)
 
 for (metric in metrics) {
   
@@ -872,7 +893,7 @@ dev.off()
 
 
 setwd("~/R/plots/S2")
-pdf("fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 26, height = 6)
+pdf("fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 17.6, height = 4.4)
 
 for (metric in metrics) {
   
