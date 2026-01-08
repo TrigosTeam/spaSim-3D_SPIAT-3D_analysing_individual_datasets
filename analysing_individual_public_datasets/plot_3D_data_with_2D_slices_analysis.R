@@ -630,7 +630,11 @@ plot_error_vs_metrics_for_one_pair_and_by_slice_box_plot <- function(metric_df_l
 
 ## Get plot
 metric <- "AMD"
-metrics <- c("AMD", "ANC_AUC", "ACIN_AUC", "ANE_AUC", "MS_AUC", "NMS_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+metrics <- c("AMD",
+             "ANC_AUC", "ACIN_AUC", "ANE_AUC",
+             "MS_AUC", "NMS_AUC",
+             "CK_AUC", "CL_AUC", "CG_AUC",
+             "PBP_AUC", "EBP_AUC", "PBSAC", "EBSAC")
 
 
 # This is for a SINGLE metric

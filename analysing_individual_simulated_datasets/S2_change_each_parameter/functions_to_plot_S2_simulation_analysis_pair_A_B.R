@@ -845,7 +845,11 @@ pairs <- "A/B"
 
 
 # Running the functions ----
-metrics <- c("AMD", "ANC_AUC", "ACIN_AUC", "ANE_AUC", "MS_AUC", "NMS_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "PBSAC", "PBP_AUC", "EBSAC", "EBP_AUC")
+metrics <- c("AMD",
+             "ANC_AUC", "ACIN_AUC", "ANE_AUC",
+             "MS_AUC", "NMS_AUC",
+             "CK_AUC", "CL_AUC", "CG_AUC",
+             "PBP_AUC", "EBP_AUC", "PBSAC", "EBSAC")
 
 
 setwd("~/R/plots/S2")
