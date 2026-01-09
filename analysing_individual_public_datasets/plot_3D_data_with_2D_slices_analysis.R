@@ -443,6 +443,17 @@ plot_median_error_for_each_slice_vs_metrics_box_plot <- function(metric_df_list,
   # Factor metrics
   plot_df$metric <- factor(plot_df$metric, metrics)
   
+  summary_df <- plot_df %>%
+    group_by(metric) %>%
+    summarise(
+      min     = min(median_error, na.rm = TRUE),
+      max     = max(median_error, na.rm = TRUE),
+      range   = max - min,
+      median  = median(median_error, na.rm = TRUE),
+      average = mean(median_error, na.rm = TRUE)
+    )
+  write.csv(summary_df, "~/R/values_from_figures/summary_df.csv")
+  
   fig <- ggplot(plot_df, aes(x = metric, y = median_error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
