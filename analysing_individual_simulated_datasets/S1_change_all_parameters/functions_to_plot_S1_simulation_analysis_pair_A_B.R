@@ -18,7 +18,7 @@ parameters_df <- readRDS("parameters_df.RDS")
 plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(metric_df_list,
                                                                                metrics) {
   plot_df <- data.frame()
-  pval_df <- data.frame()
+  rval_df <- data.frame()
   
   for (metric in metrics) {
     
@@ -57,90 +57,85 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(m
     # Add metric_df to plot_df
     plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "metric")])
     
-    # Add to pval_df
-    p_values <- c()
+    # Add to rval_df
+    r_values <- c()
     
     # Ignore when pair is invalid
     if (sum(is.finite(metric_df[["value3D"]])) == 0) {
       next
     } 
+
+    spearman_r <- round(cor(metric_df[["value3D"]], metric_df[["value2D"]], method = "spearman", use = "complete.obs"), 3)
     
-    wilcox_test  <- wilcox.test(metric_df[["value3D"]], 
-                                metric_df[["value2D"]], 
-                                paired = TRUE)
-    p_value <- wilcox_test$p.value
+    r_values <- c(r_values, spearman_r)
     
-    # Format p-value
-    formatCustomSci <- function(x) {
-      x_sci <- str_split_fixed(formatC(x, format = "e"), "e", 2)
-      alpha <- round(as.numeric(x_sci[ , 1]), 1)
-      power <- as.integer(x_sci[ , 2])
-      paste(alpha, power, sep = "e")
-    }
-    if (p_value == 0) p_value <- 2.2e-308
-    if (0 < p_value && p_value < 1e-3)  {
-      p_value <- formatCustomSci(p_value)
-    }
-    else {
-      p_value  <- round(p_value, 3)
-    }
-    
-    p_values <- c(p_values, p_value)
-    
-    pval_df <- rbind(pval_df, 
+    rval_df <- rbind(rval_df, 
                      data.frame(metric = metric,
-                                p_value = p_values))
+                                r_value = r_values))
   }
   
-  sci_if_big <- function(x) { 
-    out <- ifelse( 
-      abs(x) >= 5e3, 
-      scales::scientific_format()(x), 
-      scales::number_format(big.mark = "", decimal.mark = ".")(x) ) # Remove leading zeros in exponent (e.g., 3e03 → 3e3) 
+  sci_clean_threshold <- function(x) {
     
-    out <- gsub("e([+-])0+", "e\\1", out) 
+    # x[!(x %in% range(x, na.rm = T))] <- NA
     
-    out
-  } 
+    sapply(x, function(v) {
+      if (is.na(v)) {
+        return('')
+      }
+      if (abs(v) < 1000) {
+        return(as.character(v))   # keep normal numbers
+      }
+      # scientific notation
+      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
+      s <- gsub("\\+", "", s)             # remove "+"
+      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
+      s
+    })
+  }
   
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
     geom_abline(slope = 1, intercept = 0, linetype = "dotted",
                 color = "#bb0036", linewidth = 1) +
+    # labs(
+    #   title = "Scatterplots showing 2D vs 3D, for each metric, a random slice and pair A/B",
+    #   x = "3D value",
+    #   y = "2D value"
+    # ) +
     labs(
-      title = "Scatterplots showing 2D vs 3D, for each metric, a random slice and pair A/B",
-      x = "3D value",
-      y = "2D value"
+      x = "",
+      y = ""
     ) +
     facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +
     
-    scale_x_continuous(n.breaks = 3, labels = sci_if_big) + 
-    scale_y_continuous(n.breaks = 3, labels = sci_if_big) +
+    scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) + 
+    scale_y_continuous(n.breaks = 3, labels = sci_clean_threshold) +
     
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
       
       # Axis tick labels
-      axis.text.x = element_text(size = 12),
-      axis.text.y = element_text(size = 12),
+      axis.text.x = element_text(size = 15),
+      axis.text.y = element_text(size = 15),
       
       # Axis titles
-      axis.title.x = element_text(size = 12),
-      axis.title.y = element_text(size = 12),
+      axis.title.x = element_text(size = 15),
+      axis.title.y = element_text(size = 15),
       
       # Plot title
-      plot.title = element_text(size = 15),
+      plot.title = element_text(size = 18),
       
       # Facet strip titles
-      strip.text = element_text(size = 12)
+      strip.text = element_text(size = 15)
     ) +
     geom_text(
-      data = pval_df,
-      aes(x = Inf, y = -Inf, label = paste0("p: ", p_value)),
+      data = rval_df,
+      aes(x = -Inf, y = Inf, label = paste0("r: ", r_value)),
       inherit.aes = FALSE,
-      hjust = 1.1, vjust = -0.5,
-      size = 4,   # p-value font size
+      hjust = -0.1, 
+      vjust = 1.4,
+      size = 5,   # r-value font size
       color = "black"
     )
   
@@ -324,7 +319,7 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_box_plot <- function(me
 plot_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- function(metric_df_list,
                                                                                  metrics) {
   plot_df <- data.frame()
-  pval_df <- data.frame()
+  rval_df <- data.frame()
   
   for (metric in metrics) {
     
@@ -371,42 +366,42 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- function
     # Add metric_df to plot_df
     plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric")])
     
-    # Add to pval_df
-    p_values <- c()
+    # Add to rval_df
+    r_values <- c()
     
     # Ignore when pair is invalid
     if (sum(is.finite(metric_df[["value3D"]])) == 0) {
       next
     } 
     
-    wilcox_test  <- wilcox.test(metric_df[["value3D"]], 
-                                metric_df[["value2D"]], 
-                                paired = TRUE)
-    p_value <- wilcox_test$p.value
+    spearman_r <- round(cor(metric_df[["value3D"]], metric_df[["value2D"]], method = "spearman", use = "complete.obs"), 3)
     
-    # Format p-value
-    formatCustomSci <- function(x) {
-      x_sci <- str_split_fixed(formatC(x, format = "e"), "e", 2)
-      alpha <- round(as.numeric(x_sci[ , 1]), 1)
-      power <- as.integer(x_sci[ , 2])
-      paste(alpha, power, sep = "e")
-    }
-    if (p_value == 0) p_value <- 2.2e-308
-    if (0 < p_value && p_value < 1e-3)  {
-      p_value <- formatCustomSci(p_value)
-    }
-    else {
-      p_value  <- round(p_value, 3)
-    }
+    r_values <- c(r_values, spearman_r)
     
-    p_values <- c(p_values, p_value)
-    
-    pval_df <- rbind(pval_df, 
+    rval_df <- rbind(rval_df, 
                      data.frame(metric = metric,
-                                p_value = p_values))
+                                r_value = r_values))
+    
   }
   
-  
+  sci_clean_threshold <- function(x) {
+    
+    # x[!(x %in% range(x, na.rm = T))] <- NA
+    
+    sapply(x, function(v) {
+      if (is.na(v)) {
+        return('')
+      }
+      if (abs(v) < 1000) {
+        return(as.character(v))   # keep normal numbers
+      }
+      # scientific notation
+      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
+      s <- gsub("\\+", "", s)             # remove "+"
+      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
+      s
+    })
+  }
   
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
@@ -415,22 +410,37 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- function
          x = "3D value",
          y = "2D value") +
     facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +
+    
+    scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) + 
+    scale_y_continuous(n.breaks = 3, labels = sci_clean_threshold) +
+    
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
-      axis.text.x = element_text(size = 4),  # make x-axis text smaller
-      axis.text.y = element_text(size = 4)   # make y-axis text smaller
+      
+      # Axis tick labels
+      axis.text.x = element_text(size = 4),
+      axis.text.y = element_text(size = 4),
+      
+      # Axis titles
+      axis.title.x = element_text(size = 4),
+      axis.title.y = element_text(size = 4),
+      
+      # Plot title
+      plot.title = element_text(size = 6),
+      
+      # Facet strip titles
+      strip.text = element_text(size = 4)
     ) +
-    # Add p-value text
+    
+    # Add r-value text
     geom_text(
-      data = pval_df,
-      aes(
-        x = Inf, y = -Inf,   # bottom-right corner
-        label = paste0("p: ", p_value)
-      ),
+      data = rval_df,
+      aes(x = -Inf, y = Inf, label = paste0("r: ", r_value)),
       inherit.aes = FALSE,
-      hjust = 1.1, vjust = -0.5,
-      size = 2,
+      hjust = -0.1, 
+      vjust = 1.4,
+      size = 4,   # r-value font size
       color = "black"
     )
   
@@ -1015,12 +1025,14 @@ plot_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_A_B_for_random_
       .groups = "drop"
     )
   
+  write.csv(corr_df, "~/R/values_from_figures/corr_df.csv")
   
   
   fig <- ggplot(corr_df, aes(x = structure, y = spearman_corr, fill = structure)) + 
     geom_col(alpha = 0.8) + 
     labs(title = "Bar plots showing Spearman Correlation vs Structure, for each Metric, a random slice and pair A/B", x = "Structure", y = "Spearman Correlation") + 
     facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +
+    scale_y_continuous(limits = c(0, 1)) +
     theme_minimal() + 
     theme(panel.border = element_rect(color = "black", fill = NA, linewidth = 1), 
           axis.text.x = element_text(angle = 45, hjust = 1)) + 
@@ -1104,7 +1116,7 @@ fig_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_A_B_for_random_s
                                                                                                                                                                                                 parameters_df)
 
 setwd("~/R/plots/S1")
-pdf("random_slice_pair_A_B.pdf", width = 18, height = 6)
+pdf("random_slice_pair_A_B.pdf", width = 30, height = 2)
 
 print(fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot)
 print(fig_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot)
