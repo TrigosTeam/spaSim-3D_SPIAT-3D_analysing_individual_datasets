@@ -254,6 +254,8 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_random_slice_box_plot <- function(me
       corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
       .groups = "drop")
   
+  write.csv(corr_df, "~/R/values_from_figures/random_slice_corr_df.csv")
+  
   # map corr ∈ [-1,1] → error ∈ [-100,400]
   corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
   
@@ -581,6 +583,8 @@ plot_error_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_box_plot <- function(
     summarise(
       corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
       .groups = "drop")
+  
+  write.csv(corr_df, "~/R/values_from_figures/averaged_slices_corr_df.csv")
   
   # map corr ∈ [-1,1] → error ∈ [-100,400]
   corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
