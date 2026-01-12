@@ -295,7 +295,7 @@ plot_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot <- functi
   fig <- ggplot(plot_df, aes(x = metric, y = error, color = pair)) +
     geom_boxplot(fill = "lightgray") +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Box plots showing percentage difference for each cell pair, for a random slice",
+    labs(title = "Box plots showing percentage difference between 2D and 3D metrics for each cell pair, for a random slice",
          x = "Metric",
          y = "Percentage difference (%)") +
     scale_y_continuous(limits = c(-100, 400), n.breaks = 3, labels = sci_clean_threshold) +
@@ -605,7 +605,7 @@ plot_percentage_difference_vs_metric_by_pair_for_averaged_slice_box_plot <- func
   fig <- ggplot(plot_df, aes(x = metric, y = error, color = pair)) +
     geom_boxplot(fill = "lightgray") +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Box plots showing percentage difference for each cell pair, for averaged slices",
+    labs(title = "Box plots showing percentage difference between 2D and 3D metrics for each cell pair, for averaged slices",
          x = "Metric",
          y = "Percentage difference (%)") +
     scale_y_continuous(limits = c(-100, 400), n.breaks = 3, labels = sci_clean_threshold) +
