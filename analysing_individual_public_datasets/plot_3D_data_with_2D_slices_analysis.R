@@ -139,7 +139,7 @@ subset_metric_df <- function(metric,
 }
 
 plot_3D_and_2D_box_plot <- function(metric_df_list,
-                          metric) {
+                                    metric) {
   
   # Get metric_df for current metric
   metric_df <- metric_df_list[[metric]]
