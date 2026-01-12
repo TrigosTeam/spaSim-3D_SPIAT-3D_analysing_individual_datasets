@@ -138,8 +138,8 @@ subset_metric_df <- function(metric,
   return(metric_df_subset)
 }
 
-plot_3D_and_2D_box_plot <- function(metric_df_list,
-                                    metric) {
+plot_3D_and_2D_metric_vs_pair_box_plot <- function(metric_df_list,
+                                                   metric) {
   
   # For axis labels
   sci_clean_threshold <- function(x) {
@@ -181,38 +181,47 @@ plot_3D_and_2D_box_plot <- function(metric_df_list,
     metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
   }
   
-  # Add dummy column
-  metric_df$dummy <- paste("dummy")
-  
-  fig <- ggplot(metric_df, aes(x = dummy, y = value)) +
+  fig <- ggplot(metric_df, aes(x = pair, y = value)) +
     geom_boxplot(data = metric_df[metric_df$slice != as.character(max(as.numeric(metric_df$slice))), ],
                  outlier.shape = NA, fill = "lightgray") +
     geom_jitter(data = metric_df[metric_df$slice != as.character(max(as.numeric(metric_df$slice))), ],
                 width = 0.2, alpha = 0.5, color = "#0062c5") +
     geom_point(data = metric_df[metric_df$slice == as.character(max(as.numeric(metric_df$slice))), ],
                shape = 8, color = "#bb0036", size = 3) +  # Red stars for 3D value
-    labs(x = "", y = metric) +
+    labs(title = paste("Boxplots showing 3D and 2D ", metric, " vs cell pairs", sep = ""), x = "", y = metric) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
-      axis.text.x = element_blank(),
-      axis.ticks.x = element_blank(),
-      axis.title.x = element_blank(),
-      # axis.line.x = element_blank(),
-      # axis.text.y = element_blank(),
-      # axis.ticks.y = element_blank(),
-      # axis.title.y = element_blank(),
-      # axis.line.y = element_blank()
+      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)  # Rotate x-axis labels vertically
     ) +
-    scale_y_continuous(labels = sci_clean_threshold) +
-    facet_grid(~ pair, scales = "free_y", switch = "x")
+    scale_y_continuous(labels = sci_clean_threshold)
   
   
   return(fig)
 }
 
-plot_error_vs_pair_box_plot <- function(metric_df_list,
-                                        metric) {
+plot_percentage_difference_vs_pair_box_plot <- function(metric_df_list,
+                                                        metric) {
+  
+  # For axis labels
+  sci_clean_threshold <- function(x) {
+    
+    # x[!(x %in% range(x, na.rm = T))] <- NA
+    
+    sapply(x, function(v) {
+      if (is.na(v)) {
+        return('')
+      }
+      if (abs(v) < 1000) {
+        return(as.character(v))   # keep normal numbers
+      }
+      # scientific notation
+      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
+      s <- gsub("\\+", "", s)             # remove "+"
+      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
+      s
+    })
+  }
   
   # Get metric_df for current metric
   metric_df <- metric_df_list[[metric]]
@@ -228,10 +237,10 @@ plot_error_vs_pair_box_plot <- function(metric_df_list,
   
   # Remove value column (only using error now)
   metric_df["value"] <- NULL
-
+  
   # Remove 3D data (integrated into error)
   metric_df <- metric_df[metric_df[["slice"]] != max(as.integer(metric_df$slice)), ]
-
+  
   # Add pair column
   if (metric %in% c("EBSAC", "EBP_AUC")) {
     # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
@@ -250,20 +259,21 @@ plot_error_vs_pair_box_plot <- function(metric_df_list,
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Percentage difference Distribution by Pair",
+    labs(title = paste("Boxplots showing percentage difference between 2D and 3D ", metric, " vs cell pairs", sep = ""),
          x = "Pair",
          y = "Percentage difference (%)") +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)  # Rotate x-axis labels vertically
-    )
+    ) +
+    scale_y_continuous(labels = sci_clean_threshold)
   
   return(fig)
 }
 
-plot_error_vs_slice_box_plot <- function(metric_df_list,
-                                         metric) {
+plot_percentage_difference_vs_slice_box_plot <- function(metric_df_list,
+                                                         metric) {
   
   # Get metric_df for current metric
   metric_df <- metric_df_list[[metric]]
@@ -290,8 +300,8 @@ plot_error_vs_slice_box_plot <- function(metric_df_list,
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Percentage difference Distribution by Slice",
-         x = "Slice Index",
+    labs(title = paste("Boxplots showing percentage difference between 2D and 3D ", metric, " vs slice index", sep = ""),
+         x = "Slice index",
          y = "Percentage difference (%)") +
     theme_minimal() +
     theme(
@@ -699,25 +709,25 @@ metrics <- c("AMD",
 
 
 # This is for a SINGLE metric
-fig_3D_and_2D_box_plot <- plot_3D_and_2D_box_plot(metric_df_list,
-                                                  metric)
+fig_3D_and_2D_metric_vs_pair_box_plot <- plot_3D_and_2D_metric_vs_pair_box_plot(metric_df_list,
+                                                                                metric)
 
 # This is for a SINGLE metric
-fig_error_vs_pair_box_plot <- plot_error_vs_pair_box_plot(metric_df_list,
-                                                          metric)
+fig_percentage_difference_vs_pair_box_plot <- plot_percentage_difference_vs_pair_box_plot(metric_df_list,
+                                                                                          metric)
 
 # This is for a SINGLE metric
-fig_error_vs_slice_box_plot <- plot_error_vs_slice_box_plot(metric_df_list,
-                                                            metric)
+fig_percentage_difference_vs_slice_box_plot <- plot_percentage_difference_vs_slice_box_plot(metric_df_list,
+                                                                                            metric)
 
 
 fig_median_error_for_each_pair_vs_metrics_box_plot <- 
   plot_median_error_for_each_pair_vs_metrics_box_plot(metric_df_list,
                                                       metrics)
 
-fig_error_vs_metrics_for_pairs_box_plot <-
-  plot_error_vs_metrics_for_pairs_box_plot(metric_df_list,
-                                           metrics)
+# fig_error_vs_metrics_for_pairs_box_plot <-
+#   plot_error_vs_metrics_for_pairs_box_plot(metric_df_list,
+#                                            metrics)
 
 fig_median_error_for_each_slice_vs_metrics_box_plot <- 
   plot_median_error_for_each_slice_vs_metrics_box_plot(metric_df_list,
@@ -727,22 +737,22 @@ fig_error_vs_metrics_for_pairs_and_slices_box_plot <-
   plot_error_vs_metrics_for_pairs_and_slices_box_plot(metric_df_list,
                                                       metrics)
 
-fig_3D_and_2D_vs_metrics_for_one_pair_and_by_slice_box_plot <-
-  plot_3D_and_2D_vs_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
-                                                               metrics)
-
-fig_error_vs_metrics_for_one_pair_and_by_slice_box_plot <-
-  plot_error_vs_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
-                                                           metrics)
+# fig_3D_and_2D_vs_metrics_for_one_pair_and_by_slice_box_plot <-
+#   plot_3D_and_2D_vs_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
+#                                                                metrics)
+# 
+# fig_error_vs_metrics_for_one_pair_and_by_slice_box_plot <-
+#   plot_error_vs_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
+#                                                            metrics)
 
 
 ### Plotting and upload ------
 setwd("~/R/plots/public_data")
 pdf(file_name, width = 9, height = 6)
 
-print(fig_3D_and_2D_box_plot)
-print(fig_error_vs_pair_box_plot)
-print(fig_error_vs_slice_box_plot)
+print(fig_3D_and_2D_metric_vs_pair_box_plot)
+print(fig_percentage_difference_vs_pair_box_plot)
+print(fig_percentage_difference_vs_slice_box_plot)
 print(fig_median_error_for_each_pair_vs_metrics_box_plot)
 # print(fig_error_vs_metrics_for_pairs_box_plot)
 print(fig_median_error_for_each_slice_vs_metrics_box_plot)
