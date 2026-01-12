@@ -138,6 +138,27 @@ subset_metric_df <- function(metric,
   return(metric_df_subset)
 }
 
+# Utility function to add pair column
+add_pair_column_to_metric_df <- function(metric_df,
+                                         metric) {
+  
+  # Add pair column
+  if (metric %in% c("EBSAC", "EBP_AUC")) {
+    # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
+    metric_df$pair <- gsub(',', '/', metric_df$cell_types)
+  }
+  else if (metric %in% c("ANE_AUC")) {
+    # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+    metric_df$pair <- gsub(',', '/', metric_df$target)
+  }
+  else {
+    # Add reference-target column
+    metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
+  }
+  
+  return(metric_df)
+}
+
 plot_3D_and_2D_metric_vs_pair_box_plot <- function(metric_df_list,
                                                    metric) {
   
@@ -168,18 +189,7 @@ plot_3D_and_2D_metric_vs_pair_box_plot <- function(metric_df_list,
   colnames(metric_df)[colnames(metric_df) == metric] <- "value"
   
   # Add pair column
-  if (metric %in% c("EBSAC", "EBP_AUC")) {
-    # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-    metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-  }
-  else if (metric %in% c("ANE_AUC")) {
-    # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-    metric_df$pair <- gsub(',', '/', metric_df$target)
-  }
-  else {
-    # Add reference-target column
-    metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-  }
+  metric_df <- add_pair_column_to_metric_df(metric_df, metric)
   
   fig <- ggplot(metric_df, aes(x = pair, y = value)) +
     geom_boxplot(data = metric_df[metric_df$slice != as.character(max(as.numeric(metric_df$slice))), ],
@@ -242,18 +252,7 @@ plot_percentage_difference_vs_pair_box_plot <- function(metric_df_list,
   metric_df <- metric_df[metric_df[["slice"]] != max(as.integer(metric_df$slice)), ]
   
   # Add pair column
-  if (metric %in% c("EBSAC", "EBP_AUC")) {
-    # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-    metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-  }
-  else if (metric %in% c("ANE_AUC")) {
-    # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-    metric_df$pair <- gsub(',', '/', metric_df$target)
-  }
-  else {
-    # Add reference-target column
-    metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-  }
+  metric_df <- add_pair_column_to_metric_df(metric_df, metric)
   
   fig <- ggplot(metric_df, aes(x = pair, y = error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
@@ -334,8 +333,28 @@ plot_percentage_difference_vs_slice_box_plot <- function(metric_df_list,
 }
 
 
-plot_median_error_for_each_pair_vs_metrics_box_plot <- function(metric_df_list,
+plot_median_percentage_difference_of_each_pair_vs_metrics_box_plot <- function(metric_df_list,
                                                                 metrics) {
+  
+  # For axis labels
+  sci_clean_threshold <- function(x) {
+    
+    # x[!(x %in% range(x, na.rm = T))] <- NA
+    
+    sapply(x, function(v) {
+      if (is.na(v)) {
+        return('')
+      }
+      if (abs(v) < 1000) {
+        return(as.character(v))   # keep normal numbers
+      }
+      # scientific notation
+      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
+      s <- gsub("\\+", "", s)             # remove "+"
+      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
+      s
+    })
+  }
   
   plot_df <- data.frame()
   
@@ -359,32 +378,13 @@ plot_median_error_for_each_pair_vs_metrics_box_plot <- function(metric_df_list,
     # Remove 3D data (integrated into error)
     metric_df <- metric_df[metric_df[["slice"]] != max(as.integer(metric_df$slice)), ]
     
-    if (!(metric %in% c("EBSAC", "EBP_AUC"))) {
-      
-      if (metric %in% c("ANE_AUC")) {
-        # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-        metric_df$pair <- gsub(',', '/', metric_df$target)
-      }
-      else {
-        # Add pair column
-        metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/") 
-      }
-      
-      # Extract median values for error for each pair
-      median_df <- metric_df %>%
-        group_by(pair) %>%
-        dplyr::summarize(median_error = median(error, na.rm = TRUE), .groups = "drop")
-      
-      median_df$pair <- NULL
-    }
-    else {
-      # Extract median values for error for each pair
-      median_df <- metric_df %>%
-        group_by(cell_types) %>%
-        dplyr::summarize(median_error = median(error, na.rm = TRUE), .groups = "drop")
-      
-      median_df$cell_types <- NULL
-    }
+    # Add pair column
+    metric_df <- add_pair_column_to_metric_df(metric_df, metric)
+    
+    # Extract median values for error for each pair
+    median_df <- metric_df %>%
+      group_by(pair) %>%
+      dplyr::summarize(median_error = median(error, na.rm = TRUE), .groups = "drop")
     
     median_df$metric <- metric  
     
@@ -396,19 +396,40 @@ plot_median_error_for_each_pair_vs_metrics_box_plot <- function(metric_df_list,
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Percentage difference Distribution by Metric, showing Median Percentage difference for each Pair",
+    labs(title = "Box plots showing median percentage difference between 2D and 3D metrics of each pair",
          x = "Metric",
          y = "Percentage difference (%)") +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
-    )
+    ) +
+    scale_y_continuous(labels = sci_clean_threshold)
   
   return(fig)
 }
 
-plot_error_vs_metrics_for_pairs_box_plot <- function(metric_df_list,
+plot_percentage_difference_vs_metrics_for_each_pair_box_plot <- function(metric_df_list,
                                                      metrics) {
+  
+  # For axis labels
+  sci_clean_threshold <- function(x) {
+    
+    # x[!(x %in% range(x, na.rm = T))] <- NA
+    
+    sapply(x, function(v) {
+      if (is.na(v)) {
+        return('')
+      }
+      if (abs(v) < 1000) {
+        return(as.character(v))   # keep normal numbers
+      }
+      # scientific notation
+      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
+      s <- gsub("\\+", "", s)             # remove "+"
+      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
+      s
+    })
+  }
   
   plot_df <- data.frame()
   
@@ -455,7 +476,7 @@ plot_error_vs_metrics_for_pairs_box_plot <- function(metric_df_list,
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, aes(color = pair)) +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Percentage difference Distribution by Metric, showing Percentage difference for each Pair",
+    labs(title = "Box plots showing percentage difference between 2D and 3D metrics for each pair",
          x = "Metric",
          y = "Percentage difference (%)") +
     theme_minimal() +
@@ -473,13 +494,34 @@ plot_error_vs_metrics_for_pairs_box_plot <- function(metric_df_list,
       "Tumour/Immune" = "#0062c5",
       "Immune/Tumour" = "#f77e3b",
       "Immune/Immune" = "#bb0036"
-    ))
+    )) +
+    scale_y_continuous(labels = sci_clean_threshold)
   
   return(fig)
 }
 
-plot_median_error_for_each_slice_vs_metrics_box_plot <- function(metric_df_list,
+plot_median_percentage_difference_of_each_slice_vs_metrics_box_plot <- function(metric_df_list,
                                                                  metrics) {
+  
+  # For axis labels
+  sci_clean_threshold <- function(x) {
+    
+    # x[!(x %in% range(x, na.rm = T))] <- NA
+    
+    sapply(x, function(v) {
+      if (is.na(v)) {
+        return('')
+      }
+      if (abs(v) < 1000) {
+        return(as.character(v))   # keep normal numbers
+      }
+      # scientific notation
+      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
+      s <- gsub("\\+", "", s)             # remove "+"
+      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
+      s
+    })
+  }
   
   plot_df <- data.frame()
   
@@ -535,7 +577,7 @@ plot_median_error_for_each_slice_vs_metrics_box_plot <- function(metric_df_list,
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Boxplots showing median percentage difference for each slice vs metrics",
+    labs(title = "Box plots showing median percentage difference between 2D and 3D metrics of each slice",
          x = "Metric",
          y = "Percentage difference (%)") +
     theme_minimal() +
@@ -552,15 +594,36 @@ plot_median_error_for_each_slice_vs_metrics_box_plot <- function(metric_df_list,
       
       # Plot title 
       plot.title = element_text(size = 18)
-    )
+    ) +
+    scale_y_continuous(labels = sci_clean_threshold)
   
   return(fig)
 }
 
 
-plot_error_vs_metrics_for_pairs_and_slices_box_plot <- function(metric_df_list,
+plot_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot <- function(metric_df_list,
                                                                 metrics) {
   
+  # For axis labels
+  sci_clean_threshold <- function(x) {
+    
+    # x[!(x %in% range(x, na.rm = T))] <- NA
+    
+    sapply(x, function(v) {
+      if (is.na(v)) {
+        return('')
+      }
+      if (abs(v) < 1000) {
+        return(as.character(v))   # keep normal numbers
+      }
+      # scientific notation
+      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
+      s <- gsub("\\+", "", s)             # remove "+"
+      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
+      s
+    })
+  }
+  
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -596,124 +659,14 @@ plot_error_vs_metrics_for_pairs_and_slices_box_plot <- function(metric_df_list,
   fig <- ggplot(plot_df, aes(x = metric, y = error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Percentage difference Distribution by Metric, showing all Percentage difference Values",
+    labs(title = "Box plots showing percentage difference between 2D and 3D metrics for all cell pairs and slices",
          x = "Metric",
          y = "Percentage difference (%)") +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
-    )
-  
-  return(fig)
-}
-
-plot_3D_and_2D_vs_metrics_for_one_pair_and_by_slice_box_plot <- function(metric_df_list,
-                                                                         metrics) {
-  
-  plot_df <- data.frame()
-  
-  for (metric in metrics) {
-    
-    # Get metric_df for current metric
-    metric_df <- metric_df_list[[metric]]
-    
-    metric_df <- subset_metric_df(metric,
-                                  metric_df,
-                                  index = 1)
-    
-    # Change and further subset columns of metric_df
-    colnames(metric_df)[colnames(metric_df) == metric] <- "value"
-    
-    # Add metric column
-    metric_df$metric <- metric
-    
-    # Keep value, metric and slice column
-    metric_df <- metric_df[ , c("value", "metric", "slice")]
-    
-    # Add median_df to plot_df
-    plot_df <- rbind(plot_df, metric_df)
-  }
-  
-  # Add dummy column
-  plot_df$dummy <- paste("dummy")
-  
-  fig <- ggplot(plot_df, aes(x = dummy, y = value)) +
-    geom_boxplot(data = plot_df[plot_df$slice != as.character(max(as.numeric(plot_df$slice))), ],
-                 outlier.shape = NA, fill = "lightgray") +
-    geom_jitter(data = plot_df[plot_df$slice != as.character(max(as.numeric(plot_df$slice))), ],
-                width = 0.2, alpha = 0.5, color = "#0062c5") +
-    geom_point(data = plot_df[plot_df$slice == as.character(max(as.numeric(plot_df$slice))), ],
-               shape = 8, color = "#bb0036", size = 3) +
-    facet_wrap(~ metric, scales = "free_y") +  # Facet by metric with independent y-axes
-    labs(title = "3D and 2D metric values, for one cell pair and for each slice",
-         x = "",
-         y = "") +
-    theme_minimal() +
-    theme(
-      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
-      strip.background = element_rect(fill = "gray90"),
-      strip.text = element_text(face = "bold"),
-      axis.text.x = element_blank(),
-      axis.ticks.x = element_blank(),
-      axis.title.x = element_blank(),
-      axis.line.x = element_blank(),
-    )
-  
-  
-  
-  return(fig)
-}
-
-plot_error_vs_metrics_for_one_pair_and_by_slice_box_plot <- function(metric_df_list,
-                                                                     metrics) {
-  
-  plot_df <- data.frame()
-  
-  for (metric in metrics) {
-    
-    # Get metric_df for current metric
-    metric_df <- metric_df_list[[metric]]
-    
-    metric_df <- subset_metric_df(metric,
-                                  metric_df,
-                                  index = 1)
-    
-    # Change and further subset columns of metric_df
-    colnames(metric_df)[colnames(metric_df) == metric] <- "value"
-    
-    # Obtain 3D value
-    value_3D <- metric_df[["value"]][metric_df[["slice"]] == as.character(max(as.numeric(metric_df$slice)))]
-    
-    # Calculate error
-    metric_df[["error"]] <- ((metric_df[["value"]] - value_3D) / value_3D) * 100
-    
-    # Remove value column (only using error now)
-    metric_df["value"] <- NULL
-    
-    # Remove 3D data (integrated into error)
-    metric_df <- metric_df[metric_df[["slice"]] != max(as.integer(metric_df$slice)), ]
-    
-    # Add metric column
-    metric_df$metric <- metric
-    
-    # Keep error and metric column
-    metric_df <- metric_df[ , c("error", "metric")]
-    
-    # Add median_df to plot_df
-    plot_df <- rbind(plot_df, metric_df)
-  }
-  
-  fig <- ggplot(plot_df, aes(x = metric, y = error)) +
-    geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
-    geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
-    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Percentage difference Distribution by Metric, for one cell pair and for each slice",
-         x = "Metric",
-         y = "Percentage difference (%)") +
-    theme_minimal() +
-    theme(
-      panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
-    )
+    ) +
+    scale_y_continuous(labels = sci_clean_threshold)
   
   return(fig)
 }
@@ -742,29 +695,22 @@ fig_percentage_difference_vs_slice_box_plot <- plot_percentage_difference_vs_sli
                                                                                             metric)
 
 
-fig_median_error_for_each_pair_vs_metrics_box_plot <- 
-  plot_median_error_for_each_pair_vs_metrics_box_plot(metric_df_list,
+fig_median_percentage_difference_of_each_pair_vs_metrics_box_plot <- 
+  plot_median_percentage_difference_of_each_pair_vs_metrics_box_plot(metric_df_list,
                                                       metrics)
 
-# fig_error_vs_metrics_for_pairs_box_plot <-
-#   plot_error_vs_metrics_for_pairs_box_plot(metric_df_list,
-#                                            metrics)
+# This is only for CyCIF dataset
+fig_percentage_difference_vs_metrics_for_each_pair_box_plot <-
+  plot_percentage_difference_vs_metrics_for_each_pair_box_plot(metric_df_list,
+                                           metrics)
 
-fig_median_error_for_each_slice_vs_metrics_box_plot <- 
-  plot_median_error_for_each_slice_vs_metrics_box_plot(metric_df_list,
+fig_median_percentage_difference_of_each_slice_vs_metrics_box_plot <- 
+  plot_median_percentage_difference_of_each_slice_vs_metrics_box_plot(metric_df_list,
                                                        metrics)
 
-fig_error_vs_metrics_for_pairs_and_slices_box_plot <- 
-  plot_error_vs_metrics_for_pairs_and_slices_box_plot(metric_df_list,
+fig_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot <- 
+  plot_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot(metric_df_list,
                                                       metrics)
-
-# fig_3D_and_2D_vs_metrics_for_one_pair_and_by_slice_box_plot <-
-#   plot_3D_and_2D_vs_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
-#                                                                metrics)
-# 
-# fig_error_vs_metrics_for_one_pair_and_by_slice_box_plot <-
-#   plot_error_vs_metrics_for_one_pair_and_by_slice_box_plot(metric_df_list,
-#                                                            metrics)
 
 
 ### Plotting and upload ------
@@ -774,11 +720,9 @@ pdf(file_name, width = 9, height = 6)
 print(fig_3D_and_2D_metric_vs_pair_box_plot)
 print(fig_percentage_difference_vs_pair_box_plot)
 print(fig_percentage_difference_vs_slice_box_plot)
-print(fig_median_error_for_each_pair_vs_metrics_box_plot)
-# print(fig_error_vs_metrics_for_pairs_box_plot)
-print(fig_median_error_for_each_slice_vs_metrics_box_plot)
-print(fig_error_vs_metrics_for_pairs_and_slices_box_plot)
-# print(fig_3D_vs_2D_all_metrics_for_one_pair_and_by_slice_box_plot)
-# print(fig_error_vs_metrics_for_one_pair_and_by_slice_box_plot)
+print(fig_median_percentage_difference_of_each_pair_vs_metrics_box_plot)
+# print(fig_percentage_difference_vs_metrics_for_each_pair_box_plot)
+print(fig_median_percentage_difference_of_each_slice_vs_metrics_box_plot)
+print(fig_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot)
 
 dev.off()
