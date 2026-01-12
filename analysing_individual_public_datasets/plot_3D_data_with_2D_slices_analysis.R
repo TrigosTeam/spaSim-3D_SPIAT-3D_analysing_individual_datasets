@@ -141,11 +141,45 @@ subset_metric_df <- function(metric,
 plot_3D_and_2D_box_plot <- function(metric_df_list,
                                     metric) {
   
+  # For axis labels
+  sci_clean_threshold <- function(x) {
+    
+    # x[!(x %in% range(x, na.rm = T))] <- NA
+    
+    sapply(x, function(v) {
+      if (is.na(v)) {
+        return('')
+      }
+      if (abs(v) < 1000) {
+        return(as.character(v))   # keep normal numbers
+      }
+      # scientific notation
+      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
+      s <- gsub("\\+", "", s)             # remove "+"
+      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
+      s
+    })
+  }
+  
   # Get metric_df for current metric
   metric_df <- metric_df_list[[metric]]
   
   # Change and further subset columns of metric_df_subset
   colnames(metric_df)[colnames(metric_df) == metric] <- "value"
+  
+  # Add pair column
+  if (metric %in% c("EBSAC", "EBP_AUC")) {
+    # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
+    metric_df$pair <- gsub(',', '/', metric_df$cell_types)
+  }
+  else if (metric %in% c("ANE_AUC")) {
+    # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+    metric_df$pair <- gsub(',', '/', metric_df$target)
+  }
+  else {
+    # Add reference-target column
+    metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
+  }
   
   # Add dummy column
   metric_df$dummy <- paste("dummy")
@@ -157,20 +191,21 @@ plot_3D_and_2D_box_plot <- function(metric_df_list,
                 width = 0.2, alpha = 0.5, color = "#0062c5") +
     geom_point(data = metric_df[metric_df$slice == as.character(max(as.numeric(metric_df$slice))), ],
                shape = 8, color = "#bb0036", size = 3) +  # Red stars for 3D value
-    labs(title = metric, x = NULL, y = NULL) +
+    labs(x = "", y = metric) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
       axis.text.x = element_blank(),
       axis.ticks.x = element_blank(),
       axis.title.x = element_blank(),
-      axis.line.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks.y = element_blank(),
-      axis.title.y = element_blank(),
-      axis.line.y = element_blank()
+      # axis.line.x = element_blank(),
+      # axis.text.y = element_blank(),
+      # axis.ticks.y = element_blank(),
+      # axis.title.y = element_blank(),
+      # axis.line.y = element_blank()
     ) +
-    facet_grid(reference ~ target, scales = "free_y")
+    scale_y_continuous(labels = sci_clean_threshold) +
+    facet_grid(~ pair, scales = "free_y", switch = "x")
   
   
   return(fig)
@@ -193,12 +228,23 @@ plot_error_vs_pair_box_plot <- function(metric_df_list,
   
   # Remove value column (only using error now)
   metric_df["value"] <- NULL
-  
+
   # Remove 3D data (integrated into error)
   metric_df <- metric_df[metric_df[["slice"]] != max(as.integer(metric_df$slice)), ]
-  
+
   # Add pair column
-  metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
+  if (metric %in% c("EBSAC", "EBP_AUC")) {
+    # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
+    metric_df$pair <- gsub(',', '/', metric_df$cell_types)
+  }
+  else if (metric %in% c("ANE_AUC")) {
+    # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
+    metric_df$pair <- gsub(',', '/', metric_df$target)
+  }
+  else {
+    # Add reference-target column
+    metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
+  }
   
   fig <- ggplot(metric_df, aes(x = pair, y = error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
