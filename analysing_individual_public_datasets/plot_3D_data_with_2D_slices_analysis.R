@@ -275,6 +275,26 @@ plot_percentage_difference_vs_pair_box_plot <- function(metric_df_list,
 plot_percentage_difference_vs_slice_box_plot <- function(metric_df_list,
                                                          metric) {
   
+  # For axis labels
+  sci_clean_threshold <- function(x) {
+    
+    # x[!(x %in% range(x, na.rm = T))] <- NA
+    
+    sapply(x, function(v) {
+      if (is.na(v)) {
+        return('')
+      }
+      if (abs(v) < 1000) {
+        return(as.character(v))   # keep normal numbers
+      }
+      # scientific notation
+      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
+      s <- gsub("\\+", "", s)             # remove "+"
+      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
+      s
+    })
+  }
+  
   # Get metric_df for current metric
   metric_df <- metric_df_list[[metric]]
   
@@ -307,7 +327,8 @@ plot_percentage_difference_vs_slice_box_plot <- function(metric_df_list,
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)  # Rotate x-axis labels vertically
-    )
+    ) +
+    scale_y_continuous(labels = sci_clean_threshold)
   
   return(fig)
 }
