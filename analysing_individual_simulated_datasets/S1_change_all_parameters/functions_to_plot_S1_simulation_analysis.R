@@ -18,7 +18,7 @@ parameters_df <- readRDS("parameters_df.RDS")
 plot_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(metric_df_list,
                                                                            metrics) {
   plot_df <- data.frame()
-  pval_df <- data.frame()
+  rval_df <- data.frame()
   
   for (metric in metrics) {
     
@@ -28,14 +28,6 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(metri
     # Change slice column to numeric for safety
     metric_df$slice <- as.numeric(metric_df$slice)
     
-    # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
-    # Choose a random slice for 2D values
-    metric_values2D <- metric_df[[metric]][metric_df[["slice"]] == sample(unique(metric_df[["slice"]]), 1)]
-    # Slice == 0 is the 3D value
-    metric_df <- metric_df[metric_df[["slice"]] == 0, ]
-    metric_df[["value2D"]] <- metric_values2D
-    colnames(metric_df)[colnames(metric_df) == metric] <- "value3D"
-    
     if (metric %in% c("EBSAC", "EBP_AUC")) {
       # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
       metric_df$pair <- gsub(',', '/', metric_df$cell_types)
@@ -51,11 +43,25 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(metri
     
     metric_df$metric <- metric  
     
+    # Select 3D values, when slice == 0, then remove from data frame
+    metric_values3D <- metric_df[[metric]][metric_df[["slice"]] == 0]
+    metric_df <- metric_df[metric_df[["slice"]] != 0, ]
+    
+    # Select a random 2D slice
+    metric_df <- metric_df %>%
+      group_by(simulation, pair) %>%
+      slice_sample(n = 1) %>%   # pick one random slice per simulation
+      ungroup() %>%
+      select(pair, metric, value2D = .data[[metric]])
+    
+    # Combine 3D and 2D values
+    metric_df[["value3D"]] <- metric_values3D
+    
     # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric")])
+    plot_df <- rbind(plot_df, metric_df)
     
     # Add to pval_df
-    p_values <- c()
+    r_values <- c()
     for (pair in unique(metric_df$pair)) {
       
       # Ignore when pair is invalid
@@ -63,68 +69,71 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(metri
         next
       } 
       
-      wilcox_test  <- wilcox.test(metric_df[["value3D"]][metric_df$pair == pair], 
-                                  metric_df[["value2D"]][metric_df$pair == pair], 
-                                  paired = TRUE)
-      p_value <- wilcox_test$p.value
+      spearman_r <- round(cor(metric_df[["value3D"]][metric_df$pair == pair], 
+                              metric_df[["value2D"]][metric_df$pair == pair], 
+                              method = "spearman", use = "complete.obs"), 3)
       
-      # Format p-value
-      formatCustomSci <- function(x) {
-        x_sci <- str_split_fixed(formatC(x, format = "e"), "e", 2)
-        alpha <- round(as.numeric(x_sci[ , 1]), 1)
-        power <- as.integer(x_sci[ , 2])
-        paste(alpha, power, sep = "e")
-      }
-      if (p_value == 0) p_value <- 2.2e-308
-      if (0 < p_value && p_value < 1e-3)  {
-        p_value <- formatCustomSci(p_value)
-      }
-      else {
-        p_value  <- round(p_value, 3)
-      }
+      r_values <- c(r_values, spearman_r)
       
-      p_values <- c(p_values, p_value)
     }
-    pval_df <- rbind(pval_df, 
+    rval_df <- rbind(rval_df, 
                      data.frame(metric = metric,
                                 pair = unique(metric_df$pair),
-                                p_value = p_values))
+                                r_value = r_values))
   }
   
   pairs <- unique(plot_df$pair)
   
+  # Use scientific notation axis labels with big numbers
+  sci_clean_threshold <- function(x) {
+    
+    # x[!(x %in% range(x, na.rm = T))] <- NA
+    
+    sapply(x, function(v) {
+      if (is.na(v)) {
+        return('')
+      }
+      if (abs(v) < 1000) {
+        return(as.character(v))   # keep normal numbers
+      }
+      # scientific notation
+      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
+      s <- gsub("\\+", "", s)             # remove "+"
+      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
+      s
+    })
+  }
+  
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
     geom_abline(slope = 1, intercept = 0, linetype = "dotted", color = "#bb0036", linewidth = 1) + # Dotted line of the equation y = x
-    labs(title = "Scatterplots showing 2D vs 3D, for each Metric and Pair, for a random slice",
+    labs(title = "Scatter plots showing 2D vs 3D with spearman correlation, for each metric and cell pair, for a random slice",
          x = "3D value",
          y = "2D value") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +
+    scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) + 
+    scale_y_continuous(n.breaks = 3, labels = sci_clean_threshold) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
       axis.text.x = element_text(size = 4),  # make x-axis text smaller
       axis.text.y = element_text(size = 4)   # make y-axis text smaller
     ) +
-    # Add p-value text
     geom_text(
-      data = pval_df,
-      aes(
-        x = Inf, y = -Inf,   # bottom-right corner
-        label = paste0("p: ", p_value)
-      ),
+      data = rval_df,
+      aes(x = -Inf, y = Inf, label = paste0("r: ", r_value)),
       inherit.aes = FALSE,
-      hjust = 1.1, vjust = -0.5,
-      size = 2,
+      hjust = -0.1, 
+      vjust = 1.4,
       color = "black"
     )
   
   return(fig)
 }
 
-# Plot error vs 3D for each metric and pair for a random slice
-plot_error_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(metric_df_list,
-                                                                              metrics) {
+# Plot percentage difference vs 3D for each metric and pair for a random slice
+plot_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(metric_df_list,
+                                                                                              metrics) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -132,12 +141,8 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(me
     # Get metric_df for current metric
     metric_df <- metric_df_list[[metric]]
     
-    # Choose a random slice for 2D values
-    metric_values2D <- metric_df[[metric]][metric_df[["slice"]] == sample(unique(metric_df[["slice"]]), 1)]
-    # Slice == 0 is the 3D value
-    metric_df <- metric_df[metric_df[["slice"]] == 0, ]
-    metric_df[["value2D"]] <- metric_values2D
-    colnames(metric_df)[colnames(metric_df) == metric] <- "value3D"
+    # Change slice column to numeric for safety
+    metric_df$slice <- as.numeric(metric_df$slice)
     
     if (metric %in% c("EBSAC", "EBP_AUC")) {
       # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
@@ -154,9 +159,22 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(me
     
     metric_df$metric <- metric  
     
-    # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric")])
+    # Select 3D values, when slice == 0, then remove from data frame
+    metric_values3D <- metric_df[[metric]][metric_df[["slice"]] == 0]
+    metric_df <- metric_df[metric_df[["slice"]] != 0, ]
     
+    # Select a random 2D slice
+    metric_df <- metric_df %>%
+      group_by(simulation, pair) %>%
+      slice_sample(n = 1) %>%   # pick one random slice per simulation
+      ungroup() %>%
+      select(pair, metric, value2D = .data[[metric]])
+    
+    # Combine 3D and 2D values
+    metric_df[["value3D"]] <- metric_values3D
+    
+    # Add metric_df to plot_df
+    plot_df <- rbind(plot_df, metric_df)
   }
   
   # Get error column
@@ -164,14 +182,35 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(me
   
   pairs <- unique(plot_df$pair)
   
+  # Use scientific notation axis labels with big numbers
+  sci_clean_threshold <- function(x) {
+    
+    # x[!(x %in% range(x, na.rm = T))] <- NA
+    
+    sapply(x, function(v) {
+      if (is.na(v)) {
+        return('')
+      }
+      if (abs(v) < 1000) {
+        return(as.character(v))   # keep normal numbers
+      }
+      # scientific notation
+      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
+      s <- gsub("\\+", "", s)             # remove "+"
+      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
+      s
+    })
+  }
+  
   fig <- ggplot(plot_df, aes(x = value3D, y = error)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatterplots showing Percentage difference vs 3D, for each Metric and Pair, for a random slice",
+    labs(title = "Scatter plots showing percentage difference between 2D and 3D metrics vs 3D, for each metric and cell pair, for a random slice",
          x = "3D value",
          y = "Percentage difference (%)") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +  
-    scale_y_continuous(limits = c(-100, 500)) +
+    scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) + 
+    scale_y_continuous(limits = c(-100, 500), n.breaks = 3, labels = sci_clean_threshold) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
@@ -182,9 +221,9 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(me
   return(fig)
 }
 
-# Plot error vs 3D for each metric and pair for a random slice
-plot_error_vs_3D_by_metric_and_pair_for_random_slice_box_plot <- function(metric_df_list,
-                                                                          metrics) {
+# Plot percentage difference vs metric for each pair for a random slice
+plot_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot <- function(metric_df_list,
+                                                                                          metrics) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -192,12 +231,8 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_box_plot <- function(metric
     # Get metric_df for current metric
     metric_df <- metric_df_list[[metric]]
     
-    # Choose a random slice for 2D values
-    metric_values2D <- metric_df[[metric]][metric_df[["slice"]] == sample(unique(metric_df[["slice"]]), 1)]
-    # Slice == 0 is the 3D value
-    metric_df <- metric_df[metric_df[["slice"]] == 0, ]
-    metric_df[["value2D"]] <- metric_values2D
-    colnames(metric_df)[colnames(metric_df) == metric] <- "value3D"
+    # Change slice column to numeric for safety
+    metric_df$slice <- as.numeric(metric_df$slice)
     
     if (metric %in% c("EBSAC", "EBP_AUC")) {
       # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
@@ -214,9 +249,22 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_box_plot <- function(metric
     
     metric_df$metric <- metric  
     
-    # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric")])
+    # Select 3D values, when slice == 0, then remove from data frame
+    metric_values3D <- metric_df[[metric]][metric_df[["slice"]] == 0]
+    metric_df <- metric_df[metric_df[["slice"]] != 0, ]
     
+    # Select a random 2D slice
+    metric_df <- metric_df %>%
+      group_by(simulation, pair) %>%
+      slice_sample(n = 1) %>%   # pick one random slice per simulation
+      ungroup() %>%
+      select(pair, metric, value2D = .data[[metric]])
+    
+    # Combine 3D and 2D values
+    metric_df[["value3D"]] <- metric_values3D
+    
+    # Add metric_df to plot_df
+    plot_df <- rbind(plot_df, metric_df)
   }
   
   # Get error column
@@ -224,13 +272,33 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_box_plot <- function(metric
   
   pairs <- unique(plot_df$pair)
   
+  # Use scientific notation axis labels with big numbers
+  sci_clean_threshold <- function(x) {
+    
+    # x[!(x %in% range(x, na.rm = T))] <- NA
+    
+    sapply(x, function(v) {
+      if (is.na(v)) {
+        return('')
+      }
+      if (abs(v) < 1000) {
+        return(as.character(v))   # keep normal numbers
+      }
+      # scientific notation
+      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
+      s <- gsub("\\+", "", s)             # remove "+"
+      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
+      s
+    })
+  }
+  
   fig <- ggplot(plot_df, aes(x = metric, y = error, color = pair)) +
     geom_boxplot(fill = "lightgray") +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Percentage difference Distribution by Metric, showing Percentage difference for each Pair, for a random slice",
+    labs(title = "Box plots showing percentage difference for each cell pair, for a random slice",
          x = "Metric",
          y = "Percentage difference (%)") +
-    scale_y_continuous(limits = c(-100, 400)) +
+    scale_y_continuous(limits = c(-100, 400), n.breaks = 3, labels = sci_clean_threshold) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
@@ -274,7 +342,7 @@ plot_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(met
       # Add reference-target column
       metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
     }
-
+    
     # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
     colnames(metric_df)[colnames(metric_df) == metric] <- "metric_value"
     metric_df$sim_pair <- paste(metric_df$simulation, metric_df$pair, sep = "_")
@@ -294,7 +362,7 @@ plot_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(met
     
     # Add metric_df to plot_df
     plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric")])
-
+    
     # Add to pval_df
     p_values <- c()
     for (pair in unique(metric_df$pair)) {
@@ -363,9 +431,9 @@ plot_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(met
   return(fig)
 }
 
-# Plot error vs 3D for each metric and pair for averaged slice
-plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(metric_df_list,
-                                                                                metrics) {
+# Plot percentage difference vs 3D for each metric and pair for averaged slice
+plot_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(metric_df_list,
+                                                                                                metrics) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -435,9 +503,9 @@ plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(
   return(fig)
 }
 
-# Plot error vs 3D for each metric and pair for averaged slice
-plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot <- function(metric_df_list,
-                                                                            metrics) {
+# Plot percentage difference vs 3D for each metric and pair for averaged slice
+plot_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot <- function(metric_df_list,
+                                                                                            metrics) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -593,9 +661,9 @@ plot_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(metri
   return(fig)
 }
 
-# Plot error vs 3D for each metric and pair for 3 slices
-plot_error_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(metric_df_list,
-                                                                              metrics) {
+# Plot percentage difference vs 3D for each metric and pair for 3 slices
+plot_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(metric_df_list,
+                                                                                              metrics) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -759,10 +827,10 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot
   return(fig)
 }
 
-# Plot error vs 3D for each metric and pair for a random slice, annotating for tissue structure
-plot_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot <- function(metric_df_list,
-                                                                                                metrics,
-                                                                                                parameters_df) {
+# Plot percentage difference vs 3D for each metric and pair for a random slice, annotating for tissue structure
+plot_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot <- function(metric_df_list,
+                                                                                                                metrics,
+                                                                                                                parameters_df) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -838,7 +906,7 @@ plot_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_p
         "separated_network" = "#bb0036"
       )
     )
-
+  
   return(fig)
 }
 
@@ -891,7 +959,7 @@ plot_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_for_random_slic
     plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "structure")])
     
   }
-
+  
   # Compute spearman correlation
   corr_df <- plot_df %>%
     group_by(pair, metric, structure) %>%
@@ -919,22 +987,13 @@ plot_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_for_random_slic
         "separated_network" = "#bb0036"
       )
     )
-
+  
   return(fig)
 }
 
 
 
 # Running the functions ----
-
-# # Subset...
-# random_numbers <- sample(1:40000, 1000, replace = FALSE)
-# metric_df_list_subset <- list()
-# for (metric in names(metric_df_list)) {
-#   metric_df <- metric_df_list[[metric]]
-#   metric_df_subset <- metric_df[c(random_numbers, random_numbers + 40000), ]
-#   metric_df_list_subset[[metric]] <- metric_df_subset
-# }
 
 metrics <- c("AMD",
              "ANC_AUC", "ACIN_AUC", "ANE_AUC",
@@ -945,33 +1004,26 @@ metrics <- c("AMD",
 
 
 
-fig_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot(metric_df_list,
-                                                                                                                                metrics)
 
-fig_error_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- plot_error_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot(metric_df_list,
-                                                                                                                                      metrics)
-
-fig_error_vs_3D_by_metric_and_pair_for_random_slice_box_plot <- plot_error_vs_3D_by_metric_and_pair_for_random_slice_box_plot(metric_df_list,
-                                                                                                                              metrics)
 
 
 
 fig_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot(metric_df_list,
                                                                                                                                     metrics)
 
-fig_error_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot(metric_df_list,
-                                                                                                                                          metrics)
+fig_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot(metric_df_list,
+                                                                                                                                                                          metrics)
 
-fig_error_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot <- plot_error_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot(metric_df_list,
-                                                                                                                                  metrics)
+fig_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot(metric_df_list,
+                                                                                                                                                                  metrics)
 
 
 
 fig_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot(metric_df_list,
                                                                                                                                 metrics)
 
-fig_error_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- plot_error_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot(metric_df_list,
-                                                                                                                                      metrics)
+fig_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot(metric_df_list,
+                                                                                                                                                                      metrics)
 
 
 
@@ -979,35 +1031,64 @@ fig_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot 
                                                                                                                                                                     metrics,
                                                                                                                                                                     parameters_df)
 
-fig_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot <- plot_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot(metric_df_list,
-                                                                                                                                                                          metrics,
-                                                                                                                                                                          parameters_df)
+fig_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot(metric_df_list,
+                                                                                                                                                                                                          metrics,
+                                                                                                                                                                                                          parameters_df)
 
 fig_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_for_random_slice_bar_plot <- plot_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_for_random_slice_bar_plot(metric_df_list,
                                                                                                                                                                                         metrics,
                                                                                                                                                                                         parameters_df)
 
-
-
 fig_2D_vs_3D_by_metric_for_random_slice_and_for_pair_A_B_scatter_plot <- plot_2D_vs_3D_by_metric_for_random_slice_and_for_pair_A_B_scatter_plot(metric_df_list,
                                                                                                                                                 metrics)
 
+
+
+
+
+
 setwd("~/R/plots/S1")
-pdf("random_slice.pdf", width = 24, height = 10)
-
+fig_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot(metric_df_list,
+                                                                                                                                metrics)
+pdf("fig_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot.pdf", width = 24, height = 10)
 print(fig_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot)
-print(fig_error_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot)
-print(fig_error_vs_3D_by_metric_and_pair_for_random_slice_box_plot)
-
 dev.off()
+
+
+setwd("~/R/plots/S1")
+fig_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot(metric_df_list,
+                                                                                                                                                                      metrics)
+pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot.pdf", width = 24, height = 10)
+print(fig_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot)
+dev.off()
+
+
+setwd("~/R/plots/S1")
+fig_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot <- plot_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot(metric_df_list,
+                                                                                                                                                              metrics)
+pdf("fig_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot.pdf", width = 24, height = 10)
+print(fig_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 setwd("~/R/plots/S1")
 pdf("averaged_slices.pdf", width = 24, height = 10)
 
 print(fig_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot)
-print(fig_error_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot)
-print(fig_error_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot)
+print(fig_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot)
+print(fig_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_box_plot)
 
 dev.off()
 
@@ -1016,7 +1097,7 @@ setwd("~/R/plots/S1")
 pdf("three_slices.pdf", width = 24, height = 10)
 
 print(fig_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot)
-print(fig_error_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot)
+print(fig_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot)
 
 dev.off()
 
@@ -1025,7 +1106,7 @@ setwd("~/R/plots/S1")
 pdf("random_slice_showing_structure.pdf", width = 24, height = 10)
 
 print(fig_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot)
-print(fig_error_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot)
+print(fig_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot)
 print(fig_2D_vs_3D_correlation_vs_tissue_structure_by_metric_and_pair_for_random_slice_bar_plot)
 
 dev.off()
