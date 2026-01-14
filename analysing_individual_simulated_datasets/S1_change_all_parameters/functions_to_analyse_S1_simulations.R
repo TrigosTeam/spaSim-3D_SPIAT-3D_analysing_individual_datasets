@@ -1,3 +1,7 @@
+# Set seed for consistency
+set.seed(678999821)
+
+
 # Functions -----
 # Generate data frame containing values of important parameters
 generate_random_parameters <- function(
