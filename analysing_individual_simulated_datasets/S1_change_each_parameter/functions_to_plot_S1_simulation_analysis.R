@@ -59,6 +59,25 @@ get_parameters <- function(arrangement, shape) {
   return(parameters)
 }
 
+# For nicer tick labels
+sci_clean_threshold <- function(x) {
+  # x[!(x %in% range(x, na.rm = T))] <- NA
+  
+  sapply(x, function(v) {
+    if (is.na(v)) {
+      return('')
+    }
+    if (abs(v) < 1000) {
+      return(as.character(v))   # keep normal numbers
+    }
+    # scientific notation
+    s <- format(v, scientific = TRUE)   # e.g. "1e+03"
+    s <- gsub("\\+", "", s)             # remove "+"
+    s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
+    s
+  })
+}
+
 combine_metric_and_parameters_df <- function(metric_df, parameters_df) {
   pairs <- unique(metric_df$pair)
   metric_and_parameters_df <- data.frame()
@@ -135,8 +154,8 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
               axis.text.x = element_text(size = 8),  # make x-axis text smaller
               axis.text.y = element_text(size = 8)   # make y-axis text smaller
             ) +
-            scale_x_continuous(breaks = pretty_breaks(n = 3)) + 
-            scale_y_continuous(breaks = pretty_breaks(n = 3)) 
+            scale_x_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) + 
+            scale_y_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) 
           
           # Get correlation and p-value       
           p_value <- "N/A"
@@ -194,7 +213,7 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
       }
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
-      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
+      title <- ggdraw() + draw_label(paste(arrangement, "-", shape, sep = ""), fontface = "bold")
       arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.02, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
@@ -209,10 +228,6 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
   
   return(fig)
 }
-
-# plot_3D_vs_parameters_for_gradient_metrics_line_graph <- function(metric_df_list, parameters_df, metric) {
-#   
-# }
 
 plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_df_list, parameters_df, metric) {
   
@@ -295,8 +310,8 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
               axis.text.y = element_text(size = 8),
               legend.position = "none"
             ) +
-            scale_x_continuous(breaks = pretty_breaks(n = 3)) +
-            scale_y_continuous(breaks = pretty_breaks(n = 3)) +
+            scale_x_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) +
+            scale_y_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) +
             scale_color_manual(
               values = c(
                 "1" = "#9437a8",
@@ -334,7 +349,7 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
       }
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
-      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
+      title <- ggdraw() + draw_label(paste(arrangement, "-", shape, sep = ""), fontface = "bold")
       arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.02, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
@@ -350,7 +365,7 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
   return(fig) 
 }
 
-plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_df_list, parameters_df, metric) {
+plot_percentage_difference_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_df_list, parameters_df, metric) {
   
   fig_list <- list()
   
@@ -385,7 +400,7 @@ plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metri
   
   # Add error column to metric_df
   metric_df$error <- ((metric_df[[metric]] -  rep(metric_df[[metric]][metric_df$slice == "0"], 4)) / rep(metric_df[[metric]][metric_df$slice == "0"], 4)) * 100
-
+  
   for (arrangement in arrangements) {
     for (shape in shapes) {
       
@@ -415,7 +430,7 @@ plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metri
             geom_point(size = 0.5) +
             geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
             theme_minimal() +
-            labs(y = paste(metric, "Percentage difference (%)")) +
+            labs(y = paste(metric, "percentage diff (%)")) +
             theme(
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
               plot.title = element_text(size = 10),
@@ -423,8 +438,8 @@ plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metri
               axis.text.y = element_text(size = 8),   # make y-axis text smaller
               legend.position = "none"
             ) +
-            scale_x_continuous(breaks = pretty_breaks(n = 3)) + 
-            scale_y_continuous(breaks = pretty_breaks(n = 3)) +
+            scale_x_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) + 
+            scale_y_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) +
             scale_color_manual(
               values = c(
                 "1" = "#9437a8",
@@ -460,7 +475,7 @@ plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metri
       }
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
-      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
+      title <- ggdraw() + draw_label(paste(arrangement, "-", shape, sep = ""), fontface = "bold")
       arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.02, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
@@ -545,7 +560,7 @@ plot_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_df_list
               axis.text.y = element_text(size = 8),   # make y-axis text smaller
               legend.position = "none"
             ) +
-            scale_y_continuous(breaks = pretty_breaks(n = 3)) +
+            scale_y_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) +
             scale_fill_manual(
               values = c(
                 "1" = "#9437a8",
@@ -632,7 +647,7 @@ plot_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_df_list
       
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
-      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
+      title <- ggdraw() + draw_label(paste(arrangement, "-", shape, sep = ""), fontface = "bold")
       arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.02, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
@@ -717,7 +732,7 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
               axis.text.y = element_text(size = 8),   # make y-axis text smaller
               legend.position = "none"
             ) +
-            scale_y_continuous(breaks = pretty_breaks(n = 3)) +
+            scale_y_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) +
             scale_fill_manual(
               values = c(
                 "1" = "#9437a8",
@@ -808,7 +823,7 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
       
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
-      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
+      title <- ggdraw() + draw_label(paste(arrangement, "-", shape, sep = ""), fontface = "bold")
       arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.02, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
@@ -827,10 +842,10 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
 
 
 # Running the functions for 4 pair metrics ----
-metrics <- c("AMD",
-             "ANC_AUC",
-             "CK_AUC", "CL_AUC", "CG_AUC",
-             "COO_AUC")
+metrics_with_4_pairs <- c("AMD",
+                          "ANC_AUC",
+                          "CK_AUC", "CL_AUC", "CG_AUC",
+                          "COO_AUC")
 
 
 setwd("~/R/plots/S1")
@@ -870,14 +885,14 @@ dev.off()
 
 
 setwd("~/R/plots/S1")
-pdf("fig_error_vs_parameters_for_non_gradient_metrics_4_pairs_scatter_plot.pdf", width = 26, height = 25)
+pdf("fig_percentage_difference_vs_parameters_for_non_gradient_metrics_4_pairs_scatter_plot.pdf", width = 26, height = 25)
 
 for (metric in metrics_with_4_pairs) {
   
-  fig_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot(metric_df_list,
-                                                                                                                                  parameters_df,
-                                                                                                                                  metric)
-  print(fig_error_vs_parameters_for_non_gradient_metrics_scatter_plot)
+  fig_percentage_difference_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_percentage_difference_vs_parameters_for_non_gradient_metrics_scatter_plot(metric_df_list,
+                                                                                                                                                                  parameters_df,
+                                                                                                                                                                  metric)
+  print(fig_percentage_difference_vs_parameters_for_non_gradient_metrics_scatter_plot)
   
 }
 dev.off()
@@ -971,6 +986,25 @@ get_parameters <- function(arrangement, shape) {
   return(parameters)
 }
 
+# For nicer tick labels
+sci_clean_threshold <- function(x) {
+  # x[!(x %in% range(x, na.rm = T))] <- NA
+  
+  sapply(x, function(v) {
+    if (is.na(v)) {
+      return('')
+    }
+    if (abs(v) < 1000) {
+      return(as.character(v))   # keep normal numbers
+    }
+    # scientific notation
+    s <- format(v, scientific = TRUE)   # e.g. "1e+03"
+    s <- gsub("\\+", "", s)             # remove "+"
+    s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
+    s
+  })
+}
+
 combine_metric_and_parameters_df <- function(metric_df, parameters_df) {
   pairs <- unique(metric_df$pair)
   metric_and_parameters_df <- data.frame()
@@ -983,6 +1017,7 @@ combine_metric_and_parameters_df <- function(metric_df, parameters_df) {
 }
 
 plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_df_list, parameters_df, metric) {
+  
   
   fig_list <- list()
   
@@ -1047,8 +1082,8 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
               axis.text.x = element_text(size = 8),  # make x-axis text smaller
               axis.text.y = element_text(size = 8)   # make y-axis text smaller
             ) +
-            scale_x_continuous(breaks = pretty_breaks(n = 3)) + 
-            scale_y_continuous(breaks = pretty_breaks(n = 3)) 
+            scale_x_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) + 
+            scale_y_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) 
           
           # Get correlation and p-value       
           p_value <- "N/A"
@@ -1106,7 +1141,7 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
       }
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
-      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
+      title <- ggdraw() + draw_label(paste(arrangement, "-", shape, sep = ""), fontface = "bold")
       arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.04, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
@@ -1121,10 +1156,6 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
   
   return(fig)
 }
-
-# plot_3D_vs_parameters_for_gradient_metrics_line_graph <- function(metric_df_list, parameters_df, metric) {
-#   
-# }
 
 plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_df_list, parameters_df, metric) {
   
@@ -1207,8 +1238,8 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
               axis.text.y = element_text(size = 8),
               legend.position = "none"
             ) +
-            scale_x_continuous(breaks = pretty_breaks(n = 3)) +
-            scale_y_continuous(breaks = pretty_breaks(n = 3)) +
+            scale_x_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) +
+            scale_y_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) +
             scale_color_manual(
               values = c(
                 "1" = "#9437a8",
@@ -1246,7 +1277,7 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
       }
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
-      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
+      title <- ggdraw() + draw_label(paste(arrangement, "-", shape, sep = ""), fontface = "bold")
       arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.04, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
@@ -1262,7 +1293,7 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
   return(fig) 
 }
 
-plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_df_list, parameters_df, metric) {
+plot_percentage_difference_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_df_list, parameters_df, metric) {
   
   fig_list <- list()
   
@@ -1327,7 +1358,7 @@ plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metri
             geom_point(size = 0.5) +
             geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
             theme_minimal() +
-            labs(y = paste(metric, "Percentage difference (%)")) +
+            labs(y = paste(metric, "percentage diff (%)")) +
             theme(
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
               plot.title = element_text(size = 10),
@@ -1335,8 +1366,8 @@ plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metri
               axis.text.y = element_text(size = 8),   # make y-axis text smaller
               legend.position = "none"
             ) +
-            scale_x_continuous(breaks = pretty_breaks(n = 3)) + 
-            scale_y_continuous(breaks = pretty_breaks(n = 3)) +
+            scale_x_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) + 
+            scale_y_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) +
             scale_color_manual(
               values = c(
                 "1" = "#9437a8",
@@ -1372,7 +1403,7 @@ plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metri
       }
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
-      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
+      title <- ggdraw() + draw_label(paste(arrangement, "-", shape, sep = ""), fontface = "bold")
       arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.04, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
@@ -1457,7 +1488,7 @@ plot_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_df_list
               axis.text.y = element_text(size = 8),   # make y-axis text smaller
               legend.position = "none"
             ) +
-            scale_y_continuous(breaks = pretty_breaks(n = 3)) +
+            scale_y_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) +
             scale_fill_manual(
               values = c(
                 "1" = "#9437a8",
@@ -1544,7 +1575,7 @@ plot_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_df_list
       
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
-      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
+      title <- ggdraw() + draw_label(paste(arrangement, "-", shape, sep = ""), fontface = "bold")
       arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.04, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
@@ -1629,7 +1660,7 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
               axis.text.y = element_text(size = 8),   # make y-axis text smaller
               legend.position = "none"
             ) +
-            scale_y_continuous(breaks = pretty_breaks(n = 3)) +
+            scale_y_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) +
             scale_fill_manual(
               values = c(
                 "1" = "#9437a8",
@@ -1720,7 +1751,7 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
       
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
-      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
+      title <- ggdraw() + draw_label(paste(arrangement, "-", shape, sep = ""), fontface = "bold")
       arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.04, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
@@ -1739,9 +1770,9 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
 
 
 # Running the functions for 2 pair metrics ----
-metrics <- c("ACIN_AUC", "ANE_AUC",
-             "MS_AUC", "NMS_AUC",
-             "PBP_AUC", "EBP_AUC", "PBSAC", "EBSAC")
+metrics_with_2_pairs <- c("ACIN_AUC", "ANE_AUC",
+                          "MS_AUC", "NMS_AUC",
+                          "PBP_AUC", "EBP_AUC", "PBSAC", "EBSAC")
 
 
 setwd("~/R/plots/S1")
@@ -1781,14 +1812,14 @@ dev.off()
 
 
 setwd("~/R/plots/S1")
-pdf("fig_error_vs_parameters_for_non_gradient_metrics_2_pairs_scatter_plot.pdf", width = 26, height = 13)
+pdf("fig_percentage_difference_vs_parameters_for_non_gradient_metrics_2_pairs_scatter_plot.pdf", width = 26, height = 13)
 
 for (metric in metrics_with_2_pairs) {
   
-  fig_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot(metric_df_list,
-                                                                                                                                  parameters_df,
-                                                                                                                                  metric)
-  print(fig_error_vs_parameters_for_non_gradient_metrics_scatter_plot)
+  fig_percentage_difference_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_percentage_difference_vs_parameters_for_non_gradient_metrics_scatter_plot(metric_df_list,
+                                                                                                                                                                  parameters_df,
+                                                                                                                                                                  metric)
+  print(fig_percentage_difference_vs_parameters_for_non_gradient_metrics_scatter_plot)
   
 }
 dev.off()

@@ -76,6 +76,36 @@ combine_metric_and_parameters_df <- function(metric_df, parameters_df) {
 
 plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_df_list, parameters_df, metric) {
   
+  # For nicer tick labels
+  sci_clean_threshold <- function(x) {
+    sapply(x, function(v) {
+      if (is.na(v)) return("")
+      
+      if (abs(v) < 1000) {
+        return(as.character(v))
+      }
+      
+      # scientific notation with 1 decimal place
+      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
+      
+      # remove "+" in exponent
+      s <- gsub("e\\+", "e", s)
+      
+      # split mantissa and exponent
+      parts <- strsplit(s, "e")[[1]]
+      mant <- parts[1]
+      exp  <- parts[2]
+      
+      # remove trailing .0 (so 1.0e3 → 1e3)
+      mant <- sub("\\.0$", "", mant)
+      
+      # remove leading zeros in exponent
+      exp <- sub("^0+", "", exp)
+      
+      paste0(mant, "e", exp)
+    })
+  }
+  
   fig_list <- list()
   
   # Define parameters
@@ -91,7 +121,7 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
   # Add 'pair' column to metric_df
   metric_df <- add_pair_to_metric_df(metric_df, metric)
   
-pairs <- "A/B"
+  pairs <- "A/B"
   
   # Add to parameters_df
   parameters_df$distance <- 450 - parameters_df$cluster1_x_coord # 450 is the x-coordinate of cluster2
@@ -142,8 +172,8 @@ pairs <- "A/B"
               axis.text.x = element_text(size = 8),  # make x-axis text smaller
               axis.text.y = element_text(size = 8)   # make y-axis text smaller
             ) +
-            scale_x_continuous(breaks = pretty_breaks(n = 3)) + 
-            scale_y_continuous(breaks = pretty_breaks(n = 3)) 
+            scale_x_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) + 
+            scale_y_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) 
           
           # Get correlation and p-value       
           p_value <- "N/A"
@@ -194,13 +224,13 @@ pairs <- "A/B"
         
         pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
                               ncol = length(fig_list[[arrangement_shape]][[pair]]))
-
+        
         
         pair_figs[[pair]] <- pair_fig
       }
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
-      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
+      title <- ggdraw() + draw_label(paste(arrangement, "-", shape, sep = ""), fontface = "bold")
       arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.08, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
@@ -216,11 +246,27 @@ pairs <- "A/B"
   return(fig)
 }
 
-# plot_3D_vs_parameters_for_gradient_metrics_line_graph <- function(metric_df_list, parameters_df, metric) {
-#   
-# }
-
 plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_df_list, parameters_df, metric) {
+  
+  # For nicer tick labels
+  sci_clean_threshold <- function(x) {
+    
+    x[!(x %in% range(x, na.rm = T))] <- NA
+    
+    sapply(x, function(v) {
+      if (is.na(v)) {
+        return('')
+      }
+      if (abs(v) < 1000) {
+        return(as.character(v))   # keep normal numbers
+      }
+      # scientific notation
+      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
+      s <- gsub("\\+", "", s)             # remove "+"
+      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
+      s
+    })
+  }
   
   fig_list <- list()
   
@@ -277,26 +323,6 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
         for (parameter in parameters) {
           # Subset for parameter
           plot_df <- metric_arrangement_shape_pair_df[metric_arrangement_shape_pair_df$variable_parameter == parameter, ]
-          
-          sci_clean_threshold <- function(x) {
-            x[!(x %in% range(x, na.rm = T))] <- NA
-            
-            sapply(x, function(v) {
-              if (is.na(v)) {
-                return('')
-              }
-              if (abs(v) < 1000) {
-                return(as.character(v))   # keep normal numbers
-              }
-              # scientific notation
-              s <- format(v, scientific = TRUE)   # e.g. "1e+03"
-              s <- gsub("\\+", "", s)             # remove "+"
-              s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
-              s
-            })
-          }
-          
-          
           
           fig <- ggplot(plot_df, aes_string(parameter, metric)) +
             geom_point(
@@ -356,8 +382,8 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
         
         pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
                               ncol = length(fig_list[[arrangement_shape]][[pair]]))
-
-
+        
+        
         
         pair_figs[[pair]] <- pair_fig
       }
@@ -379,7 +405,37 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
   return(fig) 
 }
 
-plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_df_list, parameters_df, metric) {
+plot_percentage_difference_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_df_list, parameters_df, metric) {
+  
+  # For nicer tick labels
+  sci_clean_threshold <- function(x) {
+    sapply(x, function(v) {
+      if (is.na(v)) return("")
+      
+      if (abs(v) < 1000) {
+        return(as.character(v))
+      }
+      
+      # scientific notation with 1 decimal place
+      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
+      
+      # remove "+" in exponent
+      s <- gsub("e\\+", "e", s)
+      
+      # split mantissa and exponent
+      parts <- strsplit(s, "e")[[1]]
+      mant <- parts[1]
+      exp  <- parts[2]
+      
+      # remove trailing .0 (so 1.0e3 → 1e3)
+      mant <- sub("\\.0$", "", mant)
+      
+      # remove leading zeros in exponent
+      exp <- sub("^0+", "", exp)
+      
+      paste0(mant, "e", exp)
+    })
+  }
   
   fig_list <- list()
   
@@ -396,7 +452,7 @@ plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metri
   # Add 'pair' column to metric_df
   metric_df <- add_pair_to_metric_df(metric_df, metric)
   
-pairs <- "A/B"
+  pairs <- "A/B"
   
   # Make 'slice' column categorical
   metric_df$slice <- as.character(metric_df$slice)
@@ -447,7 +503,7 @@ pairs <- "A/B"
             geom_point(size = 0.5) +
             geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
             theme_minimal() +
-            labs(y = paste(metric, "Percentage difference (%)")) +
+            labs(y = paste(metric, "percentage diff (%)")) +
             theme(
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
               plot.title = element_text(size = 10),
@@ -455,8 +511,8 @@ pairs <- "A/B"
               axis.text.y = element_text(size = 8),   # make y-axis text smaller
               legend.position = "none"
             ) +
-            scale_x_continuous(breaks = pretty_breaks(n = 3)) + 
-            scale_y_continuous(breaks = pretty_breaks(n = 3)) +
+            scale_x_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) + 
+            scale_y_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) +
             scale_color_manual(
               values = c(
                 "1" = "#9437a8",
@@ -485,14 +541,14 @@ pairs <- "A/B"
         
         pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
                               ncol = length(fig_list[[arrangement_shape]][[pair]]))
-
-
+        
+        
         
         pair_figs[[pair]] <- pair_fig
       }
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
-      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
+      title <- ggdraw() + draw_label(paste(arrangement, "-", shape, sep = ""), fontface = "bold")
       arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.08, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
@@ -510,6 +566,36 @@ pairs <- "A/B"
 
 plot_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_df_list, parameters_df, metric) {
   
+  # For nicer tick labels
+  sci_clean_threshold <- function(x) {
+    sapply(x, function(v) {
+      if (is.na(v)) return("")
+      
+      if (abs(v) < 1000) {
+        return(as.character(v))
+      }
+      
+      # scientific notation with 1 decimal place
+      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
+      
+      # remove "+" in exponent
+      s <- gsub("e\\+", "e", s)
+      
+      # split mantissa and exponent
+      parts <- strsplit(s, "e")[[1]]
+      mant <- parts[1]
+      exp  <- parts[2]
+      
+      # remove trailing .0 (so 1.0e3 → 1e3)
+      mant <- sub("\\.0$", "", mant)
+      
+      # remove leading zeros in exponent
+      exp <- sub("^0+", "", exp)
+      
+      paste0(mant, "e", exp)
+    })
+  }
+  
   fig_list <- list()
   
   # Define parameters
@@ -525,7 +611,7 @@ plot_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_df_list
   # Add 'pair' column to metric_df
   metric_df <- add_pair_to_metric_df(metric_df, metric)
   
-pairs <- "A/B"
+  pairs <- "A/B"
   
   # Make 'slice' column categorical
   metric_df$slice <- as.character(metric_df$slice)
@@ -580,7 +666,7 @@ pairs <- "A/B"
               axis.text.y = element_text(size = 8),   # make y-axis text smaller
               legend.position = "none"
             ) +
-            scale_y_continuous(breaks = pretty_breaks(n = 3)) +
+            scale_y_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) +
             scale_fill_manual(
               values = c(
                 "1" = "#9437a8",
@@ -660,14 +746,14 @@ pairs <- "A/B"
         
         pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
                               ncol = length(fig_list[[arrangement_shape]][[pair]]))
-
-
+        
+        
         pair_figs[[pair]] <- pair_fig 
       }
       
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
-      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
+      title <- ggdraw() + draw_label(paste(arrangement, "-", shape, sep = ""), fontface = "bold")
       arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.08, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
@@ -685,6 +771,36 @@ pairs <- "A/B"
 
 plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_df_list, parameters_df, metric) {
   
+  # For nicer tick labels
+  sci_clean_threshold <- function(x) {
+    sapply(x, function(v) {
+      if (is.na(v)) return("")
+      
+      if (abs(v) < 1000) {
+        return(as.character(v))
+      }
+      
+      # scientific notation with 1 decimal place
+      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
+      
+      # remove "+" in exponent
+      s <- gsub("e\\+", "e", s)
+      
+      # split mantissa and exponent
+      parts <- strsplit(s, "e")[[1]]
+      mant <- parts[1]
+      exp  <- parts[2]
+      
+      # remove trailing .0 (so 1.0e3 → 1e3)
+      mant <- sub("\\.0$", "", mant)
+      
+      # remove leading zeros in exponent
+      exp <- sub("^0+", "", exp)
+      
+      paste0(mant, "e", exp)
+    })
+  }
+  
   fig_list <- list()
   
   # Define parameters
@@ -700,7 +816,7 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
   # Add 'pair' column to metric_df
   metric_df <- add_pair_to_metric_df(metric_df, metric)
   
-pairs <- "A/B"
+  pairs <- "A/B"
   
   # Make 'slice' column categorical
   metric_df$slice <- as.character(metric_df$slice)
@@ -755,7 +871,7 @@ pairs <- "A/B"
               axis.text.y = element_text(size = 8),   # make y-axis text smaller
               legend.position = "none"
             ) +
-            scale_y_continuous(breaks = pretty_breaks(n = 3)) +
+            scale_y_continuous(breaks = pretty_breaks(n = 3), labels = sci_clean_threshold) +
             scale_fill_manual(
               values = c(
                 "1" = "#9437a8",
@@ -839,14 +955,14 @@ pairs <- "A/B"
         
         pair_fig <- plot_grid(plotlist = fig_list[[arrangement_shape]][[pair]],
                               ncol = length(fig_list[[arrangement_shape]][[pair]]))
-
-
+        
+        
         pair_figs[[pair]] <- pair_fig 
       }
       
       arrangement_shape_fig <- plot_grid(plotlist = pair_figs, ncol = 1)
       
-      title <- ggdraw() + draw_label(paste("arrangement-shape: ", arrangement, "-", shape, sep = ""), fontface = "bold")
+      title <- ggdraw() + draw_label(paste(arrangement, "-", shape, sep = ""), fontface = "bold")
       arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.08, 1))  + 
         theme(plot.margin = margin(10, 10, 10, 10),
               panel.border = element_rect(color = "black", fill = NA, linewidth = 1))  
@@ -874,7 +990,7 @@ metrics <- c("AMD",
 
 
 setwd("~/R/plots/S1")
-pdf("fig_3D_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 18, height = 6)
+pdf("fig_3D_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 26, height = 6)
 
 for (metric in metrics) {
   
@@ -910,14 +1026,14 @@ dev.off()
 
 
 setwd("~/R/plots/S1")
-pdf("fig_error_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 26, height = 6)
+pdf("fig_percentage_difference_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 26, height = 6)
 
 for (metric in metrics) {
   
-  fig_error_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_error_vs_parameters_for_non_gradient_metrics_scatter_plot(metric_df_list,
-                                                                                                                                  parameters_df,
-                                                                                                                                  metric)
-  print(fig_error_vs_parameters_for_non_gradient_metrics_scatter_plot)
+  fig_percentage_difference_vs_parameters_for_non_gradient_metrics_scatter_plot <- plot_percentage_difference_vs_parameters_for_non_gradient_metrics_scatter_plot(metric_df_list,
+                                                                                                                                                                  parameters_df,
+                                                                                                                                                                  metric)
+  print(fig_percentage_difference_vs_parameters_for_non_gradient_metrics_scatter_plot)
   
 }
 dev.off()
