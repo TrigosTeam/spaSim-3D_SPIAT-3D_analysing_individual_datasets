@@ -1,3 +1,5 @@
+# Set seed ----
+set.seed(678999821)
 # Libraries ----
 library(cowplot)
 library(ggplot2)
