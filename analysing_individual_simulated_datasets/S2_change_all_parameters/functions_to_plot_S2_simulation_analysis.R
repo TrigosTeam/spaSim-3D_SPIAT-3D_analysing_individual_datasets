@@ -8,9 +8,9 @@ library(stringr)
 library(dplyr)
 
 # Read data and set up ----
-setwd("~/R/S1_data")
+setwd("~/R/S2_data")
 
-metric_df_list <- readRDS("S1_metric_df_list.RDS")
+metric_df_list <- readRDS("S2_metric_df_list.RDS")
 
 parameters_df <- readRDS("parameters_df.RDS")
 
@@ -1160,7 +1160,7 @@ metrics <- c("AMD",
 
 
 
-setwd("~/R/plots/S1")
+setwd("~/R/plots/S2")
 fig_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot(metric_df_list,
                                                                                                                                 metrics)
 pdf("fig_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot.pdf", width = 24, height = 10)
@@ -1168,7 +1168,7 @@ print(fig_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot)
 dev.off()
 
 
-setwd("~/R/plots/S1")
+setwd("~/R/plots/S2")
 fig_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot(metric_df_list,
                                                                                                                                                                       metrics)
 pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot.pdf", width = 24, height = 10)
@@ -1176,7 +1176,7 @@ print(fig_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatte
 dev.off()
 
 
-setwd("~/R/plots/S1")
+setwd("~/R/plots/S2")
 fig_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot <- plot_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot(metric_df_list,
                                                                                                                                                 metrics)
 pdf("fig_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot.pdf", width = 24, height = 10)
@@ -1188,7 +1188,7 @@ dev.off()
 
 
 
-setwd("~/R/plots/S1")
+setwd("~/R/plots/S2")
 fig_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot(metric_df_list,
                                                                                                                                     metrics)
 pdf("fig_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot.pdf", width = 24, height = 10)
@@ -1196,7 +1196,7 @@ print(fig_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot)
 dev.off()
 
 
-setwd("~/R/plots/S1")
+setwd("~/R/plots/S2")
 fig_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot(metric_df_list,
                                                                                                                                                                           metrics)
 pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot.pdf", width = 24, height = 10)
@@ -1204,7 +1204,7 @@ print(fig_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scat
 dev.off()
 
 
-setwd("~/R/plots/S1")
+setwd("~/R/plots/S2")
 fig_percentage_difference_vs_metric_by_pair_for_averaged_slice_box_plot <- plot_percentage_difference_vs_metric_by_pair_for_averaged_slice_box_plot(metric_df_list,
                                                                                                                                                     metrics)
 pdf("fig_percentage_difference_vs_metric_by_pair_for_averaged_slice_box_plot.pdf", width = 24, height = 10)
@@ -1215,7 +1215,7 @@ dev.off()
 
 
 
-setwd("~/R/plots/S1")
+setwd("~/R/plots/S2")
 fig_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot(metric_df_list,
                                                                                                                                 metrics)
 pdf("fig_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot.pdf", width = 24, height = 10)
@@ -1223,7 +1223,7 @@ print(fig_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot)
 dev.off()
 
 
-setwd("~/R/plots/S1")
+setwd("~/R/plots/S2")
 fig_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot(metric_df_list,
                                                                                                                                                                       metrics)
 pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot.pdf", width = 24, height = 10)
@@ -1235,7 +1235,7 @@ dev.off()
 
 
 
-setwd("~/R/plots/S1")
+setwd("~/R/plots/S2")
 fig_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot(metric_df_list,
                                                                                                                                                                     metrics,
                                                                                                                                                                     parameters_df)
@@ -1244,7 +1244,7 @@ print(fig_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter
 dev.off()
 
 
-setwd("~/R/plots/S1")
+setwd("~/R/plots/S2")
 fig_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot(metric_df_list,
                                                                                                                                                                                                           metrics,
                                                                                                                                                                                                           parameters_df)
@@ -1253,7 +1253,7 @@ print(fig_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_showin
 dev.off()
 
 
-setwd("~/R/plots/S1")
+setwd("~/R/plots/S2")
 fig_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_for_random_slice_bar_plot <- plot_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_for_random_slice_bar_plot(metric_df_list,
                                                                                                                                                                           metrics,
                                                                                                                                                                           parameters_df)

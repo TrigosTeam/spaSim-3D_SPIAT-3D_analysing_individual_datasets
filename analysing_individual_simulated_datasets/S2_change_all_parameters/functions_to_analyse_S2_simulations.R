@@ -39,8 +39,8 @@ generate_random_parameters <- function(
   return(parameters_df)
 }
 
-# Analyse S1 simulations
-analyse_S1_simulations <- function(parameters_df) {
+# Analyse S2 simulations
+analyse_S2_simulations <- function(parameters_df) {
   
   # Set defined parameters/values
   cell_types <- c('A', 'B')
@@ -749,6 +749,6 @@ parameters_df <- generate_random_parameters(
   cluster1_x_coord_range = c("min" = 125, "max" = 175)
 )
 
-S1_metric_df_list <- analyse_S1_simulations(parameters_df)
+S2_metric_df_list <- analyse_S2_simulations(parameters_df)
 
 
