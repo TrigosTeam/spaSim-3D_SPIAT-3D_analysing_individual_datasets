@@ -364,7 +364,7 @@ plot_percentage_difference_vs_slice_box_plot <- function(metric_df_list,
 
 
 plot_median_percentage_difference_of_each_pair_vs_metrics_box_plot <- function(metric_df_list,
-                                                                metrics) {
+                                                                               metrics) {
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
@@ -432,6 +432,9 @@ plot_median_percentage_difference_of_each_pair_vs_metrics_box_plot <- function(m
     plot_df <- rbind(plot_df, median_df)
   }
   
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
   fig <- ggplot(plot_df, aes(x = metric, y = median_error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
@@ -449,7 +452,7 @@ plot_median_percentage_difference_of_each_pair_vs_metrics_box_plot <- function(m
 }
 
 plot_percentage_difference_vs_metrics_for_each_pair_box_plot <- function(metric_df_list,
-                                                     metrics) {
+                                                                         metrics) {
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
@@ -522,6 +525,9 @@ plot_percentage_difference_vs_metrics_for_each_pair_box_plot <- function(metric_
     plot_df <- rbind(plot_df, metric_df[ , c("error", "slice", "pair", "metric")])
   }
   
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
   fig <- ggplot(plot_df, aes(x = metric, y = error, color = pair)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, aes(color = pair)) +  # Add dots with slight horizontal jitter
@@ -551,7 +557,7 @@ plot_percentage_difference_vs_metrics_for_each_pair_box_plot <- function(metric_
 }
 
 plot_median_percentage_difference_of_each_slice_vs_metrics_box_plot <- function(metric_df_list,
-                                                                 metrics) {
+                                                                                metrics) {
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
@@ -662,7 +668,7 @@ plot_median_percentage_difference_of_each_slice_vs_metrics_box_plot <- function(
 
 
 plot_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot <- function(metric_df_list,
-                                                                metrics) {
+                                                                                    metrics) {
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
@@ -726,6 +732,9 @@ plot_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot <- funct
     plot_df <- rbind(plot_df, metric_df)
   }
   
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
   fig <- ggplot(plot_df, aes(x = metric, y = error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
@@ -767,20 +776,20 @@ fig_percentage_difference_vs_slice_box_plot <- plot_percentage_difference_vs_sli
 
 fig_median_percentage_difference_of_each_pair_vs_metrics_box_plot <- 
   plot_median_percentage_difference_of_each_pair_vs_metrics_box_plot(metric_df_list,
-                                                      metrics)
+                                                                     metrics)
 
 # This is only for CyCIF dataset
 fig_percentage_difference_vs_metrics_for_each_pair_box_plot <-
   plot_percentage_difference_vs_metrics_for_each_pair_box_plot(metric_df_list,
-                                           metrics)
+                                                               metrics)
 
 fig_median_percentage_difference_of_each_slice_vs_metrics_box_plot <- 
   plot_median_percentage_difference_of_each_slice_vs_metrics_box_plot(metric_df_list,
-                                                       metrics)
+                                                                      metrics)
 
 fig_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot <- 
   plot_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot(metric_df_list,
-                                                      metrics)
+                                                                          metrics)
 
 
 ### Plotting and upload ------

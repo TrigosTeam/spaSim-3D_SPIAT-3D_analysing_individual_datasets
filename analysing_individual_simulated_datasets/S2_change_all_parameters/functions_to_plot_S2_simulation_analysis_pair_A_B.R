@@ -112,6 +112,9 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(m
     })
   }
   
+  # Factor metrics
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
     geom_abline(slope = 1, intercept = 0, linetype = "dotted",
@@ -241,6 +244,9 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter
       paste0(mant, "e", exp)
     })
   }
+  
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
   
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
@@ -516,6 +522,9 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- function
     })
   }
   
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
     geom_abline(slope = 1, intercept = 0, linetype = "dotted", color = "#bb0036", linewidth = 1) + # Dotted line of the equation y = x
@@ -642,6 +651,8 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatt
     })
   }
   
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
   
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
@@ -767,6 +778,9 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_averaged_slice_box_plot <- 
     })
   }
   
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
   fig <- ggplot(plot_df, aes(x = metric, y = error)) +
     geom_boxplot(fill = "lightgray") +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
@@ -887,6 +901,9 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot <- function(m
     })
   }
   
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
   # Change slice column back to character for plotting
   plot_df$slice <- as.character(metric_df$slice)
   
@@ -1006,6 +1023,9 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter
     })
   }
   
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
   
@@ -1093,6 +1113,9 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- fun
   
   plot_df$slice <- factor(plot_df$slice, levels = c('7', '10', '13'))
   
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
   
@@ -1166,7 +1189,7 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- fun
       size = 3.5,
       color = "black"
     ) +
-  
+    
     
     # ⭐ correlation stars
     geom_point(
@@ -1177,7 +1200,7 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- fun
       color = "#0062c5",
       position = position_dodge(width = 0.8)
     ) +
-  
+    
     
     labs(title = "Box plots showing percentage difference between 2D and 3D metrics with spearman correlation, for three slices for cell pair A/B",
          x = "Metric",
@@ -1287,6 +1310,8 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_
     })
   }
   
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
   
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D, color = structure)) +
     geom_point(alpha = 0.5, size = 1) +
@@ -1408,6 +1433,8 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing
     })
   }
   
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
   
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
@@ -1508,6 +1535,9 @@ plot_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_A_B_for_random_slice_b
       corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"),
       .groups = "drop"
     )
+  
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
   
   fig <- ggplot(corr_df, aes(x = structure, y = corr, fill = structure)) + 
     geom_col(alpha = 0.8) + 
@@ -1612,7 +1642,7 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_struct
   error_to_corr <- function(e) scales::rescale(e, to = c(0, 1), from = c(-100, 400))
   
   corr_df$y_trans <- corr_to_error(corr_df$corr)
-
+  
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
     sapply(x, function(v) {
@@ -1642,7 +1672,10 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_struct
       paste0(mant, "e", exp)
     })
   }
-
+  
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
   # Structure colors
   structure_cols <- c(
     "mixed_ellipsoid" = "#007128",
