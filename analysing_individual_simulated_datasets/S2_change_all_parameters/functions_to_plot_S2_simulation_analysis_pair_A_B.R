@@ -388,7 +388,7 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- fu
                color = "#0062c5") +
     
     labs(
-      title = "Box plots showing percentage difference between 2D and 3D metrics, for a random slice and cell pair A/B",
+      # title = "Box plots showing percentage difference between 2D and 3D metrics, for a random slice and cell pair A/B",
       x = "Metric",
       y = "Percentage difference (%)"
     ) +
@@ -404,7 +404,7 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- fu
       plot.title      = element_text(size = 16),
       axis.title.x    = element_text(size = 16),
       axis.title.y    = element_text(size = 16),
-      axis.text.x     = element_text(size = 16),
+      axis.text.x     = element_text(size = 16, angle = 90, vjust = 0.5, hjust = 1),
       axis.text.y     = element_text(size = 16)
     )
   
@@ -1727,7 +1727,7 @@ dev.off()
 setwd("~/R/plots/S2")
 fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot(metric_df_list,
                                                                                                                                                         metrics)
-pdf("fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot.pdf", width = 24, height = 10)
+pdf("fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot.pdf", width = 9, height = 6)
 print(fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot)
 dev.off()
 
