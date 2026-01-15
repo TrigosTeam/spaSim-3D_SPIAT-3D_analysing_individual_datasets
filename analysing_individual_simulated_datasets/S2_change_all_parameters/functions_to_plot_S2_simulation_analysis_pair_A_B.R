@@ -1499,7 +1499,15 @@ plot_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_A_B_for_random_slice_b
     
   }
   
-  fig <- ggplot(corr_df, aes(x = structure, y = spearman_corr, fill = structure)) + 
+  # Compute spearman correlation
+  corr_df <- plot_df %>%
+    group_by(pair, metric, structure) %>%
+    summarise(
+      corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"),
+      .groups = "drop"
+    )
+  
+  fig <- ggplot(corr_df, aes(x = structure, y = corr, fill = structure)) + 
     geom_col(alpha = 0.8) + 
     labs(title = "Bar plots showing spearman correlation vs structure, for each metric, for a random slice and cell pair A/B", x = "Structure", y = "Spearman Correlation") + 
     facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +
