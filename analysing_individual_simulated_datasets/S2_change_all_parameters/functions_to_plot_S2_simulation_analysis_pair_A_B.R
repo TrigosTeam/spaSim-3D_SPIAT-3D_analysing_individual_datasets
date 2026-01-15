@@ -14,6 +14,7 @@ metric_df_list <- readRDS("S2_metric_df_list.RDS")
 
 parameters_df <- readRDS("S2_parameters_df.RDS")
 
+
 # Functions ----
 
 # Get plot_df by sampling a random slice
@@ -694,15 +695,15 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_averaged_slice_box_plot <- 
     geom_boxplot(fill = "lightgray") +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
     
-    # Median labels
-    stat_summary(
-      fun = function(z) median(z, na.rm = TRUE),
-      geom = "text",
-      aes(label = after_stat(sprintf("%.1f", y))),
-      vjust = -0.5,
-      size = 3.5,
-      color = "black"
-    ) +
+    # # Median labels
+    # stat_summary(
+    #   fun = function(z) median(z, na.rm = TRUE),
+    #   geom = "text",
+    #   aes(label = after_stat(sprintf("%.1f", y))),
+    #   vjust = -0.5,
+    #   size = 5,
+    #   color = "black"
+    # ) +
     
     # ⭐ correlation stars
     geom_point(data = corr_df, 
@@ -711,16 +712,25 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_averaged_slice_box_plot <- 
                size = 5, 
                color = "#0062c5") +
     
-    labs(title = "Box plots showing percentage difference between 2D and 3D metrics with spearman correlation, for averaged slices for cell pair A/B",
-         x = "Metric",
-         y = "Percentage difference (%)") +
+    labs(
+      # title = "Box plots showing percentage difference between 2D and 3D metrics with spearman correlation, for averaged slices for cell pair A/B",
+       x = "Metric",
+       y = "Percentage difference (%)"
+      ) +
     
     scale_y_continuous(limits = c(-100, 400), n.breaks = 3, labels = sci_clean_threshold,
                        sec.axis = sec_axis(~ error_to_corr(.), name = "Spearman Correlation")) +
     
     theme_minimal() +
     theme(
-      panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      
+      # Font sizes
+      plot.title      = element_text(size = 16),
+      axis.title.x    = element_text(size = 16),
+      axis.title.y    = element_text(size = 16),
+      axis.text.x     = element_text(size = 16, angle = 90, vjust = 0.5, hjust = 1),
+      axis.text.y     = element_text(size = 16)
     )
   
   return(fig)
@@ -1088,16 +1098,16 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- fun
     scale_fill_manual(values = slice_cols) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
     
-    # Median labels
-    stat_summary(
-      fun = function(z) median(z, na.rm = TRUE),
-      geom = "text",
-      aes(label = after_stat(sprintf("%.1f", y)), group = slice),
-      position = position_dodge(width = 0.8),
-      vjust = -0.5,
-      size = 3.5,
-      color = "black"
-    ) +
+    # # Median labels
+    # stat_summary(
+    #   fun = function(z) median(z, na.rm = TRUE),
+    #   geom = "text",
+    #   aes(label = after_stat(sprintf("%.1f", y)), group = slice),
+    #   position = position_dodge(width = 0.8),
+    #   vjust = -0.5,
+    #   size = 3.5,
+    #   color = "black"
+    # ) +
     
     
     # ⭐ correlation stars
@@ -1111,16 +1121,28 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- fun
     ) +
     
     
-    labs(title = "Box plots showing percentage difference between 2D and 3D metrics with spearman correlation, for three slices for cell pair A/B",
-         x = "Metric",
-         y = "Percentage difference (%)") +
+    labs(
+      # title = "Box plots showing percentage difference between 2D and 3D metrics with spearman correlation, for three slices for cell pair A/B",
+       x = "Metric",
+       y = "Percentage difference (%)"
+      ) +
     
     scale_y_continuous(limits = c(-100, 400), n.breaks = 3, labels = sci_clean_threshold,
                        sec.axis = sec_axis(~ error_to_corr(.), name = "Spearman Correlation")) +
     
     theme_minimal() +
     theme(
-      panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      
+      # Font sizes
+      plot.title      = element_text(size = 16),
+      axis.title.x    = element_text(size = 16),
+      axis.title.y    = element_text(size = 16),
+      axis.text.x     = element_text(size = 16, angle = 90, vjust = 0.5, hjust = 1),
+      axis.text.y     = element_text(size = 16),
+      
+      legend.position = "none"
+      
     )
   
   return(fig)
@@ -1374,16 +1396,16 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_struct
     scale_fill_manual(values = structure_cols) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
     
-    # Median labels
-    stat_summary(
-      fun = function(z) median(z, na.rm = TRUE),
-      geom = "text",
-      aes(label = after_stat(sprintf("%.1f", y)), group = structure),
-      position = position_dodge(width = 0.8),
-      vjust = -0.5,
-      size = 3.5,
-      color = "black"
-    ) +
+    # # Median labels
+    # stat_summary(
+    #   fun = function(z) median(z, na.rm = TRUE),
+    #   geom = "text",
+    #   aes(label = after_stat(sprintf("%.1f", y)), group = structure),
+    #   position = position_dodge(width = 0.8),
+    #   vjust = -0.5,
+    #   size = 5,
+    #   color = "black"
+    # ) +
     
     
     # ⭐ correlation stars
@@ -1391,22 +1413,33 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_struct
       data = corr_df,
       aes(x = metric, y = y_trans, group = structure),
       shape = 8,
-      size = 5,
+      size = 3,
       color = "#0062c5",
       position = position_dodge(width = 0.8)
     ) +
     
     
-    labs(title = "Box plots showing percentage difference between 2D and 3D metrics with spearman correlation, for a random slice for cell pair A/B, showing tissue structure",
-         x = "Metric",
-         y = "Percentage difference (%)") +
+    labs(
+      # title = "Box plots showing percentage difference between 2D and 3D metrics with spearman correlation, for a random slice for cell pair A/B, showing tissue structure",
+       x = "Metric",
+       y = "Percentage difference (%)"
+      ) +
     
     scale_y_continuous(limits = c(-100, 400), n.breaks = 3, labels = sci_clean_threshold,
                        sec.axis = sec_axis(~ error_to_corr(.), name = "Spearman Correlation")) +
     
     theme_minimal() +
     theme(
-      panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      
+      # Font sizes
+      plot.title      = element_text(size = 16),
+      axis.title.x    = element_text(size = 16),
+      axis.title.y    = element_text(size = 16),
+      axis.text.x     = element_text(size = 16, angle = 90, vjust = 0.5, hjust = 1),
+      axis.text.y     = element_text(size = 16),
+      
+      legend.position = "none"
     )
   
   return(fig)
@@ -1426,16 +1459,20 @@ metrics <- c("AMD",
 
 
 
+plot_df <- get_plot_df_for_random_slice(metric_df_list,
+                                        metrics,
+                                        parameters_df)
+
 setwd("~/R/plots/S2")
 fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot(plot_df,
                                                                                                                                         metrics)
-pdf("fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot.pdf", width = 24, height = 10)
+pdf("fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot.pdf", width = 30, height = 4)
 print(fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot)
 dev.off()
 
 
 setwd("~/R/plots/S2")
-fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot(metric_df_list,
+fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot(plot_df,
                                                                                                                                                                               metrics)
 pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot.pdf", width = 24, height = 10)
 print(fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot)
@@ -1443,9 +1480,9 @@ dev.off()
 
 
 setwd("~/R/plots/S2")
-fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot(metric_df_list,
+fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot(plot_df,
                                                                                                                                                         metrics)
-pdf("fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot.pdf", width = 9, height = 6)
+pdf("fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot.pdf", width = 15, height = 6)
 print(fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot)
 dev.off()
 
@@ -1473,7 +1510,7 @@ dev.off()
 setwd("~/R/plots/S2")
 fig_percentage_difference_vs_metric_by_pair_A_B_for_averaged_slice_box_plot <- plot_percentage_difference_vs_metric_by_pair_A_B_for_averaged_slice_box_plot(metric_df_list,
                                                                                                                                                             metrics)
-pdf("fig_percentage_difference_vs_metric_by_pair_A_B_for_averaged_slice_box_plot.pdf", width = 24, height = 10)
+pdf("fig_percentage_difference_vs_metric_by_pair_A_B_for_averaged_slice_box_plot.pdf", width = 15, height = 4)
 print(fig_percentage_difference_vs_metric_by_pair_A_B_for_averaged_slice_box_plot)
 dev.off()
 
@@ -1499,7 +1536,7 @@ dev.off()
 setwd("~/R/plots/S2")
 fig_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot(metric_df_list,
                                                                                                                                                       metrics)
-pdf("fig_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot.pdf", width = 24, height = 10)
+pdf("fig_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot.pdf", width = 15, height = 4)
 print(fig_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot)
 dev.off()
 
@@ -1541,7 +1578,7 @@ setwd("~/R/plots/S2")
 fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_structure_box_plot <- plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_structure_box_plot(plot_df,
                                                                                                                                                                                             metrics,
                                                                                                                                                                                             parameters_df)
-pdf("fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_structure_box_plot.pdf", width = 24, height = 10)
+pdf("fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_structure_box_plot.pdf", width = 15, height = 4)
 print(fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_structure_box_plot)
 dev.off()
 
