@@ -326,7 +326,8 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- fu
   
   write.csv(corr_df, "~/R/values_from_figures/random_slice_corr_df.csv")
   
-  # map corr ∈ [-1,1] → error ∈ [-100,400]
+  
+  # map corr ∈ [-1,1] → error ∈ [-100, 400]
   corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
   
   # inverse transform for the secondary axis
@@ -363,6 +364,7 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- fu
       paste0(mant, "e", exp)
     })
   }
+  
   # Factor metrics
   plot_df$metric <- factor(plot_df$metric, metrics)
   
