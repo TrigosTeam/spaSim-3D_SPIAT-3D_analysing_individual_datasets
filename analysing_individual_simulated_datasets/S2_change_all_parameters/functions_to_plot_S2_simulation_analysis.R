@@ -86,23 +86,33 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(metri
   
   pairs <- unique(plot_df$pair)
   
-  # Use scientific notation axis labels with big numbers
+  # For nicer tick labels
   sci_clean_threshold <- function(x) {
-    
-    # x[!(x %in% range(x, na.rm = T))] <- NA
-    
     sapply(x, function(v) {
-      if (is.na(v)) {
-        return('')
-      }
+      if (is.na(v)) return("")
+      
       if (abs(v) < 1000) {
-        return(as.character(v))   # keep normal numbers
+        return(as.character(v))
       }
-      # scientific notation
-      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
-      s <- gsub("\\+", "", s)             # remove "+"
-      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
-      s
+      
+      # scientific notation with 1 decimal place
+      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
+      
+      # remove "+" in exponent
+      s <- gsub("e\\+", "e", s)
+      
+      # split mantissa and exponent
+      parts <- strsplit(s, "e")[[1]]
+      mant <- parts[1]
+      exp  <- parts[2]
+      
+      # remove trailing .0 (so 1.0e3 → 1e3)
+      mant <- sub("\\.0$", "", mant)
+      
+      # remove leading zeros in exponent
+      exp <- sub("^0+", "", exp)
+      
+      paste0(mant, "e", exp)
     })
   }
   
@@ -184,23 +194,33 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plo
   
   pairs <- unique(plot_df$pair)
   
-  # Use scientific notation axis labels with big numbers
+  # For nicer tick labels
   sci_clean_threshold <- function(x) {
-    
-    # x[!(x %in% range(x, na.rm = T))] <- NA
-    
     sapply(x, function(v) {
-      if (is.na(v)) {
-        return('')
-      }
+      if (is.na(v)) return("")
+      
       if (abs(v) < 1000) {
-        return(as.character(v))   # keep normal numbers
+        return(as.character(v))
       }
-      # scientific notation
-      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
-      s <- gsub("\\+", "", s)             # remove "+"
-      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
-      s
+      
+      # scientific notation with 1 decimal place
+      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
+      
+      # remove "+" in exponent
+      s <- gsub("e\\+", "e", s)
+      
+      # split mantissa and exponent
+      parts <- strsplit(s, "e")[[1]]
+      mant <- parts[1]
+      exp  <- parts[2]
+      
+      # remove trailing .0 (so 1.0e3 → 1e3)
+      mant <- sub("\\.0$", "", mant)
+      
+      # remove leading zeros in exponent
+      exp <- sub("^0+", "", exp)
+      
+      paste0(mant, "e", exp)
     })
   }
   
@@ -274,23 +294,33 @@ plot_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot <- functi
   
   pairs <- unique(plot_df$pair)
   
-  # Use scientific notation axis labels with big numbers
+  # For nicer tick labels
   sci_clean_threshold <- function(x) {
-    
-    # x[!(x %in% range(x, na.rm = T))] <- NA
-    
     sapply(x, function(v) {
-      if (is.na(v)) {
-        return('')
-      }
+      if (is.na(v)) return("")
+      
       if (abs(v) < 1000) {
-        return(as.character(v))   # keep normal numbers
+        return(as.character(v))
       }
-      # scientific notation
-      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
-      s <- gsub("\\+", "", s)             # remove "+"
-      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
-      s
+      
+      # scientific notation with 1 decimal place
+      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
+      
+      # remove "+" in exponent
+      s <- gsub("e\\+", "e", s)
+      
+      # split mantissa and exponent
+      parts <- strsplit(s, "e")[[1]]
+      mant <- parts[1]
+      exp  <- parts[2]
+      
+      # remove trailing .0 (so 1.0e3 → 1e3)
+      mant <- sub("\\.0$", "", mant)
+      
+      # remove leading zeros in exponent
+      exp <- sub("^0+", "", exp)
+      
+      paste0(mant, "e", exp)
     })
   }
   
@@ -389,23 +419,33 @@ plot_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(met
   
   pairs <- unique(plot_df$pair)
   
-  # Use scientific notation axis labels with big numbers
+  # For nicer tick labels
   sci_clean_threshold <- function(x) {
-    
-    # x[!(x %in% range(x, na.rm = T))] <- NA
-    
     sapply(x, function(v) {
-      if (is.na(v)) {
-        return('')
-      }
+      if (is.na(v)) return("")
+      
       if (abs(v) < 1000) {
-        return(as.character(v))   # keep normal numbers
+        return(as.character(v))
       }
-      # scientific notation
-      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
-      s <- gsub("\\+", "", s)             # remove "+"
-      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
-      s
+      
+      # scientific notation with 1 decimal place
+      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
+      
+      # remove "+" in exponent
+      s <- gsub("e\\+", "e", s)
+      
+      # split mantissa and exponent
+      parts <- strsplit(s, "e")[[1]]
+      mant <- parts[1]
+      exp  <- parts[2]
+      
+      # remove trailing .0 (so 1.0e3 → 1e3)
+      mant <- sub("\\.0$", "", mant)
+      
+      # remove leading zeros in exponent
+      exp <- sub("^0+", "", exp)
+      
+      paste0(mant, "e", exp)
     })
   }
   
@@ -491,23 +531,33 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_p
   
   pairs <- unique(plot_df$pair)
   
-  # Use scientific notation axis labels with big numbers
+  # For nicer tick labels
   sci_clean_threshold <- function(x) {
-    
-    # x[!(x %in% range(x, na.rm = T))] <- NA
-    
     sapply(x, function(v) {
-      if (is.na(v)) {
-        return('')
-      }
+      if (is.na(v)) return("")
+      
       if (abs(v) < 1000) {
-        return(as.character(v))   # keep normal numbers
+        return(as.character(v))
       }
-      # scientific notation
-      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
-      s <- gsub("\\+", "", s)             # remove "+"
-      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
-      s
+      
+      # scientific notation with 1 decimal place
+      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
+      
+      # remove "+" in exponent
+      s <- gsub("e\\+", "e", s)
+      
+      # split mantissa and exponent
+      parts <- strsplit(s, "e")[[1]]
+      mant <- parts[1]
+      exp  <- parts[2]
+      
+      # remove trailing .0 (so 1.0e3 → 1e3)
+      mant <- sub("\\.0$", "", mant)
+      
+      # remove leading zeros in exponent
+      exp <- sub("^0+", "", exp)
+      
+      paste0(mant, "e", exp)
     })
   }
   
@@ -584,23 +634,33 @@ plot_percentage_difference_vs_metric_by_pair_for_averaged_slice_box_plot <- func
   
   pairs <- unique(plot_df$pair)
   
-  # Use scientific notation axis labels with big numbers
+  # For nicer tick labels
   sci_clean_threshold <- function(x) {
-    
-    # x[!(x %in% range(x, na.rm = T))] <- NA
-    
     sapply(x, function(v) {
-      if (is.na(v)) {
-        return('')
-      }
+      if (is.na(v)) return("")
+      
       if (abs(v) < 1000) {
-        return(as.character(v))   # keep normal numbers
+        return(as.character(v))
       }
-      # scientific notation
-      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
-      s <- gsub("\\+", "", s)             # remove "+"
-      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
-      s
+      
+      # scientific notation with 1 decimal place
+      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
+      
+      # remove "+" in exponent
+      s <- gsub("e\\+", "e", s)
+      
+      # split mantissa and exponent
+      parts <- strsplit(s, "e")[[1]]
+      mant <- parts[1]
+      exp  <- parts[2]
+      
+      # remove trailing .0 (so 1.0e3 → 1e3)
+      mant <- sub("\\.0$", "", mant)
+      
+      # remove leading zeros in exponent
+      exp <- sub("^0+", "", exp)
+      
+      paste0(mant, "e", exp)
     })
   }
   
@@ -678,23 +738,33 @@ plot_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(metri
   
   pairs <- unique(plot_df$pair)
   
-  # Use scientific notation axis labels with big numbers
+  # For nicer tick labels
   sci_clean_threshold <- function(x) {
-    
-    # x[!(x %in% range(x, na.rm = T))] <- NA
-    
     sapply(x, function(v) {
-      if (is.na(v)) {
-        return('')
-      }
+      if (is.na(v)) return("")
+      
       if (abs(v) < 1000) {
-        return(as.character(v))   # keep normal numbers
+        return(as.character(v))
       }
-      # scientific notation
-      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
-      s <- gsub("\\+", "", s)             # remove "+"
-      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
-      s
+      
+      # scientific notation with 1 decimal place
+      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
+      
+      # remove "+" in exponent
+      s <- gsub("e\\+", "e", s)
+      
+      # split mantissa and exponent
+      parts <- strsplit(s, "e")[[1]]
+      mant <- parts[1]
+      exp  <- parts[2]
+      
+      # remove trailing .0 (so 1.0e3 → 1e3)
+      mant <- sub("\\.0$", "", mant)
+      
+      # remove leading zeros in exponent
+      exp <- sub("^0+", "", exp)
+      
+      paste0(mant, "e", exp)
     })
   }
   
@@ -786,23 +856,33 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plo
   
   plot_df$slice <- factor(plot_df$slice, levels = c('7', '10', '13'))
   
-  # Use scientific notation axis labels with big numbers
+  # For nicer tick labels
   sci_clean_threshold <- function(x) {
-    
-    # x[!(x %in% range(x, na.rm = T))] <- NA
-    
     sapply(x, function(v) {
-      if (is.na(v)) {
-        return('')
-      }
+      if (is.na(v)) return("")
+      
       if (abs(v) < 1000) {
-        return(as.character(v))   # keep normal numbers
+        return(as.character(v))
       }
-      # scientific notation
-      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
-      s <- gsub("\\+", "", s)             # remove "+"
-      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
-      s
+      
+      # scientific notation with 1 decimal place
+      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
+      
+      # remove "+" in exponent
+      s <- gsub("e\\+", "e", s)
+      
+      # split mantissa and exponent
+      parts <- strsplit(s, "e")[[1]]
+      mant <- parts[1]
+      exp  <- parts[2]
+      
+      # remove trailing .0 (so 1.0e3 → 1e3)
+      mant <- sub("\\.0$", "", mant)
+      
+      # remove leading zeros in exponent
+      exp <- sub("^0+", "", exp)
+      
+      paste0(mant, "e", exp)
     })
   }
   
@@ -897,23 +977,33 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot
   
   pairs <- unique(plot_df$pair)
   
-  # Use scientific notation axis labels with big numbers
+  # For nicer tick labels
   sci_clean_threshold <- function(x) {
-    
-    # x[!(x %in% range(x, na.rm = T))] <- NA
-    
     sapply(x, function(v) {
-      if (is.na(v)) {
-        return('')
-      }
+      if (is.na(v)) return("")
+      
       if (abs(v) < 1000) {
-        return(as.character(v))   # keep normal numbers
+        return(as.character(v))
       }
-      # scientific notation
-      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
-      s <- gsub("\\+", "", s)             # remove "+"
-      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
-      s
+      
+      # scientific notation with 1 decimal place
+      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
+      
+      # remove "+" in exponent
+      s <- gsub("e\\+", "e", s)
+      
+      # split mantissa and exponent
+      parts <- strsplit(s, "e")[[1]]
+      mant <- parts[1]
+      exp  <- parts[2]
+      
+      # remove trailing .0 (so 1.0e3 → 1e3)
+      mant <- sub("\\.0$", "", mant)
+      
+      # remove leading zeros in exponent
+      exp <- sub("^0+", "", exp)
+      
+      paste0(mant, "e", exp)
     })
   }
   
@@ -1005,23 +1095,33 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_showing_str
 
   pairs <- unique(plot_df$pair)
   
-  # Use scientific notation axis labels with big numbers
+  # For nicer tick labels
   sci_clean_threshold <- function(x) {
-    
-    # x[!(x %in% range(x, na.rm = T))] <- NA
-    
     sapply(x, function(v) {
-      if (is.na(v)) {
-        return('')
-      }
+      if (is.na(v)) return("")
+      
       if (abs(v) < 1000) {
-        return(as.character(v))   # keep normal numbers
+        return(as.character(v))
       }
-      # scientific notation
-      s <- format(v, scientific = TRUE)   # e.g. "1e+03"
-      s <- gsub("\\+", "", s)             # remove "+"
-      s <- gsub("e0+", "e", s)            # remove leading zeros in exponent
-      s
+      
+      # scientific notation with 1 decimal place
+      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
+      
+      # remove "+" in exponent
+      s <- gsub("e\\+", "e", s)
+      
+      # split mantissa and exponent
+      parts <- strsplit(s, "e")[[1]]
+      mant <- parts[1]
+      exp  <- parts[2]
+      
+      # remove trailing .0 (so 1.0e3 → 1e3)
+      mant <- sub("\\.0$", "", mant)
+      
+      # remove leading zeros in exponent
+      exp <- sub("^0+", "", exp)
+      
+      paste0(mant, "e", exp)
     })
   }
   
