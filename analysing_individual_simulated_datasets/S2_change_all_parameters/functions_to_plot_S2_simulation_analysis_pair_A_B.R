@@ -16,11 +16,12 @@ parameters_df <- readRDS("S2_parameters_df.RDS")
 
 # Functions ----
 
-# Plot 2D vs 3D for each metric and pair for a random slice
-plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(metric_df_list,
-                                                                               metrics) {
+# Get plot_df by sampling a random slice
+get_plot_df_for_random_slice <- function(metric_df_list, 
+                                         metrics,
+                                         parameters_df) {
+  
   plot_df <- data.frame()
-  rval_df <- data.frame()
   
   for (metric in metrics) {
     
@@ -54,33 +55,45 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(m
       group_by(simulation, pair) %>%
       slice_sample(n = 1) %>%   # pick one random slice per simulation
       ungroup() %>%
-      select(pair, metric, value2D = .data[[metric]])
+      select(simulation, pair, metric, value2D = .data[[metric]])
     
     # Combine 3D and 2D values
     metric_df[["value3D"]] <- metric_values3D
     
+    # Merge metric_df and parameters_df
+    parameters_df$simulation <- seq(nrow(parameters_df))
+    metric_df <- metric_df %>% left_join(parameters_df[, c("simulation", "arrangement", "shape")], by = "simulation")
+    
+    # Get structure column
+    metric_df$structure <- paste(metric_df$arrangement, metric_df$shape, sep = "_")
+    
+    metric_df$metric <- metric  
+    
     # Subset for A/B pair
     metric_df <- metric_df[metric_df$pair == "A/B", ]
     
+    
     # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "metric")])
+    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "structure")])
     
-    # Add to rval_df
-    r_values <- c()
-    
-    # Ignore when pair is invalid
-    if (sum(is.finite(metric_df[["value3D"]])) == 0) {
-      next
-    } 
-    
-    spearman_r <- round(cor(metric_df[["value3D"]], metric_df[["value2D"]], method = "spearman", use = "complete.obs"), 3)
-    
-    r_values <- c(r_values, spearman_r)
-    
-    rval_df <- rbind(rval_df, 
-                     data.frame(metric = metric,
-                                r_value = r_values))
   }
+  return(plot_df)
+}
+
+# Plot 2D vs 3D for each metric and pair for a random slice
+plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(plot_df,
+                                                                               metrics) {
+
+  # Get correlation
+  corr_df <- plot_df %>% 
+    group_by(metric) %>% 
+    summarise(
+      corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
+      .groups = "drop")
+  
+  write.csv(corr_df, "~/R/values_from_figures/random_slice_corr_df.csv")
+  
+  corr_df$corr <- round(corr_df$corr, 3)
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
@@ -152,8 +165,8 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(m
       strip.text = element_text(size = 15)
     ) +
     geom_text(
-      data = rval_df,
-      aes(x = -Inf, y = Inf, label = paste0("r: ", r_value)),
+      data = corr_df,
+      aes(x = -Inf, y = Inf, label = paste0("r: ", round(corr, 3))),
       inherit.aes = FALSE,
       hjust = -0.1, 
       vjust = 1.4,
@@ -166,54 +179,8 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(m
 }
 
 # Plot percentage difference vs 3D for each metric and pair for a random slice
-plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(metric_df_list,
+plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(plot_df,
                                                                                                   metrics) {
-  plot_df <- data.frame()
-  
-  for (metric in metrics) {
-    
-    # Get metric_df for current metric
-    metric_df <- metric_df_list[[metric]]
-    
-    # Change slice column to numeric for safety
-    metric_df$slice <- as.numeric(metric_df$slice)
-    
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-    }
-    else if (metric %in% c("ANE_AUC")) {
-      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-      metric_df$pair <- gsub(',', '/', metric_df$target)
-    }
-    else {
-      # Add reference-target column
-      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-    }
-    
-    metric_df$metric <- metric  
-    
-    # Select 3D values, when slice == 0, then remove from data frame
-    metric_values3D <- metric_df[[metric]][metric_df[["slice"]] == 0]
-    metric_df <- metric_df[metric_df[["slice"]] != 0, ]
-    
-    # Select a random 2D slice
-    metric_df <- metric_df %>%
-      group_by(simulation, pair) %>%
-      slice_sample(n = 1) %>%   # pick one random slice per simulation
-      ungroup() %>%
-      select(pair, metric, value2D = .data[[metric]])
-    
-    # Combine 3D and 2D values
-    metric_df[["value3D"]] <- metric_values3D
-    
-    # Subset for A/B pair
-    metric_df <- metric_df[metric_df$pair == "A/B", ]
-    
-    # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric")])
-    
-  }
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
@@ -271,54 +238,8 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter
 }
 
 # Plot percentage difference vs metric for each pair for a random slice
-plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- function(metric_df_list,
+plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- function(plot_df,
                                                                                        metrics) {
-  plot_df <- data.frame()
-  
-  for (metric in metrics) {
-    
-    # Get metric_df for current metric
-    metric_df <- metric_df_list[[metric]]
-    
-    # Change slice column to numeric for safety
-    metric_df$slice <- as.numeric(metric_df$slice)
-    
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-    }
-    else if (metric %in% c("ANE_AUC")) {
-      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-      metric_df$pair <- gsub(',', '/', metric_df$target)
-    }
-    else {
-      # Add reference-target column
-      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-    }
-    
-    metric_df$metric <- metric  
-    
-    # Select 3D values, when slice == 0, then remove from data frame
-    metric_values3D <- metric_df[[metric]][metric_df[["slice"]] == 0]
-    metric_df <- metric_df[metric_df[["slice"]] != 0, ]
-    
-    # Select a random 2D slice
-    metric_df <- metric_df %>%
-      group_by(simulation, pair) %>%
-      slice_sample(n = 1) %>%   # pick one random slice per simulation
-      ungroup() %>%
-      select(pair, metric, value2D = .data[[metric]])
-    
-    # Combine 3D and 2D values
-    metric_df[["value3D"]] <- metric_values3D
-    
-    # Subset for A/B pair
-    metric_df <- metric_df[metric_df$pair == "A/B", ]
-    
-    # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric")])
-    
-  }
   
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
@@ -329,9 +250,6 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- fu
     summarise(
       corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
       .groups = "drop")
-  
-  write.csv(corr_df, "~/R/values_from_figures/random_slice_corr_df.csv")
-  
   
   # map corr ∈ [-1,1] → error ∈ [-100, 400]
   corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
@@ -427,7 +345,6 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- fu
 plot_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- function(metric_df_list,
                                                                                  metrics) {
   plot_df <- data.frame()
-  rval_df <- data.frame()
   
   for (metric in metrics) {
     
@@ -473,24 +390,18 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- function
     
     # Add metric_df to plot_df
     plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric")])
-    
-    # Add to rval_df
-    r_values <- c()
-    
-    # Ignore when pair is invalid
-    if (sum(is.finite(metric_df[["value3D"]])) == 0) {
-      next
-    } 
-    
-    spearman_r <- round(cor(metric_df[["value3D"]], metric_df[["value2D"]], method = "spearman", use = "complete.obs"), 3)
-    
-    r_values <- c(r_values, spearman_r)
-    
-    rval_df <- rbind(rval_df, 
-                     data.frame(metric = metric,
-                                r_value = r_values))
-    
   }
+  
+  # Get correlation
+  corr_df <- plot_df %>% 
+    group_by(metric) %>% 
+    summarise(
+      corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
+      .groups = "drop")
+  
+  write.csv(corr_df, "~/R/values_from_figures/averaged_slice_corr_df.csv")
+  
+  corr_df$corr <- round(corr_df$corr, 3)
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
@@ -557,8 +468,8 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- function
     
     # Add r-value text
     geom_text(
-      data = rval_df,
-      aes(x = -Inf, y = Inf, label = paste0("r: ", r_value)),
+      data = corr_df,
+      aes(x = -Inf, y = Inf, label = paste0("r: ", corr)),
       inherit.aes = FALSE,
       hjust = -0.1, 
       vjust = 1.4,
@@ -737,8 +648,6 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_averaged_slice_box_plot <- 
     summarise(
       corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
       .groups = "drop")
-  
-  write.csv(corr_df, "~/R/values_from_figures/averaged_slices_corr_df.csv")
   
   # map corr ∈ [-1,1] → error ∈ [-100,400]
   corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
@@ -1126,7 +1035,7 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- fun
       corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
       .groups = "drop")
   
-  write.csv(corr_df, "~/R/values_from_figures/three_slices_corr_df.csv")
+  write.csv(corr_df, "~/R/values_from_figures/three_slice_corr_df.csv")
   
   # map corr ∈ [-1,1] → error ∈ [-100,400]
   corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
@@ -1220,66 +1129,10 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- fun
 
 
 # Plot 2D vs 3D for each metric and pair for a random slice, annotating for tissue structure
-plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot <- function(metric_df_list,
+plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot <- function(plot_df,
                                                                                                  metrics,
                                                                                                  parameters_df) {
-  plot_df <- data.frame()
-  
-  for (metric in metrics) {
-    
-    # Get metric_df for current metric
-    metric_df <- metric_df_list[[metric]]
-    
-    # Change slice column to numeric for safety
-    metric_df$slice <- as.numeric(metric_df$slice)
-    
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-    }
-    else if (metric %in% c("ANE_AUC")) {
-      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-      metric_df$pair <- gsub(',', '/', metric_df$target)
-    }
-    else {
-      # Add reference-target column
-      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-    }
-    
-    metric_df$metric <- metric  
-    
-    # Select 3D values, when slice == 0, then remove from data frame
-    metric_values3D <- metric_df[[metric]][metric_df[["slice"]] == 0]
-    metric_df <- metric_df[metric_df[["slice"]] != 0, ]
-    
-    # Select a random 2D slice
-    metric_df <- metric_df %>%
-      group_by(simulation, pair) %>%
-      slice_sample(n = 1) %>%   # pick one random slice per simulation
-      ungroup() %>%
-      select(simulation, pair, metric, value2D = .data[[metric]])
-    
-    # Combine 3D and 2D values
-    metric_df[["value3D"]] <- metric_values3D
-    
-    # Merge metric_df and parameters_df
-    parameters_df$simulation <- seq(nrow(parameters_df))
-    metric_df <- metric_df %>% left_join(parameters_df[, c("simulation", "arrangement", "shape")], by = "simulation")
-    
-    # Get structure column
-    metric_df$structure <- paste(metric_df$arrangement, metric_df$shape, sep = "_")
-    
-    metric_df$metric <- metric  
-    
-    # Subset for A/B pair
-    metric_df <- metric_df[metric_df$pair == "A/B", ]
-    
-    
-    # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "structure")])
-    
-  }
-  
+
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
     sapply(x, function(v) {
@@ -1343,66 +1196,9 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_
 }
 
 # Plot percentage difference vs 3D for each metric and pair for a random slice, annotating for tissue structure
-plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot <- function(metric_df_list,
+plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot <- function(plot_df,
                                                                                                                     metrics,
                                                                                                                     parameters_df) {
-  plot_df <- data.frame()
-  
-  for (metric in metrics) {
-    
-    # Get metric_df for current metric
-    metric_df <- metric_df_list[[metric]]
-    
-    # Change slice column to numeric for safety
-    metric_df$slice <- as.numeric(metric_df$slice)
-    
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-    }
-    else if (metric %in% c("ANE_AUC")) {
-      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-      metric_df$pair <- gsub(',', '/', metric_df$target)
-    }
-    else {
-      # Add reference-target column
-      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-    }
-    
-    metric_df$metric <- metric  
-    
-    # Select 3D values, when slice == 0, then remove from data frame
-    metric_values3D <- metric_df[[metric]][metric_df[["slice"]] == 0]
-    metric_df <- metric_df[metric_df[["slice"]] != 0, ]
-    
-    # Select a random 2D slice
-    metric_df <- metric_df %>%
-      group_by(simulation, pair) %>%
-      slice_sample(n = 1) %>%   # pick one random slice per simulation
-      ungroup() %>%
-      select(simulation, pair, metric, value2D = .data[[metric]])
-    
-    # Combine 3D and 2D values
-    metric_df[["value3D"]] <- metric_values3D
-    
-    # Merge metric_df and parameters_df
-    parameters_df$simulation <- seq(nrow(parameters_df))
-    metric_df <- metric_df %>% left_join(parameters_df[, c("simulation", "arrangement", "shape")], by = "simulation")
-    
-    # Get structure column
-    metric_df$structure <- paste(metric_df$arrangement, metric_df$shape, sep = "_")
-    
-    metric_df$metric <- metric  
-    
-    # Subset for A/B pair
-    metric_df <- metric_df[metric_df$pair == "A/B", ]
-    
-    
-    # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "structure")])
-    
-  }
-  
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
     sapply(x, function(v) {
@@ -1468,66 +1264,9 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing
 }
 
 # Plot 2D vs 3D correlation vs tissue structure for each metric and pair for a random slice
-plot_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_A_B_for_random_slice_bar_plot <- function(metric_df_list,
+plot_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_A_B_for_random_slice_bar_plot <- function(plot_df,
                                                                                                     metrics,
                                                                                                     parameters_df) {
-  plot_df <- data.frame()
-  
-  for (metric in metrics) {
-    
-    # Get metric_df for current metric
-    metric_df <- metric_df_list[[metric]]
-    
-    # Change slice column to numeric for safety
-    metric_df$slice <- as.numeric(metric_df$slice)
-    
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-    }
-    else if (metric %in% c("ANE_AUC")) {
-      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-      metric_df$pair <- gsub(',', '/', metric_df$target)
-    }
-    else {
-      # Add reference-target column
-      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-    }
-    
-    metric_df$metric <- metric  
-    
-    # Select 3D values, when slice == 0, then remove from data frame
-    metric_values3D <- metric_df[[metric]][metric_df[["slice"]] == 0]
-    metric_df <- metric_df[metric_df[["slice"]] != 0, ]
-    
-    # Select a random 2D slice
-    metric_df <- metric_df %>%
-      group_by(simulation, pair) %>%
-      slice_sample(n = 1) %>%   # pick one random slice per simulation
-      ungroup() %>%
-      select(simulation, pair, metric, value2D = .data[[metric]])
-    
-    # Combine 3D and 2D values
-    metric_df[["value3D"]] <- metric_values3D
-    
-    # Merge metric_df and parameters_df
-    parameters_df$simulation <- seq(nrow(parameters_df))
-    metric_df <- metric_df %>% left_join(parameters_df[, c("simulation", "arrangement", "shape")], by = "simulation")
-    
-    # Get structure column
-    metric_df$structure <- paste(metric_df$arrangement, metric_df$shape, sep = "_")
-    
-    metric_df$metric <- metric  
-    
-    # Subset for A/B pair
-    metric_df <- metric_df[metric_df$pair == "A/B", ]
-    
-    
-    # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "structure")])
-    
-  }
-  
   # Compute spearman correlation
   corr_df <- plot_df %>%
     group_by(pair, metric, structure) %>%
@@ -1562,65 +1301,9 @@ plot_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_A_B_for_random_slice_b
 }
 
 # Plot percentage difference vs metric for each pair for a random slice, annotating for tissue structure
-plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_structure_box_plot <- function(metric_df_list,
+plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_structure_box_plot <- function(plot_df,
                                                                                                          metrics,
                                                                                                          parameters_df) {
-  plot_df <- data.frame()
-  
-  for (metric in metrics) {
-    
-    # Get metric_df for current metric
-    metric_df <- metric_df_list[[metric]]
-    
-    # Change slice column to numeric for safety
-    metric_df$slice <- as.numeric(metric_df$slice)
-    
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-    }
-    else if (metric %in% c("ANE_AUC")) {
-      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-      metric_df$pair <- gsub(',', '/', metric_df$target)
-    }
-    else {
-      # Add reference-target column
-      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-    }
-    
-    metric_df$metric <- metric  
-    
-    # Select 3D values, when slice == 0, then remove from data frame
-    metric_values3D <- metric_df[[metric]][metric_df[["slice"]] == 0]
-    metric_df <- metric_df[metric_df[["slice"]] != 0, ]
-    
-    # Select a random 2D slice
-    metric_df <- metric_df %>%
-      group_by(simulation, pair) %>%
-      slice_sample(n = 1) %>%   # pick one random slice per simulation
-      ungroup() %>%
-      select(simulation, pair, metric, value2D = .data[[metric]])
-    
-    # Combine 3D and 2D values
-    metric_df[["value3D"]] <- metric_values3D
-    
-    # Merge metric_df and parameters_df
-    parameters_df$simulation <- seq(nrow(parameters_df))
-    metric_df <- metric_df %>% left_join(parameters_df[, c("simulation", "arrangement", "shape")], by = "simulation")
-    
-    # Get structure column
-    metric_df$structure <- paste(metric_df$arrangement, metric_df$shape, sep = "_")
-    
-    metric_df$metric <- metric  
-    
-    # Subset for A/B pair
-    metric_df <- metric_df[metric_df$pair == "A/B", ]
-    
-    
-    # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "structure")])
-    
-  }
   
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
@@ -1744,7 +1427,7 @@ metrics <- c("AMD",
 
 
 setwd("~/R/plots/S2")
-fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot(metric_df_list,
+fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot(plot_df,
                                                                                                                                         metrics)
 pdf("fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot.pdf", width = 24, height = 10)
 print(fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot)
@@ -1828,7 +1511,7 @@ dev.off()
 
 
 setwd("~/R/plots/S2")
-fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot(metric_df_list,
+fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot(plot_df,
                                                                                                                                                                             metrics,
                                                                                                                                                                             parameters_df)
 pdf("fig_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot.pdf", width = 24, height = 10)
@@ -1837,7 +1520,7 @@ dev.off()
 
 
 setwd("~/R/plots/S2")
-fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot(metric_df_list,
+fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot(plot_df,
                                                                                                                                                                                                                   metrics,
                                                                                                                                                                                                                   parameters_df)
 pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot.pdf", width = 24, height = 10)
@@ -1846,7 +1529,7 @@ dev.off()
 
 
 setwd("~/R/plots/S2")
-fig_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_A_B_for_random_slice_bar_plot <- plot_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_A_B_for_random_slice_bar_plot(metric_df_list,
+fig_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_A_B_for_random_slice_bar_plot <- plot_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_A_B_for_random_slice_bar_plot(plot_df,
                                                                                                                                                                                   metrics,
                                                                                                                                                                                   parameters_df)
 pdf("fig_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_A_B_for_random_slice_bar_plot.pdf", width = 24, height = 10)
@@ -1855,7 +1538,7 @@ dev.off()
 
 
 setwd("~/R/plots/S2")
-fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_structure_box_plot <- plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_structure_box_plot(metric_df_list,
+fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_structure_box_plot <- plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_structure_box_plot(plot_df,
                                                                                                                                                                                             metrics,
                                                                                                                                                                                             parameters_df)
 pdf("fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_structure_box_plot.pdf", width = 24, height = 10)
