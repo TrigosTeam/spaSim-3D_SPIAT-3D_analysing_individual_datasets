@@ -1032,9 +1032,6 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- fun
   
   plot_df$slice <- factor(plot_df$slice, levels = c('7', '10', '13'))
   
-  # Factor for metric
-  plot_df$metric <- factor(plot_df$metric, metrics)
-  
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
   
@@ -1046,6 +1043,9 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- fun
       .groups = "drop")
   
   write.csv(corr_df, "~/R/values_from_figures/three_slice_corr_df.csv")
+  
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
   
   # map corr ∈ [-1,1] → error ∈ [-100,400]
   corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
