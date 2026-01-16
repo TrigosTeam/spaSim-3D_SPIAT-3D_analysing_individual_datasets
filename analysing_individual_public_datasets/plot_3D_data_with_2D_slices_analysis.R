@@ -639,7 +639,7 @@ plot_median_percentage_difference_of_each_slice_vs_metrics_box_plot <- function(
       median  = median(median_error, na.rm = TRUE),
       average = mean(median_error, na.rm = TRUE)
     )
-  write.csv(summary_df, "~/R/values_from_figures/summary_df.csv")
+  write.csv(summary_df, paste("~/R/values_from_figures/", file_name_prefix, "_summary_df.csv", sep = ""))
   
   fig <- ggplot(plot_df, aes(x = metric, y = median_error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
