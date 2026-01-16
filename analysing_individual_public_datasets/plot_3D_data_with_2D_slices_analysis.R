@@ -1,9 +1,9 @@
 ### Read data and set file name and save directory (THE ONLY PART YOU NEED TO CHANGE) ------
-setwd("***directory to your analysis***") # e.g. "~/R/public_3D_data_analysis"
+setwd("***directory to your analysis***") # e.g. "~/R/public_data_analysis"
 metric_df_list <- readRDS("***your metric_df_list.RDS***") # e.g. "CyCIF_metric_df_list.RDS"
 
-file_name_prefix <- "*** prefix for file name ***" # e.g. colorectal_cancer
-save_directory <- "*** directory to save plots ***" # e.g. "~/R/plots/public_data/colorectal_cancer
+file_name_prefix <- "*** prefix for file name ***" # e.g. "colorectal_cancer"
+save_directory <- "*** directory to save plots ***" # e.g. "~/R/plots/public_data/colorectal_cancer"
 
 ### Libraries -----
 library(SpatialExperiment)
@@ -445,7 +445,8 @@ plot_median_percentage_difference_of_each_pair_vs_metrics_box_plot <- function(m
          y = "Percentage difference (%)") +
     theme_minimal() +
     theme(
-      panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)
     ) +
     scale_y_continuous(labels = sci_clean_threshold)
   
@@ -644,9 +645,11 @@ plot_median_percentage_difference_of_each_slice_vs_metrics_box_plot <- function(
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Box plots showing median percentage difference between 2D and 3D metrics of each slice",
-         x = "Metric",
-         y = "Percentage difference (%)") +
+    labs(
+      title = "Box plots showing median percentage difference between 2D and 3D metrics of each slice",
+       x = "Metric",
+       y = "Percentage difference (%)"
+      ) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
@@ -660,7 +663,7 @@ plot_median_percentage_difference_of_each_slice_vs_metrics_box_plot <- function(
       axis.title.y = element_text(size = 15), 
       
       # Plot title 
-      plot.title = element_text(size = 18)
+      plot.title = element_text(size = 15)
     ) +
     scale_y_continuous(labels = sci_clean_threshold)
   
@@ -744,7 +747,8 @@ plot_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot <- funct
          y = "Percentage difference (%)") +
     theme_minimal() +
     theme(
-      panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)
     ) +
     scale_y_continuous(labels = sci_clean_threshold)
   
@@ -762,69 +766,72 @@ metrics <- c("AMD",
              "PBP_AUC", "EBP_AUC", "PBSAC", "EBSAC")
 
 
+### Plotting and upload ------
+setwd(save_directory)
 # This is for a SINGLE metric
 fig_3D_and_2D_metric_vs_pair_box_plot <- plot_3D_and_2D_metric_vs_pair_box_plot(metric_df_list,
                                                                                 metric)
-
-# This is for a SINGLE metric
-fig_percentage_difference_vs_pair_box_plot <- plot_percentage_difference_vs_pair_box_plot(metric_df_list,
-                                                                                          metric)
-
-# This is for a SINGLE metric
-fig_percentage_difference_vs_slice_box_plot <- plot_percentage_difference_vs_slice_box_plot(metric_df_list,
-                                                                                            metric)
-
-
-fig_median_percentage_difference_of_each_pair_vs_metrics_box_plot <- 
-  plot_median_percentage_difference_of_each_pair_vs_metrics_box_plot(metric_df_list,
-                                                                     metrics)
-
-# This is only for CyCIF dataset
-fig_percentage_difference_vs_metrics_for_each_pair_box_plot <-
-  plot_percentage_difference_vs_metrics_for_each_pair_box_plot(metric_df_list,
-                                                               metrics)
-
-fig_median_percentage_difference_of_each_slice_vs_metrics_box_plot <- 
-  plot_median_percentage_difference_of_each_slice_vs_metrics_box_plot(metric_df_list,
-                                                                      metrics)
-
-fig_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot <- 
-  plot_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot(metric_df_list,
-                                                                          metrics)
-
-
-### Plotting and upload ------
-setwd(save_directory)
 pdf(paste(file_name_prefix, "_fig_3D_and_2D_metric_vs_pair_box_plot.pdf", sep = ""), width = 9, height = 6)
 print(fig_3D_and_2D_metric_vs_pair_box_plot)
 dev.off()
 
+
+
 setwd(save_directory)
+# This is for a SINGLE metric
+fig_percentage_difference_vs_pair_box_plot <- plot_percentage_difference_vs_pair_box_plot(metric_df_list,
+                                                                                          metric)
 pdf(paste(file_name_prefix, "_fig_percentage_difference_vs_pair_box_plot.pdf", sep = ""), width = 9, height = 6)
 print(fig_percentage_difference_vs_pair_box_plot)
 dev.off()
 
+
+
 setwd(save_directory)
+# This is for a SINGLE metric
+fig_percentage_difference_vs_slice_box_plot <- plot_percentage_difference_vs_slice_box_plot(metric_df_list,
+                                                                                            metric)
 pdf(paste(file_name_prefix, "_fig_percentage_difference_vs_slice_box_plot.pdf", sep = ""), width = 9, height = 6)
 print(fig_percentage_difference_vs_slice_box_plot)
 dev.off()
 
+
+
 setwd(save_directory)
+fig_median_percentage_difference_of_each_pair_vs_metrics_box_plot <- 
+  plot_median_percentage_difference_of_each_pair_vs_metrics_box_plot(metric_df_list,
+                                                                     metrics)
 pdf(paste(file_name_prefix, "_fig_median_percentage_difference_of_each_pair_vs_metrics_box_plot.pdf", sep = ""), width = 9, height = 6)
 print(fig_median_percentage_difference_of_each_pair_vs_metrics_box_plot)
 dev.off()
 
+
+
 # setwd(save_directory)
+# This is only for CyCIF dataset
+# fig_percentage_difference_vs_metrics_for_each_pair_box_plot <-
+  # plot_percentage_difference_vs_metrics_for_each_pair_box_plot(metric_df_list,
+  #                                                              metrics)
 # pdf(paste(file_name_prefix, "_fig_percentage_difference_vs_metrics_for_each_pair_box_plot.pdf", sep = ""), width = 9, height = 6)
 # print(fig_percentage_difference_vs_metrics_for_each_pair_box_plot)
 # dev.off()
 
+
+
 setwd(save_directory)
+fig_median_percentage_difference_of_each_slice_vs_metrics_box_plot <- 
+  plot_median_percentage_difference_of_each_slice_vs_metrics_box_plot(metric_df_list,
+                                                                      metrics)
 pdf(paste(file_name_prefix, "_fig_median_percentage_difference_of_each_slice_vs_metrics_box_plot.pdf", sep = ""), width = 9, height = 6)
 print(fig_median_percentage_difference_of_each_slice_vs_metrics_box_plot)
 dev.off()
 
+
+
 setwd(save_directory)
+fig_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot <- 
+  plot_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot(metric_df_list,
+                                                                          metrics)
 pdf(paste(file_name_prefix, "_fig_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot.pdf", sep = ""), width = 9, height = 6)
 print(fig_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot)
 dev.off()
