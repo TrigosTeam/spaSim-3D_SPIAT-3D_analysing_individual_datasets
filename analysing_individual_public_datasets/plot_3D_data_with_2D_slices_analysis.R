@@ -1,8 +1,9 @@
-### Read data and set file name (THE ONLY PART YOU NEED TO CHANGE) ------
-setwd("***directory to your analysis***") # e.g. "~/R/SPIAT-3D_benchmarking/public_3D_data_analysis/metric_df_lists"
-metric_df_list <- readRDS("***your metric_df_list.RDS***") # e.g. "CyCIF_colorectal_cancer_metric_df_list.RDS"
+### Read data and set file name and save directory (THE ONLY PART YOU NEED TO CHANGE) ------
+setwd("***directory to your analysis***") # e.g. "~/R/public_3D_data_analysis"
+metric_df_list <- readRDS("***your metric_df_list.RDS***") # e.g. "CyCIF_metric_df_list.RDS"
 
-file_name <- "*** file_save_name.pdf ***" # e.g. openST_human_metastatic_lymph_node.pdf
+file_name_prefix <- "*** prefix for file name ***" # e.g. colorectal_cancer
+save_directory <- "*** directory to save plots ***" # e.g. "~/R/plots/public_data/colorectal_cancer
 
 ### Libraries -----
 library(SpatialExperiment)
@@ -793,15 +794,40 @@ fig_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot <-
 
 
 ### Plotting and upload ------
-setwd("~/R/plots/public_data")
-pdf(file_name, width = 9, height = 6)
-
+setwd(save_directory)
+pdf(paste(file_name_prefix, "_fig_3D_and_2D_metric_vs_pair_box_plot.pdf", sep = ""), width = 9, height = 6)
 print(fig_3D_and_2D_metric_vs_pair_box_plot)
-print(fig_percentage_difference_vs_pair_box_plot)
-print(fig_percentage_difference_vs_slice_box_plot)
-print(fig_median_percentage_difference_of_each_pair_vs_metrics_box_plot)
-# print(fig_percentage_difference_vs_metrics_for_each_pair_box_plot)
-print(fig_median_percentage_difference_of_each_slice_vs_metrics_box_plot)
-print(fig_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot)
-
 dev.off()
+
+setwd(save_directory)
+pdf(paste(file_name_prefix, "_fig_percentage_difference_vs_pair_box_plot.pdf", sep = ""), width = 9, height = 6)
+print(fig_percentage_difference_vs_pair_box_plot)
+dev.off()
+
+setwd(save_directory)
+pdf(paste(file_name_prefix, "_fig_percentage_difference_vs_slice_box_plot.pdf", sep = ""), width = 9, height = 6)
+print(fig_percentage_difference_vs_slice_box_plot)
+dev.off()
+
+setwd(save_directory)
+pdf(paste(file_name_prefix, "_fig_median_percentage_difference_of_each_pair_vs_metrics_box_plot.pdf", sep = ""), width = 9, height = 6)
+print(fig_median_percentage_difference_of_each_pair_vs_metrics_box_plot)
+dev.off()
+
+# setwd(save_directory)
+# pdf(paste(file_name_prefix, "_fig_percentage_difference_vs_metrics_for_each_pair_box_plot.pdf", sep = ""), width = 9, height = 6)
+# print(fig_percentage_difference_vs_metrics_for_each_pair_box_plot)
+# dev.off()
+
+setwd(save_directory)
+pdf(paste(file_name_prefix, "_fig_median_percentage_difference_of_each_slice_vs_metrics_box_plot.pdf", sep = ""), width = 9, height = 6)
+print(fig_median_percentage_difference_of_each_slice_vs_metrics_box_plot)
+dev.off()
+
+setwd(save_directory)
+pdf(paste(file_name_prefix, "_fig_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot.pdf", sep = ""), width = 9, height = 6)
+print(fig_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot)
+dev.off()
+
+
+
