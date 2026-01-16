@@ -1482,7 +1482,7 @@ dev.off()
 setwd("~/R/plots/S2")
 fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot(plot_df,
                                                                                                                                                         metrics)
-pdf("fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot.pdf", width = 15, height = 6)
+pdf("fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot.pdf", width = 9, height = 6)
 print(fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot)
 dev.off()
 
