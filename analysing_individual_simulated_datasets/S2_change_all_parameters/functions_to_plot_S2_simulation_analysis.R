@@ -12,15 +12,17 @@ setwd("~/R/S2_data")
 
 metric_df_list <- readRDS("S2_metric_df_list.RDS")
 
-parameters_df <- readRDS("parameters_df.RDS")
+parameters_df <- readRDS("S2_parameters_df.RDS")
+
 
 # Functions ----
 
-# Plot 2D vs 3D for each metric and pair for a random slice
-plot_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(metric_df_list,
-                                                                           metrics) {
+# Get plot_df by sampling a random slice
+get_plot_df_for_random_slice <- function(metric_df_list, 
+                                         metrics,
+                                         parameters_df) {
+  
   plot_df <- data.frame()
-  rval_df <- data.frame()
   
   for (metric in metrics) {
     
@@ -54,37 +56,39 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(metri
       group_by(simulation, pair) %>%
       slice_sample(n = 1) %>%   # pick one random slice per simulation
       ungroup() %>%
-      select(pair, metric, value2D = .data[[metric]])
+      select(simulation, pair, metric, value2D = .data[[metric]])
     
     # Combine 3D and 2D values
     metric_df[["value3D"]] <- metric_values3D
     
-    # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df)
+    # Merge metric_df and parameters_df
+    parameters_df$simulation <- seq(nrow(parameters_df))
+    metric_df <- metric_df %>% left_join(parameters_df[, c("simulation", "arrangement", "shape")], by = "simulation")
     
-    # Add to rval_df
-    r_values <- c()
-    for (pair in unique(metric_df$pair)) {
-      
-      # Ignore when pair is invalid
-      if (sum(is.finite(metric_df[["value3D"]][metric_df$pair == pair])) == 0) {
-        next
-      } 
-      
-      spearman_r <- round(cor(metric_df[["value3D"]][metric_df$pair == pair], 
-                              metric_df[["value2D"]][metric_df$pair == pair], 
-                              method = "spearman", use = "complete.obs"), 3)
-      
-      r_values <- c(r_values, spearman_r)
-      
-    }
-    rval_df <- rbind(rval_df, 
-                     data.frame(metric = metric,
-                                pair = unique(metric_df$pair),
-                                r_value = r_values))
+    # Get structure column
+    metric_df$structure <- paste(metric_df$arrangement, metric_df$shape, sep = "_")
+    
+    metric_df$metric <- metric  
+    
+    # Add metric_df to plot_df
+    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "structure")])
+    
   }
+  return(plot_df)
+}
+
+# Plot 2D vs 3D for each metric and pair for a random slice
+plot_2D_vs_3D_by_metric_and_pairs_for_random_slice_scatter_plot <- function(plot_df,
+                                                                            metrics) {
   
-  pairs <- unique(plot_df$pair)
+  # Get correlation
+  corr_df <- plot_df %>% 
+    group_by(metric, pair) %>% 
+    summarise(
+      corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
+      .groups = "drop")
+  
+  corr_df$corr <- round(corr_df$corr, 3)
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
@@ -116,86 +120,51 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(metri
     })
   }
   
-  # Factor for metric
+  # Get pairs
+  pairs <- c("A/A", "A/B", "B/A", "B/B")
+  
+  # Factor metrics
   plot_df$metric <- factor(plot_df$metric, metrics)
   
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
-    geom_abline(slope = 1, intercept = 0, linetype = "dotted", color = "#bb0036", linewidth = 1) + # Dotted line of the equation y = x
-    labs(title = "Scatter plots showing 2D vs 3D with spearman correlation, for each metric and cell pair, for a random slice",
-         x = "3D value",
-         y = "2D value") +
+    geom_abline(slope = 1, intercept = 0, linetype = "dotted",
+                color = "#bb0036", linewidth = 1) +
+    labs(
+      title = "Scatterplots showing 2D vs 3D, for each metric and cell pair, for a random slice",
+      x = "3D value",
+      y = "2D value"
+    ) +
+    labs(
+      x = "",
+      y = ""
+    ) +
+    
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +
+    
     scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) + 
     scale_y_continuous(n.breaks = 3, labels = sci_clean_threshold) +
+    
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
-      axis.text.x = element_text(size = 4),  # make x-axis text smaller
-      axis.text.y = element_text(size = 4)   # make y-axis text smaller
     ) +
     geom_text(
-      data = rval_df,
-      aes(x = -Inf, y = Inf, label = paste0("r: ", r_value)),
+      data = corr_df,
+      aes(x = -Inf, y = Inf, label = paste0("r: ", round(corr, 3))),
       inherit.aes = FALSE,
       hjust = -0.1, 
       vjust = 1.4,
       color = "black"
     )
   
+  
   return(fig)
 }
 
 # Plot percentage difference vs 3D for each metric and pair for a random slice
-plot_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- function(metric_df_list,
-                                                                                              metrics) {
-  plot_df <- data.frame()
-  
-  for (metric in metrics) {
-    
-    # Get metric_df for current metric
-    metric_df <- metric_df_list[[metric]]
-    
-    # Change slice column to numeric for safety
-    metric_df$slice <- as.numeric(metric_df$slice)
-    
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-    }
-    else if (metric %in% c("ANE_AUC")) {
-      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-      metric_df$pair <- gsub(',', '/', metric_df$target)
-    }
-    else {
-      # Add reference-target column
-      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-    }
-    
-    metric_df$metric <- metric  
-    
-    # Select 3D values, when slice == 0, then remove from data frame
-    metric_values3D <- metric_df[[metric]][metric_df[["slice"]] == 0]
-    metric_df <- metric_df[metric_df[["slice"]] != 0, ]
-    
-    # Select a random 2D slice
-    metric_df <- metric_df %>%
-      group_by(simulation, pair) %>%
-      slice_sample(n = 1) %>%   # pick one random slice per simulation
-      ungroup() %>%
-      select(pair, metric, value2D = .data[[metric]])
-    
-    # Combine 3D and 2D values
-    metric_df[["value3D"]] <- metric_values3D
-    
-    # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df)
-  }
-  
-  # Get error column
-  plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
-  
-  pairs <- unique(plot_df$pair)
+plot_percentage_difference_vs_3D_by_metric_and_pairs_for_random_slice_scatter_plot <- function(plot_df,
+                                                                                               metrics) {
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
@@ -227,8 +196,14 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plo
     })
   }
   
+  # Get pairs
+  pairs <- c("A/A", "A/B", "B/A", "B/B")
+  
   # Factor for metric
   plot_df$metric <- factor(plot_df$metric, metrics)
+  
+  # Get error column
+  plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
   
   fig <- ggplot(plot_df, aes(x = value3D, y = error)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
@@ -236,7 +211,7 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plo
     labs(title = "Scatter plots showing percentage difference between 2D and 3D metrics vs 3D, for each metric and cell pair, for a random slice",
          x = "3D value",
          y = "Percentage difference (%)") +
-    facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +  
+    facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +
     scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) + 
     scale_y_continuous(limits = c(-100, 500), n.breaks = 3, labels = sci_clean_threshold) +
     theme_minimal() +
@@ -250,55 +225,26 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plo
 }
 
 # Plot percentage difference vs metric for each pair for a random slice
-plot_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot <- function(metric_df_list,
-                                                                                   metrics) {
-  plot_df <- data.frame()
-  
-  for (metric in metrics) {
-    
-    # Get metric_df for current metric
-    metric_df <- metric_df_list[[metric]]
-    
-    # Change slice column to numeric for safety
-    metric_df$slice <- as.numeric(metric_df$slice)
-    
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-    }
-    else if (metric %in% c("ANE_AUC")) {
-      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-      metric_df$pair <- gsub(',', '/', metric_df$target)
-    }
-    else {
-      # Add reference-target column
-      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-    }
-    
-    metric_df$metric <- metric  
-    
-    # Select 3D values, when slice == 0, then remove from data frame
-    metric_values3D <- metric_df[[metric]][metric_df[["slice"]] == 0]
-    metric_df <- metric_df[metric_df[["slice"]] != 0, ]
-    
-    # Select a random 2D slice
-    metric_df <- metric_df %>%
-      group_by(simulation, pair) %>%
-      slice_sample(n = 1) %>%   # pick one random slice per simulation
-      ungroup() %>%
-      select(pair, metric, value2D = .data[[metric]])
-    
-    # Combine 3D and 2D values
-    metric_df[["value3D"]] <- metric_values3D
-    
-    # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df)
-  }
+plot_percentage_difference_vs_metric_by_pairs_for_random_slice_box_plot <- function(plot_df,
+                                                                                    metrics) {
   
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
   
-  pairs <- unique(plot_df$pair)
+  # Get correlation
+  corr_df <- plot_df %>% 
+    group_by(metric, pair) %>% 
+    summarise(
+      corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
+      .groups = "drop")
+  
+  # map corr ∈ [-1,1] → error ∈ [-100, 400]
+  corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
+  
+  # inverse transform for the secondary axis
+  error_to_corr <- function(e) scales::rescale(e, to = c(0, 1), from = c(-100, 400))
+  
+  corr_df$y_trans <- corr_to_error(corr_df$corr)
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
@@ -330,26 +276,54 @@ plot_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot <- functi
     })
   }
   
-  # Factor for metric
+  # Factor metrics
   plot_df$metric <- factor(plot_df$metric, metrics)
   
-  fig <- ggplot(plot_df, aes(x = metric, y = error, color = pair)) +
+  fig <- ggplot(plot_df, aes(x = metric, y = error)) +
     geom_boxplot(fill = "lightgray") +
-    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Box plots showing percentage difference between 2D and 3D metrics for each cell pair, for a random slice",
-         x = "Metric",
-         y = "Percentage difference (%)") +
-    scale_y_continuous(limits = c(-100, 400), n.breaks = 3, labels = sci_clean_threshold) +
+    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) +
+    
+    facet_wrap(~ interaction(pair), scales = "free", ncol = length(pairs)) +  
+    
+    # median labels
+    stat_summary(
+      fun = function(z) median(z, na.rm = TRUE),
+      geom = "text",
+      aes(label = after_stat(sprintf("%.1f", y))),
+      vjust = -0.5,
+      size = 5,
+      color = "black"
+    ) +
+    
+    # ⭐ correlation stars
+    geom_point(data = corr_df, 
+               aes(x = metric, y = y_trans), 
+               shape = 8, # star 
+               size = 5, 
+               color = "#0062c5") +
+    
+    labs(
+      title = "Box plots showing percentage difference between 2D and 3D metrics, for a random slice and cell pairs",
+      x = "Metric",
+      y = "Percentage difference (%)"
+    ) +
+    
+    scale_y_continuous(limits = c(-100, 400), n.breaks = 3, labels = sci_clean_threshold,
+                       sec.axis = sec_axis(~ error_to_corr(.), name = "Spearman Correlation")) +
+    
     theme_minimal() +
     theme(
-      panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
-    ) +
-    scale_color_manual(values = c(
-      "A/A" = "#bb0036",
-      "A/B" = "#0062c5",
-      "B/A" = "#007128",
-      "B/B" = "#f77e3b"
-    ))
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      
+      # Font sizes
+      plot.title      = element_text(size = 16),
+      axis.title.x    = element_text(size = 16),
+      axis.title.y    = element_text(size = 16),
+      axis.text.x     = element_text(size = 16, angle = 90, vjust = 0.5, hjust = 1),
+      axis.text.y     = element_text(size = 16)
+    )
+  
+  
   
   return(fig)
 }
@@ -357,10 +331,9 @@ plot_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot <- functi
 
 
 # Plot 2D vs 3D for each metric and pair for averaged slice
-plot_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(metric_df_list,
-                                                                             metrics) {
+plot_2D_vs_3D_by_metric_and_pairs_for_averaged_slice_scatter_plot <- function(metric_df_list,
+                                                                              metrics) {
   plot_df <- data.frame()
-  rval_df <- data.frame()
   
   for (metric in metrics) {
     
@@ -403,30 +376,16 @@ plot_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(met
     
     # Add metric_df to plot_df
     plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric")])
-    
-    # Add to pval_df
-    r_values <- c()
-    for (pair in unique(metric_df$pair)) {
-      
-      # Ignore when pair is invalid
-      if (sum(is.finite(metric_df[["value3D"]][metric_df$pair == pair])) == 0) {
-        next
-      } 
-      
-      spearman_r <- round(cor(metric_df[["value3D"]][metric_df$pair == pair], 
-                              metric_df[["value2D"]][metric_df$pair == pair], 
-                              method = "spearman", use = "complete.obs"), 3)
-      
-      r_values <- c(r_values, spearman_r)
-      
-    }
-    rval_df <- rbind(rval_df, 
-                     data.frame(metric = metric,
-                                pair = unique(metric_df$pair),
-                                r_value = r_values))
   }
   
-  pairs <- unique(plot_df$pair)
+  # Get correlation
+  corr_df <- plot_df %>% 
+    group_by(metric, pair) %>% 
+    summarise(
+      corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
+      .groups = "drop")
+  
+  corr_df$corr <- round(corr_df$corr, 3)
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
@@ -457,6 +416,9 @@ plot_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(met
       paste0(mant, "e", exp)
     })
   }
+  
+  # Get pairs
+  pairs <- c("A/A", "A/B", "B/A", "B/B")
   
   # Factor for metric
   plot_df$metric <- factor(plot_df$metric, metrics)
@@ -468,18 +430,19 @@ plot_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(met
          x = "3D value",
          y = "2D value") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +
+    
+    scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) + 
+    scale_y_continuous(n.breaks = 3, labels = sci_clean_threshold) +
+    
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
-      axis.text.x = element_text(size = 4),  # make x-axis text smaller
-      axis.text.y = element_text(size = 4)   # make y-axis text smaller
     ) +
-    scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) +
-    scale_y_continuous(n.breaks = 3, labels = sci_clean_threshold) +
+    
     # Add r-value text
     geom_text(
-      data = rval_df,
-      aes(x = -Inf, y = Inf, label = paste0("r: ", r_value)),
+      data = corr_df,
+      aes(x = -Inf, y = Inf, label = paste0("r: ", corr)),
       inherit.aes = FALSE,
       hjust = -0.1, 
       vjust = 1.4,
@@ -490,8 +453,8 @@ plot_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(met
 }
 
 # Plot percentage difference vs 3D for each metric and pair for averaged slice
-plot_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- function(metric_df_list,
-                                                                                                metrics) {
+plot_percentage_difference_vs_3D_by_metric_and_pairs_for_averaged_slice_scatter_plot <- function(metric_df_list,
+                                                                                                 metrics) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -538,11 +501,6 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_p
     
   }
   
-  # Get error column
-  plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
-  
-  pairs <- unique(plot_df$pair)
-  
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
     sapply(x, function(v) {
@@ -573,17 +531,23 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_p
     })
   }
   
+  # Get pairs
+  pairs <- c("A/A", "A/B", "B/A", "B/B")
+  
   # Factor for metric
   plot_df$metric <- factor(plot_df$metric, metrics)
+  
+  # Get error column
+  plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
   
   fig <- ggplot(plot_df, aes(x = value3D, y = error)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatter plots showing percentage difference between 2D and 3D metrics vs 3D, for each metric and cell pair, for a random slice",
+    labs(title = "Scatter plots showing percentage difference between 2D and 3D metrics vs 3D, for each metric and cell pair, for averaged slices",
          x = "3D value",
          y = "Percentage difference (%)") +
-    facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +  
-    scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) +
+    facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +
+    scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) + 
     scale_y_continuous(limits = c(-100, 500), n.breaks = 3, labels = sci_clean_threshold) +
     theme_minimal() +
     theme(
@@ -595,9 +559,9 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_p
   return(fig)
 }
 
-# Plot percentage difference vs metrics for each pair for averaged slice
-plot_percentage_difference_vs_metric_by_pair_for_averaged_slice_box_plot <- function(metric_df_list,
-                                                                                     metrics) {
+# Plot percentage difference vs metric for each pair for averaged slice
+plot_percentage_difference_vs_metric_by_pairs_for_averaged_slice_box_plot <- function(metric_df_list,
+                                                                                      metrics) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -647,7 +611,20 @@ plot_percentage_difference_vs_metric_by_pair_for_averaged_slice_box_plot <- func
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
   
-  pairs <- unique(plot_df$pair)
+  # Get correlation
+  corr_df <- plot_df %>% 
+    group_by(metric, pair) %>% 
+    summarise(
+      corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
+      .groups = "drop")
+  
+  # map corr ∈ [-1,1] → error ∈ [-100,400]
+  corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
+  
+  # inverse transform for the secondary axis
+  error_to_corr <- function(e) scales::rescale(e, to = c(0, 1), from = c(-100, 400))
+  
+  corr_df$y_trans <- corr_to_error(corr_df$corr)
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
@@ -682,23 +659,46 @@ plot_percentage_difference_vs_metric_by_pair_for_averaged_slice_box_plot <- func
   # Factor for metric
   plot_df$metric <- factor(plot_df$metric, metrics)
   
-  fig <- ggplot(plot_df, aes(x = metric, y = error, color = pair)) +
+  fig <- ggplot(plot_df, aes(x = metric, y = error)) +
     geom_boxplot(fill = "lightgray") +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Box plots showing percentage difference between 2D and 3D metrics for each cell pair, for averaged slices",
-         x = "Metric",
-         y = "Percentage difference (%)") +
-    scale_y_continuous(limits = c(-100, 400), n.breaks = 3, labels = sci_clean_threshold) +
+    
+    
+    facet_wrap(~ interaction(pair), scales = "free", ncol = length(pairs)) +  
+    
+    # # Median labels
+    # stat_summary(
+    #   fun = function(z) median(z, na.rm = TRUE),
+    #   geom = "text",
+    #   aes(label = after_stat(sprintf("%.1f", y))),
+    #   vjust = -0.5,
+    #   size = 5,
+    #   color = "black"
+    # ) +
+    
+  # ⭐ correlation stars
+  geom_point(data = corr_df, 
+             aes(x = metric, y = y_trans), 
+             shape = 8, # star 
+             size = 5, 
+             color = "#0062c5") +
+    
+    labs(
+      title = "Box plots showing percentage difference between 2D and 3D metrics with spearman correlation, for averaged slices, for each cell pair",
+      x = "Metric",
+      y = "Percentage difference (%)"
+    ) +
+    
+    scale_y_continuous(limits = c(-100, 400), n.breaks = 3, labels = sci_clean_threshold,
+                       sec.axis = sec_axis(~ error_to_corr(.), name = "Spearman Correlation")) +
+    
     theme_minimal() +
     theme(
-      panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
-    ) +
-    scale_color_manual(values = c(
-      "A/A" = "#bb0036",
-      "A/B" = "#0062c5",
-      "B/A" = "#007128",
-      "B/B" = "#f77e3b"
-    ))
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      
+      # Font sizes
+      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+    )
   
   return(fig)
 }
@@ -706,8 +706,8 @@ plot_percentage_difference_vs_metric_by_pair_for_averaged_slice_box_plot <- func
 
 
 # Plot 2D vs 3D for each metric and pair for 3 slices
-plot_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(metric_df_list,
-                                                                           metrics) {
+plot_2D_vs_3D_by_metric_and_pairs_for_three_slices_scatter_plot <- function(metric_df_list,
+                                                                            metrics) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -754,8 +754,6 @@ plot_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(metri
     
   }
   
-  pairs <- unique(plot_df$pair)
-  
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
     sapply(x, function(v) {
@@ -786,6 +784,9 @@ plot_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(metri
     })
   }
   
+  # Get pairs
+  pairs <- c("A/A", "A/B", "B/A", "B/B")
+  
   # Factor for metric
   plot_df$metric <- factor(plot_df$metric, metrics)
   
@@ -800,7 +801,7 @@ plot_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(metri
     labs(title = "Scatter plots showing 2D vs 3D with spearman correlation, for each metric and cell pair, for 3 slices",
          x = "3D value",
          y = "2D value") +
-    facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +
+    facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +  
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
@@ -822,8 +823,8 @@ plot_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(metri
 }
 
 # Plot percentage difference vs 3D for each metric and pair for 3 slices
-plot_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- function(metric_df_list,
-                                                                                              metrics) {
+plot_percentage_difference_vs_3D_by_metric_and_pairs_for_three_slices_scatter_plot <- function(metric_df_list,
+                                                                                               metrics) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -870,8 +871,6 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plo
     
   }
   
-  pairs <- unique(plot_df$pair)
-  
   # Change slice column back to character for plotting
   plot_df$slice <- as.character(metric_df$slice)
   
@@ -907,6 +906,9 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plo
     })
   }
   
+  # Get pairs
+  pairs <- c("A/A", "A/B", "B/A", "B/B")
+  
   # Factor for metric
   plot_df$metric <- factor(plot_df$metric, metrics)
   
@@ -916,7 +918,7 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plo
   fig <- ggplot(plot_df, aes(x = value3D, y = error, color = slice)) +
     geom_point(alpha = 0.5, size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatter plots showing percentage difference between 2D and 3D metrics vs 3D, for each metric and cell pair, for a random slice",
+    labs(title = "Scatter plots showing percentage difference between 2D and 3D metrics vs 3D, for each metric and cell pair, for three slices",
          x = "3D value",
          y = "Percentage difference (%)") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +  
@@ -940,12 +942,9 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plo
   return(fig)
 }
 
-
-
-# Plot 2D vs 3D for each metric and pair for a random slice, annotating for tissue structure
-plot_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot <- function(metric_df_list,
-                                                                                             metrics,
-                                                                                             parameters_df) {
+# Plot percentage difference vs metric for each pair for 3 slices
+plot_percentage_difference_vs_metric_by_pairs_for_three_slice_box_plot <- function(metric_df_list,
+                                                                                   metrics) {
   plot_df <- data.frame()
   
   for (metric in metrics) {
@@ -956,6 +955,7 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot
     # Change slice column to numeric for safety
     metric_df$slice <- as.numeric(metric_df$slice)
     
+    # Add pair column
     if (metric %in% c("EBSAC", "EBP_AUC")) {
       # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
       metric_df$pair <- gsub(',', '/', metric_df$cell_types)
@@ -969,37 +969,56 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot
       metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
     }
     
-    metric_df$metric <- metric  
+    # Modify the metric_df so that there is a column of 3D values, and a column of 2D values
+    colnames(metric_df)[colnames(metric_df) == metric] <- "metric_value"
+    metric_df$sim_pair <- paste(metric_df$simulation, metric_df$pair, sep = "_")
     
-    # Select 3D values, when slice == 0, then remove from data frame
-    metric_values3D <- metric_df[[metric]][metric_df[["slice"]] == 0]
-    metric_df <- metric_df[metric_df[["slice"]] != 0, ]
+    metric_df3D <- metric_df[metric_df[["slice"]] == 0, ]
+    colnames(metric_df3D)[colnames(metric_df3D) == "metric_value"] <- "value3D"
     
-    # Select a random 2D slice
-    metric_df <- metric_df %>%
-      group_by(simulation, pair) %>%
-      slice_sample(n = 1) %>%   # pick one random slice per simulation
-      ungroup() %>%
-      select(simulation, pair, metric, value2D = .data[[metric]])
+    # Take 3 slices for each simulation and pair to get 2D values
+    # Slice indices 7, 10, 13 correspond with 145, 175, 205 z coord
+    metric_df2D <- metric_df[metric_df[["slice"]] %in% c(7, 10, 13), ] 
     
-    # Combine 3D and 2D values
-    metric_df[["value3D"]] <- metric_values3D
-    
-    # Merge metric_df and parameters_df
-    parameters_df$simulation <- seq(nrow(parameters_df))
-    metric_df <- metric_df %>% left_join(parameters_df[, c("simulation", "arrangement", "shape")], by = "simulation")
-    
-    # Get structure column
-    metric_df$structure <- paste(metric_df$arrangement, metric_df$shape, sep = "_")
+    # Merge metric_df3D and metric_df2D
+    metric_df <- metric_df2D %>% left_join(metric_df3D[, c("sim_pair", "value3D")], by = "sim_pair")
+    colnames(metric_df)[colnames(metric_df) == "metric_value"] <- "value2D"
     
     metric_df$metric <- metric  
     
     # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "structure")])
+    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "slice")])
     
   }
   
-  pairs <- unique(plot_df$pair)
+  # Change slice column back to character for plotting
+  plot_df$slice <- as.character(metric_df$slice)
+  
+  plot_df$slice <- factor(plot_df$slice, levels = c('7', '10', '13'))
+  
+  # Get error column
+  plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
+  
+  # Get correlation
+  corr_df <- plot_df %>% 
+    group_by(metric, slice, pair) %>% 
+    summarise(
+      corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
+      .groups = "drop")
+  
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
+  # Get pairs
+  pairs <- c("A/A", "A/B", "B/A", "B/B")
+  
+  # map corr ∈ [-1,1] → error ∈ [-100,400]
+  corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
+  
+  # inverse transform for the secondary axis
+  error_to_corr <- function(e) scales::rescale(e, to = c(0, 1), from = c(-100, 400))
+  
+  corr_df$y_trans <- corr_to_error(corr_df$corr)
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
@@ -1031,13 +1050,113 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot
     })
   }
   
+  # Define slice colors
+  slice_cols <- c(
+    "7"  = "#9437a8",
+    "10" = "#007128",
+    "13" = "#b8db50"
+  )
+  
+  
+  fig <- ggplot(plot_df, aes(x = metric, y = error, fill = slice)) +
+    geom_boxplot(position = position_dodge(width = 0.8)) +
+    scale_fill_manual(values = slice_cols) +
+    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
+    
+    facet_wrap(~ interaction(pair), scales = "free", nrow = length(pairs)) +  
+    
+    # # Median labels
+    # stat_summary(
+    #   fun = function(z) median(z, na.rm = TRUE),
+    #   geom = "text",
+    #   aes(label = after_stat(sprintf("%.1f", y)), group = slice),
+    #   position = position_dodge(width = 0.8),
+    #   vjust = -0.5,
+    #   size = 3.5,
+    #   color = "black"
+    # ) +
+  
+  
+  # ⭐ correlation stars
+  geom_point(
+    data = corr_df,
+    aes(x = metric, y = y_trans, group = slice),
+    shape = 8,
+    color = "#0062c5",
+    position = position_dodge(width = 0.8)
+  ) +
+    
+    
+    labs(
+      title = "Box plots showing percentage difference between 2D and 3D metrics with spearman correlation, for three slices and cell pairs",
+      x = "Metric",
+      y = "Percentage difference (%)"
+    ) +
+    
+    scale_y_continuous(limits = c(-100, 400), n.breaks = 3, labels = sci_clean_threshold,
+                       sec.axis = sec_axis(~ error_to_corr(.), name = "Spearman Correlation")) +
+    
+    theme_minimal() +
+    theme(
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      
+      # Font sizes
+      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+      
+      legend.position = "none"
+      
+    )
+  
+  return(fig)
+}
+
+
+
+# Plot 2D vs 3D for each metric and pair for a random slice, annotating for tissue structure
+plot_2D_vs_3D_by_metric_and_pairs_for_random_slice_showing_structure_scatter_plot <- function(plot_df,
+                                                                                              metrics,
+                                                                                              parameters_df) {
+  
+  # For nicer tick labels
+  sci_clean_threshold <- function(x) {
+    sapply(x, function(v) {
+      if (is.na(v)) return("")
+      
+      if (abs(v) < 1000) {
+        return(as.character(v))
+      }
+      
+      # scientific notation with 1 decimal place
+      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
+      
+      # remove "+" in exponent
+      s <- gsub("e\\+", "e", s)
+      
+      # split mantissa and exponent
+      parts <- strsplit(s, "e")[[1]]
+      mant <- parts[1]
+      exp  <- parts[2]
+      
+      # remove trailing .0 (so 1.0e3 → 1e3)
+      mant <- sub("\\.0$", "", mant)
+      
+      # remove leading zeros in exponent
+      exp <- sub("^0+", "", exp)
+      
+      paste0(mant, "e", exp)
+    })
+  }
+  
+  # Get pairs
+  pairs <- c("A/A", "A/B", "B/A", "B/B")
+  
   # Factor for metric
   plot_df$metric <- factor(plot_df$metric, metrics)
   
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D, color = structure)) +
     geom_point(alpha = 0.5, size = 1) +
     geom_abline(slope = 1, intercept = 0, linetype = "dotted", color = "#bb0036", linewidth = 1) + # Dotted line of the equation y = x
-    labs(title = "Scatterplots showing 2D vs 3D, for each metric and cell pair, for a random slice, showing structure",
+    labs(title = "Scatterplots showing 2D vs 3D, for each metric, for a random slice and cell pairs, showing structure",
          x = "3D value",
          y = "2D value") +
     facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +
@@ -1047,7 +1166,7 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot
       axis.text.x = element_text(size = 4),  # make x-axis text smaller
       axis.text.y = element_text(size = 4)   # make y-axis text smaller
     ) +
-    scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) + 
+    scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) +
     scale_y_continuous(n.breaks = 3, labels = sci_clean_threshold) +
     scale_color_manual(
       values = c(
@@ -1064,63 +1183,141 @@ plot_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot
 }
 
 # Plot percentage difference vs 3D for each metric and pair for a random slice, annotating for tissue structure
-plot_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot <- function(metric_df_list,
-                                                                                                                metrics,
-                                                                                                                parameters_df) {
-  plot_df <- data.frame()
-  
-  for (metric in metrics) {
-    
-    # Get metric_df for current metric
-    metric_df <- metric_df_list[[metric]]
-    
-    # Change slice column to numeric for safety
-    metric_df$slice <- as.numeric(metric_df$slice)
-    
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-    }
-    else if (metric %in% c("ANE_AUC")) {
-      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-      metric_df$pair <- gsub(',', '/', metric_df$target)
-    }
-    else {
-      # Add reference-target column
-      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-    }
-    
-    metric_df$metric <- metric  
-    
-    # Select 3D values, when slice == 0, then remove from data frame
-    metric_values3D <- metric_df[[metric]][metric_df[["slice"]] == 0]
-    metric_df <- metric_df[metric_df[["slice"]] != 0, ]
-    
-    # Select a random 2D slice
-    metric_df <- metric_df %>%
-      group_by(simulation, pair) %>%
-      slice_sample(n = 1) %>%   # pick one random slice per simulation
-      ungroup() %>%
-      select(simulation, pair, metric, value2D = .data[[metric]])
-    
-    # Combine 3D and 2D values
-    metric_df[["value3D"]] <- metric_values3D
-    
-    # Merge metric_df and parameters_df
-    parameters_df$simulation <- seq(nrow(parameters_df))
-    metric_df <- metric_df %>% left_join(parameters_df[, c("simulation", "arrangement", "shape")], by = "simulation")
-    
-    # Get structure column
-    metric_df$structure <- paste(metric_df$arrangement, metric_df$shape, sep = "_")
-    
-    metric_df$metric <- metric  
-    
-    # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "structure")])
-    
+plot_percentage_difference_vs_3D_by_metric_and_pairs_for_random_slice_showing_structure_scatter_plot <- function(plot_df,
+                                                                                                                 metrics,
+                                                                                                                 parameters_df) {
+  # For nicer tick labels
+  sci_clean_threshold <- function(x) {
+    sapply(x, function(v) {
+      if (is.na(v)) return("")
+      
+      if (abs(v) < 1000) {
+        return(as.character(v))
+      }
+      
+      # scientific notation with 1 decimal place
+      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
+      
+      # remove "+" in exponent
+      s <- gsub("e\\+", "e", s)
+      
+      # split mantissa and exponent
+      parts <- strsplit(s, "e")[[1]]
+      mant <- parts[1]
+      exp  <- parts[2]
+      
+      # remove trailing .0 (so 1.0e3 → 1e3)
+      mant <- sub("\\.0$", "", mant)
+      
+      # remove leading zeros in exponent
+      exp <- sub("^0+", "", exp)
+      
+      paste0(mant, "e", exp)
+    })
   }
   
-  pairs <- unique(plot_df$pair)
+  # Get pairs
+  pairs <- c("A/A", "A/B", "B/A", "B/B")
+  
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
+  # Get error column
+  plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
+  
+  fig <- ggplot(plot_df, aes(x = value3D, y = value2D, color = structure)) +
+    geom_point(alpha = 0.5, size = 1) +
+    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
+    labs(title = "Scatterplots showing percentage difference between 2D and 3D metrics vs 3D, for each metric, for a random slice and cell pairs, showing structure",
+         x = "3D value",
+         y = "Percentage difference (%)") +
+    facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +
+    scale_y_continuous(limits = c(-100, 500), n.breaks = 3, labels = sci_clean_threshold) +
+    theme_minimal() +
+    theme(
+      panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
+      axis.text.x = element_text(size = 6),  # make x-axis text smaller
+      axis.text.y = element_text(size = 6)   # make y-axis text smaller
+    ) +
+    scale_color_manual(
+      values = c(
+        "mixed_ellipsoid" = "#007128",
+        "mixed_network" = "#b8db50",
+        "ringed_ellipsoid" = "#9437a8",
+        "ringed_network" = "#d99dff",
+        "separated_ellipsoid" = "#770026",
+        "separated_network" = "#bb0036"
+      )
+    )
+  
+  return(fig)
+}
+
+# Plot 2D vs 3D correlation vs tissue structure for each metric and pair for a random slice
+plot_2D_vs_3D_correlation_vs_structure_by_metric_and_pairs_for_random_slice_bar_plot <- function(plot_df,
+                                                                                                 metrics,
+                                                                                                 parameters_df) {
+  # Compute spearman correlation
+  corr_df <- plot_df %>%
+    group_by(pair, metric, structure) %>%
+    summarise(
+      corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"),
+      .groups = "drop"
+    )
+  
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
+  # Get pairs
+  pairs <- c("A/A", "A/B", "B/A", "B/B")
+  
+  fig <- ggplot(corr_df, aes(x = structure, y = corr, fill = structure)) + 
+    geom_col(alpha = 0.8) + 
+    labs(title = "Bar plots showing spearman correlation vs structure, for each metric, for a random slice and cell pairs", 
+         x = "Structure", 
+         y = "Spearman Correlation") + 
+    facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +
+    scale_y_continuous(limits = c(0, 1)) +
+    theme_minimal() + 
+    theme(panel.border = element_rect(color = "black", fill = NA, linewidth = 1), 
+          axis.text.x = element_text(angle = 45, hjust = 1)) + 
+    scale_fill_manual(
+      values = c(
+        "mixed_ellipsoid" = "#007128",
+        "mixed_network" = "#b8db50",
+        "ringed_ellipsoid" = "#9437a8",
+        "ringed_network" = "#d99dff",
+        "separated_ellipsoid" = "#770026",
+        "separated_network" = "#bb0036"
+      )
+    )
+  
+  return(fig)
+}
+
+# Plot percentage difference vs metric for each pair for a random slice, annotating for tissue structure
+plot_percentage_difference_vs_metric_by_pairs_for_random_slice_showing_structure_box_plot <- function(plot_df,
+                                                                                                      metrics,
+                                                                                                      parameters_df) {
+  
+  # Get error column
+  plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
+  
+  # Compute spearman correlation
+  corr_df <- plot_df %>%
+    group_by(pair, metric, structure) %>%
+    summarise(
+      corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"),
+      .groups = "drop"
+    )
+  
+  # map corr ∈ [-1,1] → error ∈ [-100,400]
+  corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
+  
+  # inverse transform for the secondary axis
+  error_to_corr <- function(e) scales::rescale(e, to = c(0, 1), from = c(-100, 400))
+  
+  corr_df$y_trans <- corr_to_error(corr_df$corr)
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
@@ -1152,133 +1349,74 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_showing_str
     })
   }
   
+  # Get pairs
+  pairs <- c("A/A", "A/B", "B/A", "B/B")
+  
   # Factor for metric
   plot_df$metric <- factor(plot_df$metric, metrics)
   
-  # Get error column
-  plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
+  # Structure colors
+  structure_cols <- c(
+    "mixed_ellipsoid" = "#007128",
+    "mixed_network" = "#b8db50",
+    "ringed_ellipsoid" = "#9437a8",
+    "ringed_network" = "#d99dff",
+    "separated_ellipsoid" = "#770026",
+    "separated_network" = "#bb0036"
+  )
   
-  fig <- ggplot(plot_df, aes(x = value3D, y = error, color = structure)) +
-    geom_point(alpha = 0.5, size = 1) +
+  fig <- ggplot(plot_df, aes(x = metric, y = error, fill = structure)) +
+    geom_boxplot(position = position_dodge(width = 0.8)) +
+    scale_fill_manual(values = structure_cols) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatterplots showing percentage difference between 2D and 3D metrics vs 3D, for each metric and cell pair, for a random slice, showing structure",
-         x = "3D value",
-         y = "Percentage difference (%)") +
-    facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +  
-    scale_y_continuous(limits = c(-100, 500)) +
+    
+    facet_wrap(~ interaction(pair), scales = "free", nrow = length(pairs)) +  
+    
+    # # Median labels
+    # stat_summary(
+    #   fun = function(z) median(z, na.rm = TRUE),
+    #   geom = "text",
+    #   aes(label = after_stat(sprintf("%.1f", y)), group = structure),
+    #   position = position_dodge(width = 0.8),
+    #   vjust = -0.5,
+    #   size = 5,
+    #   color = "black"
+    # ) +
+  
+  
+  # ⭐ correlation stars
+  geom_point(
+    data = corr_df,
+    aes(x = metric, y = y_trans, group = structure),
+    shape = 8,
+    size = 3,
+    color = "#0062c5",
+    position = position_dodge(width = 0.8)
+  ) +
+    
+    
+    labs(
+      title = "Box plots showing percentage difference between 2D and 3D metrics with spearman correlation, for a random slice and cell pairs, showing tissue structure",
+      x = "Metric",
+      y = "Percentage difference (%)"
+    ) +
+    
+    scale_y_continuous(limits = c(-100, 400), n.breaks = 3, labels = sci_clean_threshold,
+                       sec.axis = sec_axis(~ error_to_corr(.), name = "Spearman Correlation")) +
+    
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
-      axis.text.x = element_text(size = 6),  # make x-axis text smaller
-      axis.text.y = element_text(size = 6)   # make y-axis text smaller
-    ) +
-    scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) + 
-    scale_y_continuous(n.breaks = 3, labels = sci_clean_threshold) +
-    scale_color_manual(
-      values = c(
-        "mixed_ellipsoid" = "#007128",
-        "mixed_network" = "#b8db50",
-        "ringed_ellipsoid" = "#9437a8",
-        "ringed_network" = "#d99dff",
-        "separated_ellipsoid" = "#770026",
-        "separated_network" = "#bb0036"
-      )
+      
+      # Font sizes
+      axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
+      
+      legend.position = "none"
     )
   
   return(fig)
 }
 
-# Plot 2D vs 3D correlation vs tissue structure for each metric and pair for a random slice
-plot_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_for_random_slice_bar_plot <- function(metric_df_list,
-                                                                                                metrics,
-                                                                                                parameters_df) {
-  plot_df <- data.frame()
-  
-  for (metric in metrics) {
-    
-    # Get metric_df for current metric
-    metric_df <- metric_df_list[[metric]]
-    
-    # Change slice column to numeric for safety
-    metric_df$slice <- as.numeric(metric_df$slice)
-    
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-    }
-    else if (metric %in% c("ANE_AUC")) {
-      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-      metric_df$pair <- gsub(',', '/', metric_df$target)
-    }
-    else {
-      # Add reference-target column
-      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-    }
-    
-    metric_df$metric <- metric  
-    
-    # Select 3D values, when slice == 0, then remove from data frame
-    metric_values3D <- metric_df[[metric]][metric_df[["slice"]] == 0]
-    metric_df <- metric_df[metric_df[["slice"]] != 0, ]
-    
-    # Select a random 2D slice
-    metric_df <- metric_df %>%
-      group_by(simulation, pair) %>%
-      slice_sample(n = 1) %>%   # pick one random slice per simulation
-      ungroup() %>%
-      select(simulation, pair, metric, value2D = .data[[metric]])
-    
-    # Combine 3D and 2D values
-    metric_df[["value3D"]] <- metric_values3D
-    
-    # Merge metric_df and parameters_df
-    parameters_df$simulation <- seq(nrow(parameters_df))
-    metric_df <- metric_df %>% left_join(parameters_df[, c("simulation", "arrangement", "shape")], by = "simulation")
-    
-    # Get structure column
-    metric_df$structure <- paste(metric_df$arrangement, metric_df$shape, sep = "_")
-    
-    metric_df$metric <- metric  
-    
-    # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "structure")])
-    
-  }
-  
-  # Compute spearman correlation
-  corr_df <- plot_df %>%
-    group_by(pair, metric, structure) %>%
-    summarise(
-      spearman_corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"),
-      .groups = "drop"
-    )
-  
-  pairs <- unique(plot_df$pair)
-  
-  # Factor for metric
-  plot_df$metric <- factor(plot_df$metric, metrics)
-  
-  fig <- ggplot(corr_df, aes(x = structure, y = spearman_corr, fill = structure)) + 
-    geom_col(alpha = 0.8) + 
-    labs(title = "Bar plots showing spearman correlation vs structure, for each metric and pair, for a random slice", x = "Structure", y = "Spearman correlation") + 
-    facet_wrap(~ interaction(metric, pair), scales = "free", nrow = length(pairs), ncol = length(metrics)) +
-    theme_minimal() + 
-    theme(panel.border = element_rect(color = "black", fill = NA, linewidth = 1), 
-          axis.text.x = element_text(angle = 45, hjust = 1)) + 
-    scale_y_continuous(limits = c(0, 1)) +
-    scale_fill_manual(
-      values = c(
-        "mixed_ellipsoid" = "#007128",
-        "mixed_network" = "#b8db50",
-        "ringed_ellipsoid" = "#9437a8",
-        "ringed_network" = "#d99dff",
-        "separated_ellipsoid" = "#770026",
-        "separated_network" = "#bb0036"
-      )
-    )
-  
-  return(fig)
-}
 
 
 
@@ -1293,28 +1431,89 @@ metrics <- c("AMD",
 
 
 
+plot_df <- get_plot_df_for_random_slice(metric_df_list,
+                                        metrics,
+                                        parameters_df)
+
 setwd("~/R/plots/S2")
-fig_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot(metric_df_list,
-                                                                                                                                metrics)
-pdf("fig_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot.pdf", width = 24, height = 10)
-print(fig_2D_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot)
+fig_2D_vs_3D_by_metric_and_pairs_for_random_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pairs_for_random_slice_scatter_plot(plot_df,
+                                                                                                                                  metrics)
+pdf("fig_2D_vs_3D_by_metric_and_pairs_for_random_slice_scatter_plot.pdf", width = 30, height = 10)
+print(fig_2D_vs_3D_by_metric_and_pairs_for_random_slice_scatter_plot)
 dev.off()
 
 
 setwd("~/R/plots/S2")
-fig_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot(metric_df_list,
-                                                                                                                                                                      metrics)
-pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot.pdf", width = 24, height = 10)
-print(fig_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_scatter_plot)
+fig_percentage_difference_vs_3D_by_metric_and_pairs_for_random_slice_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pairs_for_random_slice_scatter_plot(plot_df,
+                                                                                                                                                                        metrics)
+pdf("fig_percentage_difference_vs_3D_by_metric_and_pairs_for_random_slice_scatter_plot.pdf", width = 24, height = 10)
+print(fig_percentage_difference_vs_3D_by_metric_and_pairs_for_random_slice_scatter_plot)
 dev.off()
 
 
 setwd("~/R/plots/S2")
-fig_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot <- plot_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot(metric_df_list,
+fig_percentage_difference_vs_metric_by_pairs_for_random_slice_box_plot <- plot_percentage_difference_vs_metric_by_pairs_for_random_slice_box_plot(plot_df,
+                                                                                                                                                  metrics)
+pdf("fig_percentage_difference_vs_metric_by_pairs_for_random_slice_box_plot.pdf", width = 20, height = 15)
+print(fig_percentage_difference_vs_metric_by_pairs_for_random_slice_box_plot)
+dev.off()
+
+
+
+
+
+
+setwd("~/R/plots/S2")
+fig_2D_vs_3D_by_metric_and_pairs_for_averaged_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pairs_for_averaged_slice_scatter_plot(metric_df_list,
+                                                                                                                                      metrics)
+pdf("fig_2D_vs_3D_by_metric_and_pairs_for_averaged_slice_scatter_plot.pdf", width = 24, height = 10)
+print(fig_2D_vs_3D_by_metric_and_pairs_for_averaged_slice_scatter_plot)
+dev.off()
+
+
+setwd("~/R/plots/S2")
+fig_percentage_difference_vs_3D_by_metric_and_pairs_for_averaged_slice_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pairs_for_averaged_slice_scatter_plot(metric_df_list,
+                                                                                                                                                                            metrics)
+pdf("fig_percentage_difference_vs_3D_by_metric_and_pairs_for_averaged_slice_scatter_plot.pdf", width = 24, height = 10)
+print(fig_percentage_difference_vs_3D_by_metric_and_pairs_for_averaged_slice_scatter_plot)
+dev.off()
+
+
+setwd("~/R/plots/S2")
+fig_percentage_difference_vs_metric_by_pairs_for_averaged_slice_box_plot <- plot_percentage_difference_vs_metric_by_pairs_for_averaged_slice_box_plot(metric_df_list,
+                                                                                                                                                      metrics)
+pdf("fig_percentage_difference_vs_metric_by_pairs_for_averaged_slice_box_plot.pdf", width = 20, height = 15)
+print(fig_percentage_difference_vs_metric_by_pairs_for_averaged_slice_box_plot)
+dev.off()
+
+
+
+
+
+setwd("~/R/plots/S2")
+fig_2D_vs_3D_by_metric_and_pairs_for_three_slices_scatter_plot <- plot_2D_vs_3D_by_metric_and_pairs_for_three_slices_scatter_plot(metric_df_list,
+                                                                                                                                  metrics)
+pdf("fig_2D_vs_3D_by_metric_and_pairs_for_three_slices_scatter_plot.pdf", width = 24, height = 10)
+print(fig_2D_vs_3D_by_metric_and_pairs_for_three_slices_scatter_plot)
+dev.off()
+
+
+setwd("~/R/plots/S2")
+fig_percentage_difference_vs_3D_by_metric_and_pairs_for_three_slices_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pairs_for_three_slices_scatter_plot(metric_df_list,
+                                                                                                                                                                        metrics)
+pdf("fig_percentage_difference_vs_3D_by_metric_and_pairs_for_three_slices_scatter_plot.pdf", width = 24, height = 10)
+print(fig_percentage_difference_vs_3D_by_metric_and_pairs_for_three_slices_scatter_plot)
+dev.off()
+
+
+setwd("~/R/plots/S2")
+fig_percentage_difference_vs_metric_by_pairs_for_three_slice_box_plot <- plot_percentage_difference_vs_metric_by_pairs_for_three_slice_box_plot(metric_df_list,
                                                                                                                                                 metrics)
-pdf("fig_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot.pdf", width = 24, height = 10)
-print(fig_percentage_difference_vs_metric_by_pair_for_random_slice_box_plot)
+pdf("fig_percentage_difference_vs_metric_by_pairs_for_three_slice_box_plot.pdf", width = 20, height = 15)
+print(fig_percentage_difference_vs_metric_by_pairs_for_three_slice_box_plot)
 dev.off()
+
+
 
 
 
@@ -1322,77 +1521,42 @@ dev.off()
 
 
 setwd("~/R/plots/S2")
-fig_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot(metric_df_list,
-                                                                                                                                    metrics)
-pdf("fig_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot.pdf", width = 24, height = 10)
-print(fig_2D_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot)
+fig_2D_vs_3D_by_metric_and_pairs_for_random_slice_showing_structure_scatter_plot <- plot_2D_vs_3D_by_metric_and_pairs_for_random_slice_showing_structure_scatter_plot(plot_df,
+                                                                                                                                                                      metrics,
+                                                                                                                                                                      parameters_df)
+pdf("fig_2D_vs_3D_by_metric_and_pairs_for_random_slice_showing_structure_scatter_plot.pdf", width = 24, height = 10)
+print(fig_2D_vs_3D_by_metric_and_pairs_for_random_slice_showing_structure_scatter_plot)
 dev.off()
 
 
 setwd("~/R/plots/S2")
-fig_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot(metric_df_list,
-                                                                                                                                                                          metrics)
-pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot.pdf", width = 24, height = 10)
-print(fig_percentage_difference_vs_3D_by_metric_and_pair_for_averaged_slice_scatter_plot)
+fig_percentage_difference_vs_3D_by_metric_and_pairs_for_random_slice_showing_structure_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pairs_for_random_slice_showing_structure_scatter_plot(plot_df,
+                                                                                                                                                                                                            metrics,
+                                                                                                                                                                                                            parameters_df)
+pdf("fig_percentage_difference_vs_3D_by_metric_and_pairs_for_random_slice_showing_structure_scatter_plot.pdf", width = 24, height = 10)
+print(fig_percentage_difference_vs_3D_by_metric_and_pairs_for_random_slice_showing_structure_scatter_plot)
 dev.off()
 
 
 setwd("~/R/plots/S2")
-fig_percentage_difference_vs_metric_by_pair_for_averaged_slice_box_plot <- plot_percentage_difference_vs_metric_by_pair_for_averaged_slice_box_plot(metric_df_list,
-                                                                                                                                                    metrics)
-pdf("fig_percentage_difference_vs_metric_by_pair_for_averaged_slice_box_plot.pdf", width = 24, height = 10)
-print(fig_percentage_difference_vs_metric_by_pair_for_averaged_slice_box_plot)
-dev.off()
-
-
-
-
-
-setwd("~/R/plots/S2")
-fig_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot(metric_df_list,
-                                                                                                                                metrics)
-pdf("fig_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot.pdf", width = 24, height = 10)
-print(fig_2D_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot)
+fig_2D_vs_3D_correlation_vs_structure_by_metric_and_pairs_for_random_slice_bar_plot <- plot_2D_vs_3D_correlation_vs_structure_by_metric_and_pairs_for_random_slice_bar_plot(plot_df,
+                                                                                                                                                                            metrics,
+                                                                                                                                                                            parameters_df)
+pdf("fig_2D_vs_3D_correlation_vs_structure_by_metric_and_pairs_for_random_slice_bar_plot.pdf", width = 24, height = 10)
+print(fig_2D_vs_3D_correlation_vs_structure_by_metric_and_pairs_for_random_slice_bar_plot)
 dev.off()
 
 
 setwd("~/R/plots/S2")
-fig_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot(metric_df_list,
-                                                                                                                                                                      metrics)
-pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot.pdf", width = 24, height = 10)
-print(fig_percentage_difference_vs_3D_by_metric_and_pair_for_three_slices_scatter_plot)
+fig_percentage_difference_vs_metric_by_pairs_for_random_slice_showing_structure_box_plot <- plot_percentage_difference_vs_metric_by_pairs_for_random_slice_showing_structure_box_plot(plot_df,
+                                                                                                                                                                                      metrics,
+                                                                                                                                                                                      parameters_df)
+pdf("fig_percentage_difference_vs_metric_by_pairs_for_random_slice_showing_structure_box_plot.pdf", width = 20, height = 15)
+print(fig_percentage_difference_vs_metric_by_pairs_for_random_slice_showing_structure_box_plot)
 dev.off()
 
 
 
-
-
-
-setwd("~/R/plots/S2")
-fig_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot <- plot_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot(metric_df_list,
-                                                                                                                                                                    metrics,
-                                                                                                                                                                    parameters_df)
-pdf("fig_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot.pdf", width = 24, height = 10)
-print(fig_2D_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot)
-dev.off()
-
-
-setwd("~/R/plots/S2")
-fig_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot(metric_df_list,
-                                                                                                                                                                                                          metrics,
-                                                                                                                                                                                                          parameters_df)
-pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot.pdf", width = 24, height = 10)
-print(fig_percentage_difference_vs_3D_by_metric_and_pair_for_random_slice_showing_structure_scatter_plot)
-dev.off()
-
-
-setwd("~/R/plots/S2")
-fig_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_for_random_slice_bar_plot <- plot_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_for_random_slice_bar_plot(metric_df_list,
-                                                                                                                                                                          metrics,
-                                                                                                                                                                          parameters_df)
-pdf("fig_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_for_random_slice_bar_plot.pdf", width = 24, height = 10)
-print(fig_2D_vs_3D_correlation_vs_structure_by_metric_and_pair_for_random_slice_bar_plot)
-dev.off()
 
 
 
