@@ -951,7 +951,7 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter
   fig <- ggplot(plot_df, aes(x = value3D, y = error, color = slice)) +
     geom_point(alpha = 0.5, size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatter plots showing percentage difference between 2D and 3D metrics vs 3D, for each metric, for a random slice and cell pair A/B",
+    labs(title = "Scatter plots showing percentage difference between 2D and 3D metrics vs 3D, for each metric, for three slices and cell pair A/B",
          x = "3D value",
          y = "Percentage difference (%)") +
     facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +  
@@ -1122,7 +1122,7 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- fun
     
     
     labs(
-      # title = "Box plots showing percentage difference between 2D and 3D metrics with spearman correlation, for three slices for cell pair A/B",
+      # title = "Box plots showing percentage difference between 2D and 3D metrics with spearman correlation, for three slices and cell pair A/B",
        x = "Metric",
        y = "Percentage difference (%)"
       ) +
