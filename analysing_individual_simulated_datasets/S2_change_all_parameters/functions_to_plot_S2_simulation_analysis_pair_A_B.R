@@ -98,6 +98,7 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(p
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
+    
     sapply(x, function(v) {
       if (is.na(v)) return("")
       
@@ -185,6 +186,9 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
+
+    x[!(x %in% range(x, na.rm = T))] <- NA
+
     sapply(x, function(v) {
       if (is.na(v)) return("")
       
@@ -221,19 +225,24 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter
   
   fig <- ggplot(plot_df, aes(x = value3D, y = error)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
-    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatter plots showing percentage difference between 2D and 3D metrics vs 3D, for each metric, for a random slice and cell pair A/B",
-         x = "3D value",
-         y = "Percentage difference (%)") +
-    facet_wrap(~ interaction(metric, pair), scales = "free", ncol = length(metrics)) +  
-    scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) + 
+    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) +
+    labs(
+      x = "3D value",
+      y = "Percentage difference (%)"
+    ) +
+    facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +
+    scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) +
     scale_y_continuous(limits = c(-100, 500), n.breaks = 3, labels = sci_clean_threshold) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
-      axis.text.x = element_text(size = 6),  # make x-axis text smaller
-      axis.text.y = element_text(size = 6)   # make y-axis text smaller
+      axis.text.x  = element_text(size = 11),
+      axis.text.y  = element_text(size = 11),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      strip.text   = element_text(size = 11)
     )
+  
   
   return(fig)
 }
@@ -292,6 +301,18 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- fu
   
   # Factor metrics
   plot_df$metric <- factor(plot_df$metric, metrics)
+  
+  # Get summary of error to save
+  summary_df <- plot_df %>%
+    group_by(metric) %>%
+    summarise(
+      min     = min(error, na.rm = TRUE),
+      max     = max(error, na.rm = TRUE),
+      range   = max - min,
+      median  = median(error, na.rm = TRUE),
+      average = mean(error, na.rm = TRUE)
+    )
+  write.csv(summary_df, paste("~/R/values_from_figures/random_slice_summary_df.csv", sep = ""))
   
   fig <- ggplot(plot_df, aes(x = metric, y = error)) +
     geom_boxplot(fill = "lightgray") +
@@ -535,6 +556,9 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatt
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
+    
+    x[!(x %in% range(x, na.rm = T))] <- NA
+    
     sapply(x, function(v) {
       if (is.na(v)) return("")
       
@@ -572,17 +596,22 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatt
   fig <- ggplot(plot_df, aes(x = value3D, y = error)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatter plots showing percentage difference between 2D and 3D metrics vs 3D, for each metric, for averaged slices and cell pair A/B",
-         x = "3D value",
-         y = "Percentage difference (%)") +
+    labs(
+      # title = "Scatter plots showing percentage difference between 2D and 3D metrics vs 3D, for each metric, for averaged slices and cell pair A/B",
+      x = "3D value",
+      y = "Percentage difference (%)"
+    ) +
     facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +  
     scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) + 
     scale_y_continuous(limits = c(-100, 500), n.breaks = 3, labels = sci_clean_threshold) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
-      axis.text.x = element_text(size = 6),  # make x-axis text smaller
-      axis.text.y = element_text(size = 6)   # make y-axis text smaller
+      axis.text.x  = element_text(size = 11),
+      axis.text.y  = element_text(size = 11),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      strip.text   = element_text(size = 11)
     )
   
   return(fig)
@@ -690,6 +719,18 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_averaged_slice_box_plot <- 
   
   # Factor for metric
   plot_df$metric <- factor(plot_df$metric, metrics)
+  
+  # Get summary of error to save
+  summary_df <- plot_df %>%
+    group_by(metric) %>%
+    summarise(
+      min     = min(error, na.rm = TRUE),
+      max     = max(error, na.rm = TRUE),
+      range   = max - min,
+      median  = median(error, na.rm = TRUE),
+      average = mean(error, na.rm = TRUE)
+    )
+  write.csv(summary_df, paste("~/R/values_from_figures/average_slice_summary_df.csv", sep = ""))
   
   fig <- ggplot(plot_df, aes(x = metric, y = error)) +
     geom_boxplot(fill = "lightgray") +
@@ -914,6 +955,9 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
+    
+    x[!(x %in% range(x, na.rm = T))] <- NA
+    
     sapply(x, function(v) {
       if (is.na(v)) return("")
       
@@ -951,17 +995,23 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter
   fig <- ggplot(plot_df, aes(x = value3D, y = error, color = slice)) +
     geom_point(alpha = 0.5, size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatter plots showing percentage difference between 2D and 3D metrics vs 3D, for each metric, for three slices and cell pair A/B",
-         x = "3D value",
-         y = "Percentage difference (%)") +
+    labs(
+      # title = "Scatter plots showing percentage difference between 2D and 3D metrics vs 3D, for each metric, for three slices and cell pair A/B",
+      x = "3D value",
+      y = "Percentage difference (%)"
+    ) +
     facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +  
     scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) +
     scale_y_continuous(limits = c(-100, 500), n.breaks = 3, labels = sci_clean_threshold) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
-      axis.text.x = element_text(size = 6),  # make x-axis text smaller
-      axis.text.y = element_text(size = 6)   # make y-axis text smaller
+      axis.text.x  = element_text(size = 11),
+      axis.text.y  = element_text(size = 11),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      strip.text   = element_text(size = 11),
+      legend.position = "none"
     ) +
     scale_color_manual(
       values = c(
@@ -1223,6 +1273,9 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing
                                                                                                                     parameters_df) {
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
+    
+    x[!(x %in% range(x, na.rm = T))] <- NA
+    
     sapply(x, function(v) {
       if (is.na(v)) return("")
       
@@ -1257,19 +1310,26 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
   
-  fig <- ggplot(plot_df, aes(x = value3D, y = value2D, color = structure)) +
-    geom_point(alpha = 0.5, size = 1) +
+  fig <- ggplot(plot_df, aes(x = value3D, y = error, color = structure)) +
+    geom_point(alpha = 1, size = 1) +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Scatterplots showing percentage difference between 2D and 3D metrics vs 3D, for each metric, for a random slice and cell pair A/B, showing structure",
-         x = "3D value",
-         y = "Percentage difference (%)") +
+    labs(
+      # title = "Scatterplots showing percentage difference between 2D and 3D metrics vs 3D, for each metric, for a random slice and cell pair A/B, showing structure",
+      x = "3D value",
+      y = "Percentage difference (%)"
+      ) +
     facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +  
+    scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) +
     scale_y_continuous(limits = c(-100, 500), n.breaks = 3, labels = sci_clean_threshold) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
-      axis.text.x = element_text(size = 6),  # make x-axis text smaller
-      axis.text.y = element_text(size = 6)   # make y-axis text smaller
+      axis.text.x  = element_text(size = 11),
+      axis.text.y  = element_text(size = 11),
+      axis.title.x = element_text(size = 11),
+      axis.title.y = element_text(size = 11),
+      strip.text   = element_text(size = 11)
+      # legend.position = "none"
     ) +
     scale_color_manual(
       values = c(
@@ -1474,7 +1534,7 @@ dev.off()
 setwd("~/R/plots/S2")
 fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot(plot_df,
                                                                                                                                                                               metrics)
-pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot.pdf", width = 24, height = 10)
+pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot.pdf", width = 17.5, height = 2.5)
 print(fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot)
 dev.off()
 
@@ -1502,7 +1562,7 @@ dev.off()
 setwd("~/R/plots/S2")
 fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot(metric_df_list,
                                                                                                                                                                                   metrics)
-pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot.pdf", width = 24, height = 10)
+pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot.pdf", width = 17.5, height = 2.5)
 print(fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot)
 dev.off()
 
@@ -1529,7 +1589,7 @@ dev.off()
 setwd("~/R/plots/S2")
 fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot(metric_df_list,
                                                                                                                                                                               metrics)
-pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot.pdf", width = 24, height = 10)
+pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot.pdf", width = 17.5, height = 2.5)
 print(fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter_plot)
 dev.off()
 
@@ -1560,7 +1620,7 @@ setwd("~/R/plots/S2")
 fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot <- plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot(plot_df,
                                                                                                                                                                                                                   metrics,
                                                                                                                                                                                                                   parameters_df)
-pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot.pdf", width = 24, height = 10)
+pdf("fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot.pdf", width = 17.5, height = 2.5)
 print(fig_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing_structure_scatter_plot)
 dev.off()
 
