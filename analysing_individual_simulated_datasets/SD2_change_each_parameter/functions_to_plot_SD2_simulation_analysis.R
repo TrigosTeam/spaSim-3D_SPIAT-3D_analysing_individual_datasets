@@ -8,9 +8,9 @@ library(scales)
 library(DescTools)
 
 # Read data and set up ----
-setwd("~/R/S1_data")
-metric_df_list <- readRDS("S1_metric_df_list.RDS")
-parameters_df <- readRDS("S1_parameters_df.RDS")
+setwd("~/R/SD2_data")
+metric_df_list <- readRDS("SD2_metric_df_list.RDS")
+parameters_df <- readRDS("SD2_parameters_df.RDS")
 
 
 # Functions for 4 pair metrics-----
@@ -859,7 +859,7 @@ metrics_with_4_pairs <- c("AMD",
                           "COO_AUC")
 
 
-setwd("~/R/plots/S1/metrics_with_4_cell_pairs")
+setwd("~/R/plots/SD2/metrics_with_4_cell_pairs")
 pdf("fig_3D_vs_parameters_for_non_gradient_metrics_4_pairs_scatter_plot.pdf", width = 26, height = 25)
 
 for (metric in metrics_with_4_pairs) {
@@ -878,7 +878,7 @@ dev.off()
 
 
 
-setwd("~/R/plots/S1/metrics_with_4_cell_pairs")
+setwd("~/R/plots/SD2/metrics_with_4_cell_pairs")
 pdf("fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_4_pairs_scatter_plot.pdf", width = 26, height = 25)
 
 for (metric in metrics_with_4_pairs) {
@@ -895,7 +895,7 @@ dev.off()
 
 
 
-setwd("~/R/plots/S1/metrics_with_4_cell_pairs")
+setwd("~/R/plots/SD2/metrics_with_4_cell_pairs")
 pdf("fig_percentage_difference_vs_parameters_for_non_gradient_metrics_4_pairs_scatter_plot.pdf", width = 26, height = 25)
 
 for (metric in metrics_with_4_pairs) {
@@ -914,7 +914,7 @@ dev.off()
 
 
 
-setwd("~/R/plots/S1/metrics_with_4_cell_pairs")
+setwd("~/R/plots/SD2/metrics_with_4_cell_pairs")
 pdf("fig_2D_vs_slice_for_non_gradient_metrics_4_pairs_violin_plot.pdf", width = 26, height = 25)
 
 for (metric in metrics_with_4_pairs) {
@@ -932,7 +932,7 @@ dev.off()
 
 
 
-setwd("~/R/plots/S1/metrics_with_4_cell_pairs")
+setwd("~/R/plots/SD2/metrics_with_4_cell_pairs")
 pdf("fig_3D_and_2D_vs_slice_for_non_gradient_metrics_4_pairs_violin_plot.pdf", width = 26, height = 25)
 
 for (metric in metrics_with_4_pairs) {
@@ -1786,7 +1786,7 @@ metrics_with_2_pairs <- c("ACIN_AUC", "ANE_AUC",
                           "PBP_AUC", "EBP_AUC", "PBSAC", "EBSAC")
 
 
-setwd("~/R/plots/S1/metrics_with_2_cell_pairs")
+setwd("~/R/plots/SD2/metrics_with_2_cell_pairs")
 pdf("fig_3D_vs_parameters_for_non_gradient_metrics_2_pairs_scatter_plot.pdf", width = 26, height = 13)
 
 for (metric in metrics_with_2_pairs) {
@@ -1805,7 +1805,7 @@ dev.off()
 
 
 
-setwd("~/R/plots/S1/metrics_with_2_cell_pairs")
+setwd("~/R/plots/SD2/metrics_with_2_cell_pairs")
 pdf("fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_2_pairs_scatter_plot.pdf", width = 26, height = 13)
 
 for (metric in metrics_with_2_pairs) {
@@ -1822,7 +1822,7 @@ dev.off()
 
 
 
-setwd("~/R/plots/S1/metrics_with_2_cell_pairs")
+setwd("~/R/plots/SD2/metrics_with_2_cell_pairs")
 pdf("fig_percentage_difference_vs_parameters_for_non_gradient_metrics_2_pairs_scatter_plot.pdf", width = 26, height = 13)
 
 for (metric in metrics_with_2_pairs) {
@@ -1843,7 +1843,7 @@ dev.off()
 
 
 
-setwd("~/R/plots/S1/metrics_with_2_cell_pairs")
+setwd("~/R/plots/SD2/metrics_with_2_cell_pairs")
 pdf("fig_2D_vs_slice_for_non_gradient_metrics_2_pairs_violin_plot.pdf", width = 26, height = 13)
 
 for (metric in metrics_with_2_pairs) {
@@ -1862,7 +1862,7 @@ dev.off()
 
 
 
-setwd("~/R/plots/S1/metrics_with_2_cell_pairs")
+setwd("~/R/plots/SD2/metrics_with_2_cell_pairs")
 pdf("fig_3D_and_2D_vs_slice_for_non_gradient_metrics_2_pairs_violin_plot.pdf", width = 26, height = 13)
 
 for (metric in metrics_with_2_pairs) {

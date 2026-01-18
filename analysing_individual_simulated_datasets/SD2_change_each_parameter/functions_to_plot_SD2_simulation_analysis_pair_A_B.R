@@ -8,9 +8,9 @@ library(scales)
 library(DescTools)
 
 # Read data and set up ----
-setwd("~/R/S1_data")
-metric_df_list <- readRDS("S1_metric_df_list.RDS")
-parameters_df <- readRDS("S1_parameters_df.RDS")
+setwd("~/R/SD2_data")
+metric_df_list <- readRDS("SD2_metric_df_list.RDS")
+parameters_df <- readRDS("SD2_parameters_df.RDS")
 
 
 # Functions for plotting-----
@@ -999,7 +999,7 @@ metrics <- c("AMD",
              "PBP_AUC", "EBP_AUC", "PBSAC", "EBSAC")
 
 
-setwd("~/R/plots/S1")
+setwd("~/R/plots/SD2")
 pdf("fig_3D_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 26, height = 6)
 
 for (metric in metrics) {
@@ -1018,7 +1018,7 @@ dev.off()
 
 
 
-setwd("~/R/plots/S1")
+setwd("~/R/plots/SD2")
 pdf("fig_3D_and_2D_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 17.6, height = 4.4)
 
 for (metric in metrics) {
@@ -1035,7 +1035,7 @@ dev.off()
 
 
 
-setwd("~/R/plots/S1")
+setwd("~/R/plots/SD2")
 pdf("fig_percentage_difference_vs_parameters_for_non_gradient_metrics_A_B_scatter_plot.pdf", width = 26, height = 6)
 
 for (metric in metrics) {
@@ -1056,7 +1056,7 @@ dev.off()
 
 
 
-setwd("~/R/plots/S1")
+setwd("~/R/plots/SD2")
 pdf("fig_2D_vs_slice_for_non_gradient_metrics_A_B_violin_plot.pdf", width = 26, height = 6)
 
 for (metric in metrics) {
@@ -1075,7 +1075,7 @@ dev.off()
 
 
 
-setwd("~/R/plots/S1")
+setwd("~/R/plots/SD2")
 pdf("fig_3D_and_2D_vs_slice_for_non_gradient_metrics_A_B_violin_plot.pdf", width = 26, height = 6)
 
 for (metric in metrics) {

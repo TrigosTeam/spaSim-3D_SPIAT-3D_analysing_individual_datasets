@@ -134,8 +134,8 @@ generate_updated_parameters_for_arrangement_and_shape <- function(
 }
 
 
-# Analyse S1 simulations
-analyse_S1_simulations <- function(parameters_df) {
+# Analyse SD2 simulations
+analyse_SD2_simulations <- function(parameters_df) {
   
   # Set defined parameters/values
   cell_types <- c('A', 'B')
@@ -844,6 +844,6 @@ updated_parameters_df <- generate_updated_parameters_for_arrangement_and_shape(
   cluster1_x_coord_range = c("min" = 125, "max" = 175)
 )
 
-S1_metric_df_list <- analyse_S1_simulations(updated_parameters_df)
+SD2_metric_df_list <- analyse_SD2_simulations(updated_parameters_df)
 
 
