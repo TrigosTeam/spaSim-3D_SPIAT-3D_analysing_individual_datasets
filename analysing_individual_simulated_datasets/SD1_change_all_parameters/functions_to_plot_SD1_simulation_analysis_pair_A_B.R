@@ -231,8 +231,8 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter
       y = "Percentage difference (%)"
     ) +
     facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +
-    scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) +
-    scale_y_continuous(limits = c(-100, 500), n.breaks = 3, labels = sci_clean_threshold) +
+    scale_x_continuous(n.breaks = 5, labels = sci_clean_threshold) +
+    scale_y_continuous(limits = c(-1000, 1000), n.breaks = 5, labels = sci_clean_threshold) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
@@ -261,11 +261,13 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- fu
       corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
       .groups = "drop")
   
-  # map corr ∈ [-1,1] → error ∈ [-100, 400]
-  corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
+  # map corr ∈ [-1,1] → error ∈ [y_min, y_max]
+  y_min <- -1000
+  y_max <- 1000
+  corr_to_error <- function(c) scales::rescale(c, to = c(y_min, y_max), from = c(0, 1))
   
   # inverse transform for the secondary axis
-  error_to_corr <- function(e) scales::rescale(e, to = c(0, 1), from = c(-100, 400))
+  error_to_corr <- function(e) scales::rescale(e, to = c(0, 1), from = c(y_min, y_max))
   
   corr_df$y_trans <- corr_to_error(corr_df$corr)
   
@@ -274,7 +276,7 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- fu
     sapply(x, function(v) {
       if (is.na(v)) return("")
       
-      if (abs(v) < 1000) {
+      if (abs(v) <= 1000) {
         return(as.character(v))
       }
       
@@ -314,6 +316,12 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- fu
     )
   write.csv(summary_df, paste("~/R/values_from_figures/random_slice_summary_df.csv", sep = ""))
   
+  # Get extreme values to save
+  extreme_values_df <- plot_df %>%
+    filter(error > 1000 | error < -1000) %>%
+    arrange(metric, error)
+  write.csv(extreme_values_df, paste("~/R/values_from_figures/random_slice_extreme_values_df.csv", sep = ""))
+  
   fig <- ggplot(plot_df, aes(x = metric, y = error)) +
     geom_boxplot(fill = "lightgray") +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) +
@@ -341,8 +349,10 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_box_plot <- fu
       y = "Percentage difference (%)"
     ) +
     
-    scale_y_continuous(limits = c(-100, 400), n.breaks = 3, labels = sci_clean_threshold,
+    scale_y_continuous(n.breaks = 5, labels = sci_clean_threshold,
                        sec.axis = sec_axis(~ error_to_corr(.), name = "Spearman Correlation")) +
+    
+    coord_cartesian(ylim = c(y_min, y_max)) +
     
     theme_minimal() +
     theme(
@@ -603,7 +613,7 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatt
     ) +
     facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +  
     scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) + 
-    scale_y_continuous(limits = c(-100, 500), n.breaks = 3, labels = sci_clean_threshold) +
+    scale_y_continuous(limits = c(-1000, 1000), n.breaks = 3, labels = sci_clean_threshold) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
@@ -679,11 +689,13 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_averaged_slice_box_plot <- 
       corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
       .groups = "drop")
   
-  # map corr ∈ [-1,1] → error ∈ [-100,400]
-  corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
+  # map corr ∈ [-1,1] → error ∈ [-1000,1000]
+  y_min <- -1000
+  y_max <- 1000
+  corr_to_error <- function(c) scales::rescale(c, to = c(y_min, y_max), from = c(0, 1))
   
   # inverse transform for the secondary axis
-  error_to_corr <- function(e) scales::rescale(e, to = c(0, 1), from = c(-100, 400))
+  error_to_corr <- function(e) scales::rescale(e, to = c(0, 1), from = c(y_min, y_max))
   
   corr_df$y_trans <- corr_to_error(corr_df$corr)
   
@@ -692,7 +704,7 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_averaged_slice_box_plot <- 
     sapply(x, function(v) {
       if (is.na(v)) return("")
       
-      if (abs(v) < 1000) {
+      if (abs(v) <= 1000) {
         return(as.character(v))
       }
       
@@ -732,6 +744,12 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_averaged_slice_box_plot <- 
     )
   write.csv(summary_df, paste("~/R/values_from_figures/average_slice_summary_df.csv", sep = ""))
   
+  # Get extreme values to save
+  extreme_values_df <- plot_df %>%
+    filter(error > 1000 | error < -1000) %>%
+    arrange(metric, error)
+  write.csv(extreme_values_df, paste("~/R/values_from_figures/average_slice_extreme_values_df.csv", sep = ""))
+  
   fig <- ggplot(plot_df, aes(x = metric, y = error)) +
     geom_boxplot(fill = "lightgray") +
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
@@ -759,8 +777,10 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_averaged_slice_box_plot <- 
        y = "Percentage difference (%)"
       ) +
     
-    scale_y_continuous(limits = c(-100, 400), n.breaks = 3, labels = sci_clean_threshold,
+    scale_y_continuous(n.breaks = 5, labels = sci_clean_threshold,
                        sec.axis = sec_axis(~ error_to_corr(.), name = "Spearman Correlation")) +
+    
+    coord_cartesian(ylim = c(y_min, y_max)) +
     
     theme_minimal() +
     theme(
@@ -1002,7 +1022,7 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_three_slices_scatter
     ) +
     facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +  
     scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) +
-    scale_y_continuous(limits = c(-100, 500), n.breaks = 3, labels = sci_clean_threshold) +
+    scale_y_continuous(limits = c(-1000, 1000), n.breaks = 3, labels = sci_clean_threshold) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
@@ -1097,11 +1117,13 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- fun
   # Factor for metric
   plot_df$metric <- factor(plot_df$metric, metrics)
   
-  # map corr ∈ [-1,1] → error ∈ [-100,400]
-  corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
+  # map corr ∈ [-1,1] → error ∈ [-1000,1000]
+  y_min <- -1000
+  y_max <- 1000
+  corr_to_error <- function(c) scales::rescale(c, to = c(y_min, y_max), from = c(0, 1))
   
   # inverse transform for the secondary axis
-  error_to_corr <- function(e) scales::rescale(e, to = c(0, 1), from = c(-100, 400))
+  error_to_corr <- function(e) scales::rescale(e, to = c(0, 1), from = c(y_min, y_max))
   
   corr_df$y_trans <- corr_to_error(corr_df$corr)
   
@@ -1110,7 +1132,7 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- fun
     sapply(x, function(v) {
       if (is.na(v)) return("")
       
-      if (abs(v) < 1000) {
+      if (abs(v) <= 1000) {
         return(as.character(v))
       }
       
@@ -1141,6 +1163,12 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- fun
     "10" = "#007128",
     "13" = "#b8db50"
   )
+  
+  # Get extreme values to save
+  extreme_values_df <- plot_df %>%
+    filter(error > 1000 | error < -1000) %>%
+    arrange(metric, error)
+  write.csv(extreme_values_df, paste("~/R/values_from_figures/three_slice_extreme_values_df.csv", sep = ""))
   
   
   fig <- ggplot(plot_df, aes(x = metric, y = error, fill = slice)) +
@@ -1177,8 +1205,10 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- fun
        y = "Percentage difference (%)"
       ) +
     
-    scale_y_continuous(limits = c(-100, 400), n.breaks = 3, labels = sci_clean_threshold,
+    scale_y_continuous(n.breaks = 3, labels = sci_clean_threshold,
                        sec.axis = sec_axis(~ error_to_corr(.), name = "Spearman Correlation")) +
+    
+    coord_cartesian(ylim = c(y_min, y_max)) +
     
     theme_minimal() +
     theme(
@@ -1320,7 +1350,7 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing
       ) +
     facet_wrap(~ interaction(metric), scales = "free", ncol = length(metrics)) +  
     scale_x_continuous(n.breaks = 3, labels = sci_clean_threshold) +
-    scale_y_continuous(limits = c(-100, 500), n.breaks = 3, labels = sci_clean_threshold) +
+    scale_y_continuous(limits = c(-1000, 1000), n.breaks = 3, labels = sci_clean_threshold) +
     theme_minimal() +
     theme(
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
@@ -1400,11 +1430,13 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_struct
   
   write.csv(corr_df, "~/R/values_from_figures/showing_structure_corr_df.csv")
   
-  # map corr ∈ [-1,1] → error ∈ [-100,400]
-  corr_to_error <- function(c) scales::rescale(c, to = c(-100, 400), from = c(0, 1))
+  # map corr ∈ [-1,1] → error ∈ [-1000,1000]
+  y_min <- -1000
+  y_max <- 1000
+  corr_to_error <- function(c) scales::rescale(c, to = c(y_min, y_max), from = c(0, 1))
   
   # inverse transform for the secondary axis
-  error_to_corr <- function(e) scales::rescale(e, to = c(0, 1), from = c(-100, 400))
+  error_to_corr <- function(e) scales::rescale(e, to = c(0, 1), from = c(y_min, y_max))
   
   corr_df$y_trans <- corr_to_error(corr_df$corr)
   
@@ -1485,8 +1517,10 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_struct
        y = "Percentage difference (%)"
       ) +
     
-    scale_y_continuous(limits = c(-100, 400), n.breaks = 3, labels = sci_clean_threshold,
+    scale_y_continuous(n.breaks = 3, labels = sci_clean_threshold,
                        sec.axis = sec_axis(~ error_to_corr(.), name = "Spearman Correlation")) +
+    
+    coord_cartesian(ylim = c(y_min, y_max)) +
     
     theme_minimal() +
     theme(
@@ -1641,9 +1675,5 @@ fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_structu
 pdf("fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_structure_box_plot.pdf", width = 15, height = 4)
 print(fig_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_structure_box_plot)
 dev.off()
-
-
-
-
 
 
