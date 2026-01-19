@@ -1,6 +1,5 @@
 ### Read data and set file name and save directory (THE ONLY PART YOU NEED TO CHANGE) ------
-setwd("***directory to your analysis***") # e.g. "~/R/public_data_analysis"
-metric_df_list <- readRDS("***your metric_df_list.RDS***") # e.g. "CyCIF_metric_df_list.RDS"
+metric_df_list <- readRDS("***your metric_df_list.RDS***") # e.g. "~/R/public_data_analysis/CyCIF_metric_df_list.RDS"
 
 file_name_prefix <- "*** prefix for file name ***" # e.g. "colorectal_cancer"
 save_directory <- "*** directory to save plots ***" # e.g. "~/R/plots/public_data/colorectal_cancer"
