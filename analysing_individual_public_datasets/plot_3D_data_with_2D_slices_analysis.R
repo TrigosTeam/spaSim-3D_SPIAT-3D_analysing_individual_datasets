@@ -432,6 +432,10 @@ plot_median_percentage_difference_of_each_pair_vs_metrics_box_plot <- function(m
     plot_df <- rbind(plot_df, median_df)
   }
   
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
+  
   # Factor for metric
   plot_df$metric <- factor(plot_df$metric, metrics)
   
@@ -525,6 +529,10 @@ plot_percentage_difference_vs_metrics_for_each_pair_box_plot <- function(metric_
     # Add metric_df to plot_df
     plot_df <- rbind(plot_df, metric_df[ , c("error", "slice", "pair", "metric")])
   }
+  
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
   
   # Factor for metric
   plot_df$metric <- factor(plot_df$metric, metrics)
@@ -625,6 +633,10 @@ plot_median_percentage_difference_of_each_slice_vs_metrics_box_plot <- function(
     # Add median_df to plot_df
     plot_df <- rbind(plot_df, median_df)
   }
+  
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
   
   # Factor metrics
   plot_df$metric <- factor(plot_df$metric, metrics)
@@ -734,6 +746,10 @@ plot_percentage_difference_vs_metrics_for_all_pairs_and_slices_box_plot <- funct
     # Add median_df to plot_df
     plot_df <- rbind(plot_df, metric_df)
   }
+  
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
   
   # Factor for metric
   plot_df$metric <- factor(plot_df$metric, metrics)

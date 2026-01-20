@@ -140,6 +140,10 @@ plot_3D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(metric_d
   # Subset for A/B
   metric_df <- metric_df[metric_df$pair == "A/B", ]
   
+  # Update metric (remove _AUC from specific metrics)
+  colnames(metric_df)[colnames(metric_df) == metric] <- sub("_AUC$", "", metric)
+  metric <- sub("_AUC$", "", metric)
+  
   for (arrangement in arrangements) {
     for (shape in shapes) {
       
@@ -311,6 +315,10 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
   
   # Subset for A/B
   metric_df <- metric_df[metric_df$pair == "A/B", ]
+  
+  # Update metric (remove _AUC from specific metrics)
+  colnames(metric_df)[colnames(metric_df) == metric] <- sub("_AUC$", "", metric)
+  metric <- sub("_AUC$", "", metric)
   
   for (arrangement in arrangements) {
     for (shape in shapes) {
@@ -484,6 +492,10 @@ plot_percentage_difference_vs_parameters_for_non_gradient_metrics_scatter_plot <
   # Add error column to metric_df
   metric_df$error <- ((metric_df[[metric]] -  rep(metric_df[[metric]][metric_df$slice == "0"], 4)) / rep(metric_df[[metric]][metric_df$slice == "0"], 4)) * 100
   
+  # Update metric (remove _AUC from specific metrics)
+  colnames(metric_df)[colnames(metric_df) == metric] <- sub("_AUC$", "", metric)
+  metric <- sub("_AUC$", "", metric)
+  
   for (arrangement in arrangements) {
     for (shape in shapes) {
       
@@ -639,6 +651,10 @@ plot_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_df_list
   
   # Subset for A/B
   metric_df <- metric_df[metric_df$pair == "A/B", ]
+  
+  # Update metric (remove _AUC from specific metrics)
+  colnames(metric_df)[colnames(metric_df) == metric] <- sub("_AUC$", "", metric)
+  metric <- sub("_AUC$", "", metric)
   
   for (arrangement in arrangements) {
     for (shape in shapes) {
@@ -844,6 +860,10 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
   
   # Subset for A/B
   metric_df <- metric_df[metric_df$pair == "A/B", ]
+  
+  # Update metric (remove _AUC from specific metrics)
+  colnames(metric_df)[colnames(metric_df) == metric] <- sub("_AUC$", "", metric)
+  metric <- sub("_AUC$", "", metric)
   
   for (arrangement in arrangements) {
     for (shape in shapes) {
