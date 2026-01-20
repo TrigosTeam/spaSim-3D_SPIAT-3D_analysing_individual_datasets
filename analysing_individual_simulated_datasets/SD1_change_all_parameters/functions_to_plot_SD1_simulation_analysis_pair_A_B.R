@@ -1403,8 +1403,8 @@ plot_percentage_difference_vs_3D_by_metric_and_pair_A_B_for_random_slice_showing
       axis.text.y  = element_text(size = 11),
       axis.title.x = element_text(size = 11),
       axis.title.y = element_text(size = 11),
-      strip.text   = element_text(size = 11)
-      # legend.position = "none"
+      strip.text   = element_text(size = 11),
+      legend.position = "none"
     ) +
     scale_color_manual(
       values = c(
