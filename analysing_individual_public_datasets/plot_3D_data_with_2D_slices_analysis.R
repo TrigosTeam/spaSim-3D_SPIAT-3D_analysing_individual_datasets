@@ -657,7 +657,7 @@ plot_median_percentage_difference_of_each_slice_vs_metrics_box_plot <- function(
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
     geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
     labs(
-      title = "Box plots showing median percentage difference between 2D and 3D metrics of each slice",
+      # title = "Box plots showing median percentage difference between 2D and 3D metrics of each slice",
        x = "Metric",
        y = "Percentage difference (%)"
       ) +
@@ -837,7 +837,7 @@ setwd(save_directory)
 fig_median_percentage_difference_of_each_slice_vs_metrics_box_plot <- 
   plot_median_percentage_difference_of_each_slice_vs_metrics_box_plot(metric_df_list,
                                                                       metrics)
-pdf(paste(file_name_prefix, "_fig_median_percentage_difference_of_each_slice_vs_metrics_box_plot.pdf", sep = ""), width = 9, height = 6)
+pdf(paste(file_name_prefix, "_fig_median_percentage_difference_of_each_slice_vs_metrics_box_plot.pdf", sep = ""), width = 9, height = 5)
 print(fig_median_percentage_difference_of_each_slice_vs_metrics_box_plot)
 dev.off()
 
