@@ -89,17 +89,6 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(p
   metrics <- sub("_AUC$", "", metrics)
   plot_df$metric <- sub("_AUC$", "", plot_df$metric)
   
-  # Get correlation
-  corr_df <- plot_df %>% 
-    group_by(metric) %>% 
-    summarise(
-      corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
-      .groups = "drop")
-  
-  write.csv(corr_df, "~/R/values_from_figures/random_slice_corr_df.csv")
-  
-  corr_df$corr <- round(corr_df$corr, 3)
-  
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
     
@@ -133,6 +122,15 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_random_slice_scatter_plot <- function(p
   
   # Factor metrics
   plot_df$metric <- factor(plot_df$metric, metrics)
+  
+  # Get correlation
+  corr_df <- plot_df %>% 
+    group_by(metric) %>% 
+    summarise(
+      corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
+      .groups = "drop")
+  
+  write.csv(corr_df, "~/R/values_from_figures/random_slice_corr_df.csv")
   
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
@@ -441,17 +439,6 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- function
   metrics <- sub("_AUC$", "", metrics)
   plot_df$metric <- sub("_AUC$", "", plot_df$metric)
   
-  # Get correlation
-  corr_df <- plot_df %>% 
-    group_by(metric) %>% 
-    summarise(
-      corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
-      .groups = "drop")
-  
-  write.csv(corr_df, "~/R/values_from_figures/averaged_slice_corr_df.csv")
-  
-  corr_df$corr <- round(corr_df$corr, 3)
-  
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
     sapply(x, function(v) {
@@ -484,6 +471,15 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- function
   
   # Factor for metric
   plot_df$metric <- factor(plot_df$metric, metrics)
+  
+  # Get correlation
+  corr_df <- plot_df %>% 
+    group_by(metric) %>% 
+    summarise(
+      corr = cor(value3D, value2D, method = "spearman", use = "complete.obs"), 
+      .groups = "drop")
+  
+  write.csv(corr_df, "~/R/values_from_figures/averaged_slice_corr_df.csv")
   
   fig <- ggplot(plot_df, aes(x = value3D, y = value2D)) +
     geom_point(alpha = 0.25, color = "#0062c5", size = 1) +
@@ -518,7 +514,7 @@ plot_2D_vs_3D_by_metric_and_pair_A_B_for_averaged_slice_scatter_plot <- function
     # Add r-value text
     geom_text(
       data = corr_df,
-      aes(x = -Inf, y = Inf, label = paste0("r: ", corr)),
+      aes(x = -Inf, y = Inf, label = paste0("r: ", round(corr, 3))),
       inherit.aes = FALSE,
       hjust = -0.1, 
       vjust = 1.4,
@@ -1142,6 +1138,9 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- fun
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
   
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
   # Get correlation
   corr_df <- plot_df %>% 
     group_by(metric, slice) %>% 
@@ -1150,9 +1149,6 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_three_slice_box_plot <- fun
       .groups = "drop")
   
   write.csv(corr_df, "~/R/values_from_figures/three_slice_corr_df.csv")
-  
-  # Factor for metric
-  plot_df$metric <- factor(plot_df$metric, metrics)
   
   # map corr ∈ [-1,1] → error ∈ [-1000,1000]
   y_min <- -1000
@@ -1474,6 +1470,9 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_struct
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
   
+  # Factor for metric
+  plot_df$metric <- factor(plot_df$metric, metrics)
+  
   # Compute spearman correlation
   corr_df <- plot_df %>%
     group_by(pair, metric, structure) %>%
@@ -1523,9 +1522,6 @@ plot_percentage_difference_vs_metric_by_pair_A_B_for_random_slice_showing_struct
       paste0(mant, "e", exp)
     })
   }
-  
-  # Factor for metric
-  plot_df$metric <- factor(plot_df$metric, metrics)
   
   # Structure colors
   structure_cols <- c(
