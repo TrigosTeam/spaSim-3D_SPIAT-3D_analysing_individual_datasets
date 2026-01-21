@@ -68,7 +68,7 @@ for (metric in gradient_radii_metrics) {
 
 ## Turn threshold radii metrics into AUC and add to metric_df list
 thresholds <- seq(0.01, 1, 0.01)
-threshold_colnames <- paste("t", thresholds, sep = "")
+thresholds_colnames <- paste("t", thresholds, sep = "")
 
 # PBP_AUC 3D
 PBP_df <- metric_df_list[["PBP"]]
