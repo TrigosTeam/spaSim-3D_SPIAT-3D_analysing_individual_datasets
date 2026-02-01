@@ -254,6 +254,8 @@ plot_3D_and_2D_vs_parameters_for_non_gradient_metrics_scatter_plot <- function(m
   
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
+    x[!(x %in% range(x, na.rm = T))] <- NA
+    
     sapply(x, function(v) {
       if (is.na(v)) return("")
       
