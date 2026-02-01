@@ -81,6 +81,10 @@ get_plot_df_for_random_slice <- function(metric_df_list,
 plot_2D_vs_3D_by_metric_and_pairs_for_random_slice_scatter_plot <- function(plot_df,
                                                                             metrics) {
   
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
+  
   # Get correlation
   corr_df <- plot_df %>% 
     group_by(metric, pair) %>% 
@@ -166,6 +170,10 @@ plot_2D_vs_3D_by_metric_and_pairs_for_random_slice_scatter_plot <- function(plot
 plot_percentage_difference_vs_3D_by_metric_and_pairs_for_random_slice_scatter_plot <- function(plot_df,
                                                                                                metrics) {
   
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
+  
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
     sapply(x, function(v) {
@@ -227,6 +235,10 @@ plot_percentage_difference_vs_3D_by_metric_and_pairs_for_random_slice_scatter_pl
 # Plot percentage difference vs metric for each pair for a random slice
 plot_percentage_difference_vs_metric_by_pairs_for_random_slice_box_plot <- function(plot_df,
                                                                                     metrics) {
+  
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
   
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
@@ -378,6 +390,10 @@ plot_2D_vs_3D_by_metric_and_pairs_for_averaged_slice_scatter_plot <- function(me
     plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric")])
   }
   
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
+  
   # Get correlation
   corr_df <- plot_df %>% 
     group_by(metric, pair) %>% 
@@ -501,6 +517,10 @@ plot_percentage_difference_vs_3D_by_metric_and_pairs_for_averaged_slice_scatter_
     
   }
   
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
+  
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
     sapply(x, function(v) {
@@ -607,6 +627,10 @@ plot_percentage_difference_vs_metric_by_pairs_for_averaged_slice_box_plot <- fun
     plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric")])
     
   }
+  
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
   
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
@@ -754,6 +778,10 @@ plot_2D_vs_3D_by_metric_and_pairs_for_three_slices_scatter_plot <- function(metr
     
   }
   
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
+  
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
     sapply(x, function(v) {
@@ -870,6 +898,10 @@ plot_percentage_difference_vs_3D_by_metric_and_pairs_for_three_slices_scatter_pl
     plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "slice")])
     
   }
+  
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
   
   # Change slice column back to character for plotting
   plot_df$slice <- as.character(metric_df$slice)
@@ -990,6 +1022,10 @@ plot_percentage_difference_vs_metric_by_pairs_for_three_slice_box_plot <- functi
     plot_df <- rbind(plot_df, metric_df[ , c("value3D", "value2D", "pair", "metric", "slice")])
     
   }
+  
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
   
   # Change slice column back to character for plotting
   plot_df$slice <- as.character(metric_df$slice)
@@ -1117,6 +1153,10 @@ plot_2D_vs_3D_by_metric_and_pairs_for_random_slice_showing_structure_scatter_plo
                                                                                               metrics,
                                                                                               parameters_df) {
   
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
+  
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
     sapply(x, function(v) {
@@ -1186,6 +1226,11 @@ plot_2D_vs_3D_by_metric_and_pairs_for_random_slice_showing_structure_scatter_plo
 plot_percentage_difference_vs_3D_by_metric_and_pairs_for_random_slice_showing_structure_scatter_plot <- function(plot_df,
                                                                                                                  metrics,
                                                                                                                  parameters_df) {
+  
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
+  
   # For nicer tick labels
   sci_clean_threshold <- function(x) {
     sapply(x, function(v) {
@@ -1257,6 +1302,11 @@ plot_percentage_difference_vs_3D_by_metric_and_pairs_for_random_slice_showing_st
 plot_2D_vs_3D_correlation_vs_structure_by_metric_and_pairs_for_random_slice_bar_plot <- function(plot_df,
                                                                                                  metrics,
                                                                                                  parameters_df) {
+  
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
+  
   # Compute spearman correlation
   corr_df <- plot_df %>%
     group_by(pair, metric, structure) %>%
@@ -1299,6 +1349,10 @@ plot_2D_vs_3D_correlation_vs_structure_by_metric_and_pairs_for_random_slice_bar_
 plot_percentage_difference_vs_metric_by_pairs_for_random_slice_showing_structure_box_plot <- function(plot_df,
                                                                                                       metrics,
                                                                                                       parameters_df) {
+  
+  # Update metrics (remove _AUC from specific metrics)
+  metrics <- sub("_AUC$", "", metrics)
+  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
   
   # Get error column
   plot_df$error <- (plot_df$value2D - plot_df$value3D) / plot_df$value3D * 100
