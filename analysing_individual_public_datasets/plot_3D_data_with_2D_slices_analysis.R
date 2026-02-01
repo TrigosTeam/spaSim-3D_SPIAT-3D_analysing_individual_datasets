@@ -91,57 +91,6 @@ metric_df_list[["EBP_AUC"]] <- EBP_AUC_df
 
 ## Functions to plot
 
-# Utility function to subset metric_df
-subset_metric_df <- function(metric,
-                             metric_df,
-                             index) {
-  
-  # Utility function to get metric cell types
-  get_metric_cell_types <- function(metric) {
-    # Get metric_cell_types
-    if (metric %in% c("AMD", "ANC", "ACIN", "CKR", "ANC_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "CK_AUC", "CL_AUC", "CG_AUC")) {
-      metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
-      metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
-    }
-    else if (metric %in% c("MS", "NMS", "MS_AUC", "NMS_AUC")) {
-      metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
-      metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
-    }
-    else if (metric %in% c("ANE", "ANE_AUC")) {
-      metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Tumour,Immune"))
-      metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
-    }
-    else if (metric %in% c("PBSAC", "PBP", "PBP_AUC")) {
-      metric_cell_types <- data.frame(ref = c("Tumour"), tar = c("Immune"))
-      metric_cell_types$pair <- paste(metric_cell_types$ref, metric_cell_types$tar, sep = "/")
-    }
-    else if (metric %in% c("EBSAC", "EBP", "EBP_AUC")) {
-      metric_cell_types <- data.frame(cell_types = c("Tumour,Immune"))
-    }
-    else {
-      stop("metric not found")
-    }
-    return(metric_cell_types)
-  }
-  
-  metric_cell_types <- get_metric_cell_types(metric)
-  
-  if (metric %in% c("AMD", "ANC", "ACIN", "CKR", "CLR", "COO", "CGR", "CK", "CL", "CG", "MS", "NMS", "ANC_AUC", "ACIN_AUC", "CKR_AUC", "CLR_AUC", "COO_AUC", "CGR_AUC", "CK_AUC", "CL_AUC", "CG_AUC", "MS_AUC", "NMS_AUC", "PBSAC", "PBP", "PBP_AUC")) {
-    metric_df_subset <- metric_df[metric_df$reference == metric_cell_types[index, "ref"] & metric_df$target == metric_cell_types[index, "tar"], ] 
-  }
-  else if (metric %in% c("ANE", "ANE_AUC")) {
-    metric_df_subset <- metric_df[metric_df$reference == metric_cell_types[index, "ref"] & metric_df$target == metric_cell_types[index, "tar"], ] 
-  }
-  else if (metric %in% c("EBSAC", "EBP", "EBP_AUC")) {
-    metric_df_subset <- metric_df[metric_df$cell_types == metric_cell_types[index, "cell_types"], ]
-  }
-  else {
-    stop("metric not found")
-  }
-  
-  return(metric_df_subset)
-}
-
 # Utility function to add pair column
 add_pair_column_to_metric_df <- function(metric_df,
                                          metric) {
@@ -204,6 +153,9 @@ plot_3D_and_2D_metric_vs_pair_box_plot <- function(metric_df_list,
   
   # Add pair column
   metric_df <- add_pair_column_to_metric_df(metric_df, metric)
+  
+  # Update metric (remove _AUC from specific metrics)
+  metric <- sub("_AUC$", "", metric)
   
   fig <- ggplot(metric_df, aes(x = pair, y = value)) +
     geom_boxplot(data = metric_df[metric_df$slice != as.character(max(as.numeric(metric_df$slice))), ],
@@ -278,6 +230,9 @@ plot_percentage_difference_vs_pair_box_plot <- function(metric_df_list,
   # Add pair column
   metric_df <- add_pair_column_to_metric_df(metric_df, metric)
   
+  # Update metric (remove _AUC from specific metrics)
+  metric <- sub("_AUC$", "", metric)
+  
   fig <- ggplot(metric_df, aes(x = pair, y = error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
     geom_jitter(width = 0.2, alpha = 0.5, color = "#0062c5") +  # Add dots with slight horizontal jitter
@@ -348,6 +303,9 @@ plot_percentage_difference_vs_slice_box_plot <- function(metric_df_list,
   
   # Factor slice column so it is from 1, 2, 3, ...
   metric_df$slice <- factor(metric_df$slice, as.character(sort(as.integer(unique(metric_df$slice)))))
+  
+  # Update metric (remove _AUC from specific metrics)
+  metric <- sub("_AUC$", "", metric)
   
   fig <- ggplot(metric_df, aes(x = slice, y = error)) +
     geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
@@ -455,115 +413,6 @@ plot_median_percentage_difference_of_each_pair_vs_metrics_box_plot <- function(m
       panel.border = element_rect(color = "black", fill = NA, linewidth = 1),
       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)
     ) +
-    scale_y_continuous(labels = sci_clean_threshold)
-  
-  return(fig)
-}
-
-plot_percentage_difference_vs_metrics_for_each_pair_box_plot <- function(metric_df_list,
-                                                                         metrics) {
-  
-  # For nicer tick labels
-  sci_clean_threshold <- function(x) {
-    sapply(x, function(v) {
-      if (is.na(v)) return("")
-      
-      if (abs(v) < 1000) {
-        return(as.character(v))
-      }
-      
-      # scientific notation with 1 decimal place
-      s <- formatC(v, format = "e", digits = 1)   # e.g. "1.5e+03"
-      
-      # remove "+" in exponent
-      s <- gsub("e\\+", "e", s)
-      
-      # split mantissa and exponent
-      parts <- strsplit(s, "e")[[1]]
-      mant <- parts[1]
-      exp  <- parts[2]
-      
-      # remove trailing .0 (so 1.0e3 → 1e3)
-      mant <- sub("\\.0$", "", mant)
-      
-      # remove leading zeros in exponent
-      exp <- sub("^0+", "", exp)
-      
-      paste0(mant, "e", exp)
-    })
-  }
-  
-  plot_df <- data.frame()
-  
-  for (metric in metrics) {
-    
-    # Get metric_df for current metric
-    metric_df <- metric_df_list[[metric]]
-    
-    # Change and further subset columns of metric_df
-    colnames(metric_df)[colnames(metric_df) == metric] <- "value"
-    
-    # Obtain 3D value
-    value_3D <- metric_df[["value"]][metric_df[["slice"]] == as.character(max(as.numeric(metric_df$slice)))]
-    
-    # Calculate error
-    metric_df[["error"]] <- ((metric_df[["value"]] - value_3D) / value_3D) * 100
-    
-    # Remove value column (only using error now)
-    metric_df["value"] <- NULL
-    
-    # Remove 3D data (integrated into error)
-    metric_df <- metric_df[metric_df[["slice"]] != max(as.integer(metric_df$slice)), ]
-    
-    if (metric %in% c("EBSAC", "EBP_AUC")) {
-      # For EBSAC and EBP_AUC, assume pair is the same as cell_types for consistency
-      metric_df$pair <- gsub(',', '/', metric_df$cell_types)
-    }
-    else if (metric %in% c("ANE_AUC")) {
-      # For ANE_AUC, assume pair is the same as target_cell_type for consistency (as target is of form A,B already)
-      metric_df$pair <- gsub(',', '/', metric_df$target)
-    }
-    else {
-      # Add reference-target column
-      metric_df$pair <- paste(metric_df$reference, metric_df$target, sep = "/")
-    }
-    
-    metric_df$metric <- metric  
-    
-    # Add metric_df to plot_df
-    plot_df <- rbind(plot_df, metric_df[ , c("error", "slice", "pair", "metric")])
-  }
-  
-  # Update metrics (remove _AUC from specific metrics)
-  metrics <- sub("_AUC$", "", metrics)
-  plot_df$metric <- sub("_AUC$", "", plot_df$metric)
-  
-  # Factor for metric
-  plot_df$metric <- factor(plot_df$metric, metrics)
-  
-  fig <- ggplot(plot_df, aes(x = metric, y = error, color = pair)) +
-    geom_boxplot(outlier.shape = NA, fill = "lightgray") +  # Hide default outliers to avoid duplication
-    geom_jitter(width = 0.2, alpha = 0.5, aes(color = pair)) +  # Add dots with slight horizontal jitter
-    geom_hline(yintercept = 0, color = "#bb0036", linetype = "dotted", linewidth = 1) + # Red dotted line at y = 0
-    labs(title = "Box plots showing percentage difference between 2D and 3D metrics for each pair",
-         x = "Metric",
-         y = "Percentage difference (%)") +
-    theme_minimal() +
-    theme(
-      panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
-    ) +
-    scale_color_manual(values = c(
-      "Tumour/Tumour" = "#007128",
-      "Tumour/Immune" = "#0062c5",
-      "Immune/Tumour" = "#f77e3b",
-      "Immune/Immune" = "#bb0036"
-    )) +
-    scale_fill_manual(values = c(
-      "Tumour/Tumour" = "#007128",
-      "Tumour/Immune" = "#0062c5",
-      "Immune/Tumour" = "#f77e3b",
-      "Immune/Immune" = "#bb0036"
-    )) +
     scale_y_continuous(labels = sci_clean_threshold)
   
   return(fig)
@@ -824,16 +673,6 @@ pdf(paste(file_name_prefix, "_fig_median_percentage_difference_of_each_pair_vs_m
 print(fig_median_percentage_difference_of_each_pair_vs_metrics_box_plot)
 dev.off()
 
-
-
-# setwd(save_directory)
-# # This is only for CyCIF dataset
-# fig_percentage_difference_vs_metrics_for_each_pair_box_plot <-
-# plot_percentage_difference_vs_metrics_for_each_pair_box_plot(metric_df_list,
-#                                                              metrics)
-# pdf(paste(file_name_prefix, "_fig_percentage_difference_vs_metrics_for_each_pair_box_plot.pdf", sep = ""), width = 9, height = 6)
-# print(fig_percentage_difference_vs_metrics_for_each_pair_box_plot)
-# dev.off()
 
 
 
