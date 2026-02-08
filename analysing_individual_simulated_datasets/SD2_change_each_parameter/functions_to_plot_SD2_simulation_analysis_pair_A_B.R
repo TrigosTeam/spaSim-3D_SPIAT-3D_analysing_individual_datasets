@@ -1,3 +1,4 @@
+# Code to plot SD2 analysis, showing only cell pair A/B (ignoring cell pairs A/A, B/A, B/B).
 # Libraries ----
 library(cowplot)
 library(ggplot2)

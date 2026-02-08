@@ -1,3 +1,4 @@
+# Code to read and pre-process in each 3D public dataset.
 # CyCIF colorectal cancer ------
 setwd("~/R/data3D/CyCIF_colorectal_cancer")
 data3D <- read.csv("colorectal_cancer_df.csv")

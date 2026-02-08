@@ -1,3 +1,5 @@
+# Code to analyse a public 3D dataset made up of mutliple slices.
+
 # ******** READ THIS *********
 # This function assumes the following:
 # data3D is a data frame with column names: "Cell.X.Position", "Cell.Y.Position", "Cell.Z.Position", ""Cell.Type"

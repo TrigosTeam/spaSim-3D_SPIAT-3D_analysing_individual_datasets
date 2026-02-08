@@ -1,3 +1,4 @@
+# Code to plot SD2 analysis.
 # Libraries ----
 library(cowplot)
 library(ggplot2)
@@ -14,6 +15,7 @@ parameters_df <- readRDS("SD2_parameters_df.RDS")
 
 
 # Functions for 4 pair metrics-----
+# For metrics which use all cell pairs (A/A, A/B, B/A, B/B)
 # Subset metric_df_list and parameters_df
 add_pair_to_metric_df <- function(metric_df, metric) {
   
@@ -873,6 +875,7 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
 
 
 # Running the functions for 4 pair metrics ----
+# For metrics which use all cell pairs (A/A, A/B, B/A, B/B)
 metrics_with_4_pairs <- c("AMD",
                           "ANC_AUC",
                           "CK_AUC", "CL_AUC", "CG_AUC",
@@ -968,7 +971,8 @@ dev.off()
 
 
 # Functions for 2 pair metrics-----
-# The only change:
+# For metrics which use only 2 cell pairs (A/B, B/A)
+# The only change from functions for 4 pair metrics:
 # arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.02, 1))  BECOMES
 # arrangement_shape_fig <- plot_grid(title, arrangement_shape_fig, ncol = 1, rel_heights = c(0.04, 1))    0.02 --> 0.04 
 
@@ -1821,6 +1825,7 @@ plot_3D_and_2D_vs_slice_for_non_gradient_metrics_violin_plot <- function(metric_
 
 
 # Running the functions for 2 pair metrics ----
+# For metrics which use only 2 cell pairs (A/B, B/A)
 metrics_with_2_pairs <- c("ACIN_AUC", "ANE_AUC",
                           "MS_AUC", "NMS_AUC",
                           "PBP_AUC", "EBP_AUC", "PBSAC", "EBSAC")

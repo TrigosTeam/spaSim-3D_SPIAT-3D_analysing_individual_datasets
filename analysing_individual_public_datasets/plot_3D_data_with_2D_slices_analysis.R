@@ -1,3 +1,5 @@
+# Code to plot public 3D dataset analysis.
+
 ### Read data and set file name and save directory (THE ONLY PART YOU NEED TO CHANGE) ------
 metric_df_list <- readRDS("***your metric_df_list.RDS***") # e.g. "~/R/public_data_analysis/CyCIF_metric_df_list.RDS"
 

@@ -1,3 +1,4 @@
+# Code to plot SD1 analysis, showing only cell pair A/B (ignoring cell pairs A/A, B/A, B/B).
 # Set seed ----
 set.seed(678999821)
 # Libraries ----

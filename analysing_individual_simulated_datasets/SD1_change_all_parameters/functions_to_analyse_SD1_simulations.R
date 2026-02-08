@@ -1,3 +1,4 @@
+# Code to generate SD1 and to perform SPIAT-3D analyis on SD1.
 # Set seed for consistency
 set.seed(678999821)
 
