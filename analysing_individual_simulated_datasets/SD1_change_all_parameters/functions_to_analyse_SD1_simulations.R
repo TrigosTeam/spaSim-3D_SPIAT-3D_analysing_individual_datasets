@@ -16,7 +16,8 @@ generate_random_parameters <- function(
     ring_width_factor_range,
     cluster1_x_coord_range
 ) {
-  
+
+  # For each parameter, get 'n_simulations' values between specified min and max of each parameter  
   parameters_df <- data.frame(
     bg_prop_A = runif(n_simulations, bg_prop_A_range["min"], bg_prop_A_range["max"]),
     bg_prop_B = runif(n_simulations, bg_prop_B_range["min"], bg_prop_B_range["max"]),
